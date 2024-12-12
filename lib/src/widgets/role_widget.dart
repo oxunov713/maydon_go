@@ -8,18 +8,19 @@ Widget buildRoleCard({
   required bool isSelected,
   required VoidCallback onTap,
 }) {
-  return InkWell(
-    onTap: onTap,
-    child: Container(
-      height: 90,
-      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(
-          width: isSelected ? 2 : 1,
-          color: isSelected ? AppColors.green : AppColors.grey4,
-        ),
-        borderRadius: BorderRadius.circular(20),
+  return Container(
+    height: 90,
+    margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+    decoration: BoxDecoration(
+      border: Border.all(
+        width: isSelected ? 2 : 1,
+        color: isSelected ? AppColors.green : AppColors.grey4,
       ),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [

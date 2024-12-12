@@ -6,6 +6,7 @@ import '../style/app_colors.dart';
 Widget buildIconButton({
   required String iconPath,
   required bool isLeftAligned,
+  required GlobalKey<ScaffoldState> scaffoldKey,
 }) {
   return Container(
     height: 60,
@@ -15,20 +16,30 @@ Widget buildIconButton({
       color: AppColors.green,
       borderRadius: isLeftAligned
           ? const BorderRadius.only(
-        bottomLeft: Radius.circular(20),
-        topLeft: Radius.circular(20),
-      )
+              bottomLeft: Radius.circular(20),
+              topLeft: Radius.circular(20),
+            )
           : const BorderRadius.only(
-        bottomRight: Radius.circular(20),
-        topRight: Radius.circular(20),
-      ),
+              bottomRight: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
     ),
-    child: Padding(
-      padding: const EdgeInsets.all(15),
-      child: SvgPicture.asset(
-        iconPath,
-        height: 25,
-        width: 25,
+    child: InkWell(
+      onTap: () {
+        if (!isLeftAligned) {
+          // Open the drawer on the left side
+          scaffoldKey.currentState?.openDrawer();
+        } else {
+          // Handle other actions like search here
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: SvgPicture.asset(
+          iconPath,
+          height: 25,
+          width: 25,
+        ),
       ),
     ),
   );

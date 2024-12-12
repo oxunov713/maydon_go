@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:maydon_go/src/screens/owner/owner_sign_up.dart';
+import 'package:maydon_go/src/screens/user/user_sign_up_screen.dart';
 import '../style/app_colors.dart';
 import '../widgets/role_widget.dart';
-import 'home_screen.dart';
+import 'user/home_screen.dart';
 
 class RoleScreen extends StatefulWidget {
   const RoleScreen({super.key});
@@ -24,10 +26,9 @@ class _RoleScreenState extends State<RoleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 10),
             Column(
@@ -56,38 +57,44 @@ class _RoleScreenState extends State<RoleScreen> {
                 ),
               ],
             ),
-            InkWell(
-              onTap: (userSelected || ownerSelected)
-                  ? () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
-                      );
-                    }
-                  : null,
-              child: Container(
-                height: 60,
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                decoration: BoxDecoration(
-                  color: (userSelected || ownerSelected)
-                      ? AppColors.green
-                      : AppColors.green40,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Center(
-                  child: Text(
-                    "Davom etish",
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: (userSelected || ownerSelected)
+              ? () {
+                  if (userSelected) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SignUpScreen(),
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OwnerSignUp(),
+                      ),
+                    );
+                  }
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.green,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            disabledBackgroundColor: AppColors.green40
+          ),
+          child: const Text(
+            "Ro'yxatdan o'tish",
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ),
     );
