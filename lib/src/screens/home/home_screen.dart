@@ -4,18 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-import 'package:maydon_go/src/screens/user/chat_screen.dart';
-import 'package:maydon_go/src/screens/user/help_screen.dart';
-import 'package:maydon_go/src/screens/user/history_screen.dart';
-import 'package:maydon_go/src/screens/user/profile_screen.dart';
-import 'package:maydon_go/src/screens/user/settings_screen.dart';
-
+import 'package:map_launcher/map_launcher.dart';
+import 'package:maydon_go/src/data/fake_data.dart';
+import '../../model/stadium_model.dart';
 import '../../style/app_colors.dart';
 import '../../style/app_icons.dart';
 import '../../widgets/custom_list_tile.dart';
 import '../../widgets/home_menu_widget.dart';
 import 'all_stadiums_screen.dart';
-import 'favourites_screen.dart';
+import 'saved_stadiums.dart';
+import 'history_screen.dart';
+import 'profile_screen.dart';
 import 'top_ratings.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,41 +29,70 @@ class _HomeScreenState extends State<HomeScreen> {
   LocationData? _currentLocation;
   final Location _location = Location();
   final LatLng initialMap = LatLng(41.2995, 69.2401);
-  List<LatLng> stadions = [
-    const LatLng(41.2995, 69.2401),
-    const LatLng(41.2985, 69.2501),
-    const LatLng(41.2898, 69.2401),
-    const LatLng(41.2795, 69.2411),
-    const LatLng(41.2995, 69.2421),
-  ];
+  List<Stadium> stadions = [];
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // Markerlarni saqlash uchun Set
   Set<Marker> _markers = {};
+  final FocusNode searchFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _initializeLocation();
-    _setMarkers(); // Markerlarni o'rnatish
+    _fetchStadiums().then((_) => _setMarkers()); // Markerlarni o'rnatish
   }
 
-  // Markerlarni o'rnatish
+  Future<void> _fetchStadiums() async {
+    final fetchedStadiums = FakeData.stadiumOwners
+        .map(
+          (e) => e.stadium,
+        )
+        .toList();
+    setState(() {
+      stadions =
+          fetchedStadiums; // Olingan ma'lumotlarni stadions ro'yxatiga saqlash
+    });
+  }
+
   void _setMarkers() async {
     BitmapDescriptor icon = await _getMarkerIcon();
     setState(() {
       _markers = stadions.map((stadion) {
         return Marker(
-          markerId: MarkerId(stadion.toString()),
-          position: stadion,
+          markerId: MarkerId(stadion.location.address),
+          position:
+              LatLng(stadion.location.latitude, stadion.location.longitude),
           icon: icon,
           infoWindow: InfoWindow(
-            title: 'Stadion',
-            snippet: 'Here is a stadion',
+            title: stadion.name,
+            snippet: stadion.description,
+            onTap: () async {
+              // Open the map with directions
+              await _openMapWithDirections(
+                  stadion.location.latitude, stadion.location.longitude);
+            },
           ),
         );
       }).toSet();
     });
+  }
+
+  Future<void> _openMapWithDirections(double latitude, double longitude) async {
+    try {
+      final availableMaps = await MapLauncher.installedMaps;
+      // Choose the first available map
+      final selectedMap = availableMaps.first;
+      // Open directions in the selected map
+      selectedMap.showDirections(
+        destination: Coords(latitude, longitude),
+      );
+    } catch (e) {
+      // Handle any errors, such as no map app installed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No map apps are available')),
+      );
+    }
   }
 
   // Asset iconini oladigan method
@@ -160,24 +188,31 @@ class _HomeScreenState extends State<HomeScreen> {
         drawer: Drawer(
           child: ListView(
             children: <Widget>[
-              const UserAccountsDrawerHeader(
-                currentAccountPicture: CircleAvatar(
-                  backgroundImage: AssetImage(AppIcons.avatarImage),
-                ),
-                accountEmail: Text("+998900050713"),
-                accountName: Text(
-                  "Azizbek Oxunov",
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.green,
+              InkWell(
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(),
+                    )),
+                child: const UserAccountsDrawerHeader(
+                  currentAccountPicture: CircleAvatar(
+                    backgroundImage: AssetImage(AppIcons.avatarImage),
+                  ),
+                  accountEmail: Text("+998900050713"),
+                  accountName: Text(
+                    "Azizbek Oxunov",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.green,
+                  ),
                 ),
               ),
               customListTile(
                 context: context,
                 text: "Barcha maydonlar",
                 icon: AppIcons.stadionsIcon,
-                goToScreen: AllStadiumsScreen(),
+                goToScreen: AllStadiumsScreen(focusNode: searchFocusNode,),
               ),
               customListTile(
                 context: context,
@@ -186,14 +221,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 goToScreen: TopRatings(),
               ),
               ListTile(
-                leading: Icon(Icons.bookmark_border_outlined,color: AppColors.main,),
+                leading: Icon(
+                  Icons.bookmark_border_outlined,
+                  color: AppColors.main,
+                ),
                 title: Text(
                   "Saqlanganlar",
                 ),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => FavouritesScreen(),
+                    builder: (context) => SavedStadiumsScreen(),
                   ),
                 ),
               ),
@@ -208,23 +246,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: AppIcons.historyIcon,
                 goToScreen: HistoryScreen(),
               ),
-              customListTile(
-                context: context,
-                text: "Sozlamalar",
-                icon: AppIcons.settingsIcon,
-                goToScreen: SettingsScreen(),
-              ),
+              // customListTile(
+              //   context: context,
+              //   text: "Sozlamalar",
+              //   icon: AppIcons.settingsIcon,
+              //   goToScreen: SettingsScreen(),
+              // ),
               customListTile(
                 context: context,
                 text: "Yordam",
                 icon: AppIcons.faqIcon,
-                goToScreen: HelpScreen(),
+                goToScreen: null,
               ),
               customListTile(
                 context: context,
                 text: "Xabarlar",
                 icon: AppIcons.chatIcon,
-                goToScreen: ChatScreen(),
+                goToScreen: null,
               ),
             ],
           ),
@@ -257,10 +295,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     buildIconButton(
                         iconPath: AppIcons.menuIcon,
                         isLeftAligned: false,
+                        context: context,
+                        focusNode: searchFocusNode,
                         scaffoldKey: _scaffoldKey),
                     buildIconButton(
                         iconPath: AppIcons.searchIcon,
                         isLeftAligned: true,
+                        context: context,
+                        focusNode: searchFocusNode,
                         scaffoldKey: _scaffoldKey),
                   ],
                 ),

@@ -7,6 +7,7 @@ Widget buildTextField({
   required TextEditingController controller,
   required String labelText,
   bool obscureText = false,
+  bool isNumber = false,
   TextInputType keyboardType = TextInputType.text,
   List<TextInputFormatter>? inputFormatters,
   String? Function(String?)? validator,
@@ -30,13 +31,16 @@ Widget buildTextField({
       ),
       suffixIcon: toggleVisibility != null
           ? IconButton(
-        icon: Icon(
-          obscureText ? Icons.visibility_off : Icons.visibility,
-          color: AppColors.main,
-        ),
-        onPressed: toggleVisibility,
-      )
-          : null, // Display the icon button if toggleVisibility is provided
+              icon: Icon(
+                obscureText ? Icons.visibility_off : Icons.visibility,
+                color: AppColors.main,
+              ),
+              onPressed: toggleVisibility,
+            )
+          : null,
+      prefixText: isNumber == true
+          ? "+998"
+          : null, // Statik matn// Display the icon button if toggleVisibility is provided
     ),
     obscureText: obscureText,
     keyboardType: keyboardType,

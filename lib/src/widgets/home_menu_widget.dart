@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:maydon_go/main.dart';
+import 'package:maydon_go/src/provider/all_stadium_provider.dart';
+import 'package:provider/provider.dart';
 
+import '../screens/home/all_stadiums_screen.dart';
 import '../style/app_colors.dart';
 
 Widget buildIconButton({
   required String iconPath,
   required bool isLeftAligned,
   required GlobalKey<ScaffoldState> scaffoldKey,
+  required BuildContext context,
+  required FocusNode focusNode,
 }) {
   return Container(
     height: 60,
@@ -30,7 +36,14 @@ Widget buildIconButton({
           // Open the drawer on the left side
           scaffoldKey.currentState?.openDrawer();
         } else {
-          // Handle other actions like search here
+          context.read<StadiumProvider>().toggleSearchMode();
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AllStadiumsScreen(
+                  focusNode: focusNode,
+                ),
+              ));
         }
       },
       child: Padding(

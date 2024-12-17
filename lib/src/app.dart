@@ -1,16 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:maydon_go/src/style/app_colors.dart';
-
-import 'screens/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+import 'l10n/app_localizations.dart';
+import 'provider/locale_provider.dart';
+import 'router/app_router.dart';
+import 'style/app_colors.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: const SplashScreen(),
+    return MaterialApp.router(
+      routerConfig: AppRouter.goRouter,
       debugShowCheckedModeBanner: false,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('uz'),
+        Locale('ru'),
+      ],
+      locale: Provider.of<LocaleProvider>(context).locale,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        AppLocalizations.delegate,
+      ],
       theme: ThemeData(
         fontFamily: "Gilroy",
         scaffoldBackgroundColor: AppColors.white,

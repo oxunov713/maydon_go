@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+
+import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
-import 'package:maydon_go/src/screens/role_screen.dart';
-import 'package:maydon_go/src/style/app_colors.dart';
-import 'package:maydon_go/src/style/app_icons.dart';
+
+import '../router/app_routes.dart';
+import '../style/app_colors.dart';
+import '../style/app_icons.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -16,13 +18,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     Future.delayed(
-      Duration(milliseconds: 3500),
-      () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RoleScreen(),
-        ),
-      ),
+      const Duration(milliseconds: 3500),
+      () => context.goNamed(AppRoutes.chooseLanguage),
     );
     super.initState();
   }
@@ -37,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
           SizedBox(
             height: deviceHeight,
             width: deviceWidth,
-            child: Image(
+            child: const Image(
               fit: BoxFit.cover,
               image: AssetImage(
                 AppIcons.splashScreen,
@@ -48,20 +45,20 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                const Text(
                   "Maydon Go",
                   style: TextStyle(
                       color: AppColors.main,
                       fontWeight: FontWeight.w700,
                       fontSize: 40),
                 ),
-                Text(
+                const Text(
                   "Futbol maydonlarini qidirish ilovasi",
                   style: TextStyle(color: AppColors.secondary, fontSize: 14),
                 ),
                 Lottie.asset(AppIcons.downloadLottie,
                     fit: BoxFit.fill, height: 90),
-                SizedBox(height: 100),
+                const SizedBox(height: 100),
               ],
             ),
           ),

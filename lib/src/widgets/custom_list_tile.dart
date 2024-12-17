@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 Widget customListTile({
   required String text,
   required String icon,
-  required Widget goToScreen,
+  required Widget? goToScreen,
   required BuildContext context,
 }) {
   return ListTile(
@@ -12,11 +12,13 @@ Widget customListTile({
     title: Text(
       text,
     ),
-    onTap: () => Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => goToScreen,
-      ),
-    ),
+    onTap: () => (goToScreen == null)
+        ? null
+        : Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => goToScreen!,
+            ),
+          ),
   );
 }

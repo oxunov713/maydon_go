@@ -1,10 +1,10 @@
 // location_model.dart
-class Location {
+class LocationModel {
   final String address;
   final double latitude;
   final double longitude;
 
-  Location({
+  LocationModel({
     required this.address,
     required this.latitude,
     required this.longitude,
@@ -29,18 +29,32 @@ class Stadium {
   final String description;
   final String name;
   final double price;
-  final Location location;
+  final double ratings;
+  final LocationModel location;
   final Facilities facilities;
   final List<String> images;
+  final List<AvailableSlot> availableSlots;
 
   Stadium({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
+    required this.ratings,
     required this.location,
     required this.facilities,
     required this.images,
+    required this.availableSlots,
+  });
+}
+
+class AvailableSlot {
+  final DateTime startTime;
+  final DateTime endTime;
+
+  AvailableSlot({
+    required this.startTime,
+    required this.endTime,
   });
 }
 

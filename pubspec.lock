@@ -134,6 +134,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
+  flutter_localizations:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_multi_formatter:
     dependency: "direct main"
     description:
@@ -168,6 +173,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  go_router:
+    dependency: "direct main"
+    description:
+      name: go_router
+      sha256: "2fd11229f59e23e967b0775df8d5948a519cd7e1e8b6e849729e010587b46539"
+      url: "https://pub.dev"
+    source: hosted
+    version: "14.6.2"
   google_maps:
     dependency: transitive
     description:
@@ -240,14 +253,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
-  intl_phone_field:
+  intl:
     dependency: "direct main"
     description:
-      name: intl_phone_field
-      sha256: "73819d3dfcb68d2c85663606f6842597c3ddf6688ac777f051b17814fe767bbf"
+      name: intl
+      sha256: d6f56758b7d3014a48af9701c085700aac781a92a87a62b1333b46d8879661cf
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.0"
+    version: "0.19.0"
   js:
     dependency: transitive
     description:
@@ -312,6 +325,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.4"
+  logging:
+    dependency: transitive
+    description:
+      name: logging
+      sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.0"
   lottie:
     dependency: "direct main"
     description:
@@ -320,6 +341,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
+  map_launcher:
+    dependency: "direct main"
+    description:
+      name: map_launcher
+      sha256: "7436d6ef9ae57ff15beafcedafe0a8f0604006cbecd2d26024c4cfb0158c2b9a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.5.0"
   matcher:
     dependency: transitive
     description:
@@ -344,6 +373,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   path:
     dependency: transitive
     description:
@@ -376,6 +413,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  provider:
+    dependency: "direct main"
+    description:
+      name: provider
+      sha256: c8a055ee5ce3fd98d6fc872478b03823ffdb448699c6ebdbbc71d59b596fd48c
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.2"
   sanitize_html:
     dependency: transitive
     description:
@@ -389,14 +434,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
-  smooth_page_indicator:
-    dependency: "direct main"
-    description:
-      name: smooth_page_indicator
-      sha256: "3b28b0c545fa67ed9e5997d9f9720d486f54c0c607e056a1094544e36934dff3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.0+3"
   source_span:
     dependency: transitive
     description:

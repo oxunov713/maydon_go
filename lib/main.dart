@@ -1,7 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:provider/provider.dart';
 
 import 'src/app.dart';
+import 'src/provider/all_stadium_provider.dart';
+import 'src/provider/auth_provider.dart';
+import 'src/provider/locale_provider.dart';
+import 'src/provider/saved_stadium_provider.dart';
+import 'src/provider/top_rating_provider.dart';
 
 void main() {
-  runApp(App());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]).then((_) {
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => StadiumProvider()),
+          ChangeNotifierProvider(create: (_) => TopRatingProvider()),
+          ChangeNotifierProvider(create: (_) => SavedStadiumsProvider()),
+          ChangeNotifierProvider(create: (_) => LocaleProvider()),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ],
+        child: const App(),
+      ),
+    );
+  });
 }
