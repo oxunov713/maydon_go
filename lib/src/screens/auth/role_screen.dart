@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maydon_go/src/widgets/sign_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/auth_provider.dart';
@@ -53,29 +54,11 @@ class _RoleScreenState extends State<RoleScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed:
-              Provider.of<AuthProvider>(context, listen: true).letDisable()
-                  ? () {
-                      Provider.of<AuthProvider>(context, listen: false)
-                          .navigateBasedOnSelection(context);
-                    }
-                  : null,
-          style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.green,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              disabledBackgroundColor: AppColors.green40),
-          child: Text(
-            context.lan.signUp,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+      bottomNavigationBar: BottomSignButton(
+        function: () => Provider.of<AuthProvider>(context, listen: false)
+            .navigateBasedOnSelection(context),
+        text: context.lan.continueBt,
+        isdisabledBT: Provider.of<AuthProvider>(context).letDisable(),
       ),
     );
   }

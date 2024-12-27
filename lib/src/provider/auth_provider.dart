@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/router/app_routes.dart';
@@ -71,6 +73,50 @@ class AuthProvider with ChangeNotifier {
 
   void toggleLogInPassword() {
     obscurePasswordLogin = !obscurePasswordLogin;
+    notifyListeners();
+  }
+
+  // SMS verify
+  late Timer _timer;
+  int remainingSeconds = 60;
+  bool isResendButtonEnabled = false;
+
+  void startTimer() {
+    remainingSeconds = 60;
+    isResendButtonEnabled = false;
+
+    // Timerni boshlab yuborish
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (remainingSeconds > 0) {
+        remainingSeconds--;
+      } else {
+        isResendButtonEnabled = true;
+        _timer.cancel();
+      }
+      // O'zgarishlarni bildirish
+      notifyListeners();
+    });
+  }
+
+  void resendCode() {
+    if (isResendButtonEnabled) {
+      // Timer qayta ishga tushiriladi
+      startTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  bool isEnabled = false;
+  int smsCodeLength = 6;
+
+  void enabledBT(String smsCode) {
+    isEnabled = smsCode.length == smsCodeLength;
+
     notifyListeners();
   }
 }

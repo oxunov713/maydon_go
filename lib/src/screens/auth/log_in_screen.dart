@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/formatters/masked_input_formatter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/widgets/sign_button.dart';
 import '../../provider/auth_provider.dart';
 import '../../router/app_routes.dart';
 import '../../tools/language_extension.dart';
@@ -85,27 +86,30 @@ class _LogInScreenState extends State<LogInScreen> {
                   return null;
                 },
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(width: 5),
+                  TextButton(
+                    onPressed: () {
+                      context.pushNamed(AppRoutes.sms);
+                    },
+                    child: Text(
+                      context.lan.forgot_password,
+                      style: TextStyle(
+                          color: AppColors.blue, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: _onLogIn,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.green,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: Text(
-            context.lan.login,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+      bottomNavigationBar: BottomSignButton(
+        function: _onLogIn,
+        text: context.lan.login,
+        isdisabledBT: true,
       ),
     );
   }

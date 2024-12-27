@@ -38,6 +38,16 @@ class App extends StatelessWidget {
             fontFamily: "Gilroy",
           ),
         ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: AppColors.green,
+          unselectedItemColor: AppColors.white,
+          selectedItemColor: AppColors.blue,
+          selectedIconTheme: IconThemeData(
+            color: AppColors.blue
+          ),
+          selectedLabelStyle: TextStyle(color: AppColors.green40, fontSize: 12),
+          unselectedLabelStyle: TextStyle(color: AppColors.grey4, fontSize: 12),
+        ),
       ),
     );
   }

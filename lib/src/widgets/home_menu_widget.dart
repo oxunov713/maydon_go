@@ -40,9 +40,7 @@ Widget buildIconButton({
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AllStadiumsScreen(
-                  focusNode: focusNode,
-                ),
+                builder: (context) => AllStadiumsScreen(),
               ));
         }
       },

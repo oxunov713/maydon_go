@@ -49,6 +49,7 @@ class _ChooseLanguageScreensState extends State<ChooseLanguageScreens> {
         ),
       ),
       bottomNavigationBar: BottomSignButton(
+          isdisabledBT: true,
           function: () => context.pushNamed(AppRoutes.role),
           text: context.lan.continueBt),
     );

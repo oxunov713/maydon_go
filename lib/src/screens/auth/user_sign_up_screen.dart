@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/tools/language_extension.dart';
+import 'package:maydon_go/src/widgets/sign_button.dart';
 
 import 'package:provider/provider.dart';
 
@@ -9,7 +10,6 @@ import '../../provider/auth_provider.dart';
 import '../../router/app_routes.dart';
 import '../../style/app_colors.dart';
 import '../../widgets/custom_text_field.dart';
-
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -26,7 +26,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
 
   void _onSignup() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -46,7 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       await Future.delayed(const Duration(seconds: 5));
 
-      context.goNamed(AppRoutes.login);
+      context.goNamed(AppRoutes.home);
     }
   }
 
@@ -72,8 +71,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             onPressed: () => context.pushNamed(AppRoutes.login),
             child: Text(
               context.lan.login,
-              style:
-                  const TextStyle(color: AppColors.red, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                  color: AppColors.red, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -183,23 +182,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
               ),
             ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: _onSignup,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.green,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: Text(
-            context.lan.signUp,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+      bottomNavigationBar: BottomSignButton(
+        function: _onSignup,
+        text: context.lan.signUp,
+        isdisabledBT: true,
       ),
     );
   }

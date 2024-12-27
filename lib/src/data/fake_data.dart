@@ -5,7 +5,7 @@ class FakeData {
     StadiumOwner(
       id: 1,
       phoneNumber: "+998901234567",
-      role: "Admin",
+      role: "ADMIN",
       active: true,
       userInfo: UserInfo(
         firstName: "Ali",
@@ -22,7 +22,7 @@ class FakeData {
         price: 500000,
         availableSlots: [
           AvailableSlot(
-            startTime: DateTime(2024, 12, 25, 14),
+            startTime: DateTime(2002),
             endTime: DateTime(2024, 12, 25, 15),
           ),
           AvailableSlot(
@@ -40,6 +40,33 @@ class FakeData {
           AvailableSlot(
             startTime: DateTime(2024, 12, 25, 23),
             endTime: DateTime(2024, 12, 25, 24, 30),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2002),
+            endTime: DateTime(2024, 12, 27, 15),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2024, 12, 28, 15),
+            endTime: DateTime(2024, 12, 28, 15, 30),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2024, 12, 30, 20),
+            endTime: DateTime(2024, 12, 30, 12, 30),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2024, 12, 31, 21),
+            endTime: DateTime(2024, 12, 31, 22),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2025, 01, 25, 23),
+            endTime: DateTime(2025, 01, 25, 24, 30),
+          ), AvailableSlot(
+            startTime: DateTime(2025, 12, 31, 21),
+            endTime: DateTime(2025, 12, 31, 22),
+          ),
+          AvailableSlot(
+            startTime: DateTime(2025, 01, 25, 23),
+            endTime: DateTime(2025, 01, 25, 24, 30),
           ),
         ],
         location: LocationModel(

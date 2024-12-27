@@ -27,5 +27,11 @@
   "confirmPasswordError": "Please confirm your password!",
   "signupInProgress": "Signup in progress...",
   "signupButtonText": "Sign Up",
-  "loginPassworEmpty": "Please enter the password"
+  "loginPassworEmpty": "Please enter the password",
+  "otp_verification_title": "OTP Verification",
+  "otp_verification_subtitle": "We sent an OTP code to your phone number --- --- ---99. Enter the OTP code below to continue.",
+  "otp_verification_resend_timer": "You can resend the code in {remaining_seconds} seconds",
+  "otp_verification_button": "Verify",
+  "forgot_password": "Forgot your password?",
+  "resend_code": "Resend Code"
 }

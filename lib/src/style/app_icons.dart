@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class AppIcons {
   static const locationIcon = "assets/icons/location_icon.svg";
   static const searchIcon = "assets/icons/search_icon.svg";
@@ -17,6 +19,11 @@ class AppIcons {
   static const settingsIcon = "assets/icons/settings_icon.svg";
   static const faqIcon = "assets/icons/faq_icon.svg";
   static const chatIcon = "assets/icons/chat_icon.svg";
+  static const saveIcon = Icons.bookmark_border;
+  static const savedIcon = Icons.bookmark;
+  static const myLocation = Icons.my_location;
 
   static const stars = "assets/images/stars_icon.png";
+
+  static const comment = "assets/icons/chat-bubble.png";
 }

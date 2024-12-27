@@ -27,5 +27,11 @@
   "confirmPasswordError": "Yaratgan parolingizni qayta kiriting!",
   "signupInProgress": "Ro'yxatdan o'tish davom etmoqda...",
   "signupButtonText": "Ro'yxatdan o'tish",
-  "loginPassworEmpty": "Iltimos, parol kiriting"
+  "loginPassworEmpty": "Iltimos, parol kiriting",
+  "otp_verification_title": "OTP kodini tekshirish",
+  "otp_verification_subtitle": "Biz telefon raqamingizga OTP kodini yubordik --- --- ---{last2numbers}. Davomi ostidagi OTP kodini kiriting davom etish uchun.",
+  "otp_verification_resend_timer": "Sizga kodni {remaining_seconds} soniyada qayta yuboramiz",
+  "otp_verification_button": "Tasdiqlash",
+  "forgot_password": "Parolni unutdingizmi?",
+  "resend_code": "Qayta yuborish"
 }
