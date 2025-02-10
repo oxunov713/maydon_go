@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
 import 'package:maydon_go/src/user/bloc/home_cubit/home_cubit.dart';
@@ -24,6 +25,7 @@ void main() {
           BlocProvider(create: (_) => BookingCubit()),
           BlocProvider(create: (_) => HomeCubit()),
           BlocProvider(create: (_) => SavedStadiumsCubit()),
+          BlocProvider(create: (_) => StadiumCubit()),
         ],
         child: const App(),
       ),

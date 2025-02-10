@@ -9,6 +9,8 @@ import '../../user/ui/home/home_screen.dart';
 import '../../user/ui/home/locations_screen.dart';
 import '../../user/ui/home/payment_page.dart';
 
+import '../../user/ui/home/stadium_detail.dart';
+import '../model/stadium_model.dart';
 import '../screens/choose_language_screens.dart';
 import '../screens/role_screen.dart';
 import '../screens/splash_screen.dart';
@@ -42,10 +44,10 @@ final GoRouter _router = GoRouter(
               builder: (context, state) => const RoleScreen(),
               routes: [
                 GoRoute(
-                    path: "ownerSignUp",
-                    name: AppRoutes.ownerSignUp,
-                    builder: (context, state) => const OwnerSignUp(),
-                    ),
+                  path: "ownerSignUp",
+                  name: AppRoutes.ownerSignUp,
+                  builder: (context, state) => const OwnerSignUp(),
+                ),
                 GoRoute(
                     path: "userSignUp",
                     name: AppRoutes.signUp,
@@ -66,14 +68,14 @@ final GoRouter _router = GoRouter(
                               name: AppRoutes.paymentPage,
                               builder: (context, state) => PaymentPage(),
                             ),
-                            // GoRoute(
-                            //   path: "detail",
-                            //   name: AppRoutes.detailStadium,
-                            //   builder: (context, state) {
-                            //     final stadium = state.extra as Stadium;
-                            //     return StadiumDetailScreen(stadium: stadium);
-                            //   },
-                            // ),
+                            GoRoute(
+                              path: "detail",
+                              name: AppRoutes.detailStadium,
+                              builder: (context, state) {
+                                final stadium = state.extra as Stadium;
+                                return StadiumDetailScreen(stadium: stadium);
+                              },
+                            ),
                           ]),
                       GoRoute(
                         path: "location",

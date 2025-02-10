@@ -1,12 +1,9 @@
-import 'package:carousel_slider/carousel_options.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/tools/extension_custom.dart';
-
-import '../../../common/model/stadium_model.dart';
+import '../../../common/tools/extension_custom.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
@@ -20,49 +17,373 @@ class AllStadiumsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final deviceWidth = MediaQuery.of(context).size.width;
+    final deviceHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: AppColors.white2,
-      // appBar: AppBar(
-      //   automaticallyImplyLeading: context.watch<StadiumCubit>().state.isSearching ? false : true,
-      //   title: context.watch<StadiumCubit>().state.isSearching
-      //       ? _buildSearchField(context)
-      //       : const Text("Barcha maydonlar"),
-      //   actions: [
-      //     Padding(
-      //       padding: const EdgeInsets.symmetric(horizontal: 10),
-      //       child: context.watch<StadiumCubit>().state.isSearching
-      //           ? IconButton(
-      //         onPressed: () => context.read<StadiumCubit>().toggleSearchMode(),
-      //         icon: const Icon(Icons.close),
-      //       )
-      //           : InkWell(
-      //         child: SvgPicture.asset(
-      //           AppIcons.searchIcon,
-      //           height: 23,
-      //         ),
-      //         onTap: () => context.read<StadiumCubit>().toggleSearchMode(),
-      //       ),
-      //     ),
-      //   ],
-      // ),
-      // body: BlocBuilder<StadiumCubit, StadiumState>(
-      //   builder: (context, state) {
-      //     if (state is StadiumLoading) {
-      //       return const Center(child: CircularProgressIndicator());
-      //     } else if (state is StadiumError) {
-      //       return Center(child: Text(state.message));
-      //     } else if (state is StadiumLoaded) {
-      //       return ListView.builder(
-      //         itemCount: state.filteredStadiums.length,
-      //         itemBuilder: (context, stadiumIndex) {
-      //           final stadium = state.filteredStadiums[stadiumIndex];
-      //           return _buildStadiumCard(context, stadium, stadiumIndex, state);
-      //         },
-      //       );
-      //     }
-      //     return const Center(child: Text('No data available'));
-      //   },
-      // ),
+      appBar: AppBar(
+        automaticallyImplyLeading:
+            context.watch<StadiumCubit>().state is StadiumLoaded &&
+                    (context.watch<StadiumCubit>().state as StadiumLoaded)
+                        .isSearching
+                ? false
+                : true,
+        title: context.watch<StadiumCubit>().state is StadiumLoaded &&
+                (context.watch<StadiumCubit>().state as StadiumLoaded)
+                    .isSearching
+            ? _buildSearchField(context)
+            : const Text("Barcha maydonlar"),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: context.watch<StadiumCubit>().state is StadiumLoaded &&
+                    (context.watch<StadiumCubit>().state as StadiumLoaded)
+                        .isSearching
+                ? IconButton(
+                    onPressed: () =>
+                        context.read<StadiumCubit>().toggleSearchMode(),
+                    icon: const Icon(Icons.close),
+                  )
+                : InkWell(
+                    child: SvgPicture.asset(
+                      AppIcons.searchIcon,
+                      height: 23,
+                    ),
+                    onTap: () =>
+                        context.read<StadiumCubit>().toggleSearchMode(),
+                  ),
+          ),
+        ],
+      ),
+      body: BlocBuilder<StadiumCubit, StadiumState>(
+        builder: (context, state) {
+          if (state is StadiumLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is StadiumError) {
+            return Center(child: Text(state.message));
+          } else if (state is StadiumLoaded) {
+            return ListView.builder(
+              itemCount: state.filteredStadiums.length,
+              itemBuilder: (context, stadiumIndex) {
+                final stadium = state.filteredStadiums[stadiumIndex];
+                return Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    color: AppColors.white,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    stadium.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: deviceHeight * 0.025,
+                                    ),
+                                  ),
+                                ),
+                                Card(
+                                  color: AppColors.green2,
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      vertical: deviceHeight * 0.005,
+                                      horizontal: deviceWidth * 0.02,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                              right: deviceWidth * 0.01),
+                                          child: Text(
+                                            stadium.averageRating.toString(),
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.white,
+                                              fontSize: deviceHeight * 0.015,
+                                            ),
+                                          ),
+                                        ),
+                                        Image.asset(
+                                          AppIcons.stars,
+                                          height: deviceHeight * 0.02,
+                                          width: deviceWidth * 0.04,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: CarouselSlider(
+                                      items: stadium.images.map((imageUrl) {
+                                        return SizedBox(
+                                          width: double.infinity,
+                                          child: DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              image: DecorationImage(
+                                                image: NetworkImage(imageUrl),
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      options: CarouselOptions(
+                                        aspectRatio: 16 / 9,
+                                        viewportFraction: 1.0,
+                                        autoPlay: true,
+                                        autoPlayInterval:
+                                            const Duration(seconds: 7),
+                                        enlargeCenterPage: true,
+                                        onPageChanged: (index, reason) =>
+                                            context
+                                                .read<StadiumCubit>()
+                                                .updateCurrentIndex(
+                                                    index, stadiumIndex),
+                                      ),
+                                      carouselController: context
+                                          .read<StadiumCubit>()
+                                          .getCarouselController(stadiumIndex),
+                                    ),
+                                  ),
+                                  // Dotted Indicator
+                                  Positioned(
+                                    bottom: 10,
+                                    left: 0,
+                                    right: 0,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: List.generate(
+                                        stadium.images.length,
+                                        (index) => AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 300),
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 5),
+                                          width: state.currentIndexList[
+                                                      stadiumIndex] ==
+                                                  index
+                                              ? 12
+                                              : 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: state.currentIndexList[
+                                                        stadiumIndex] ==
+                                                    index
+                                                ? AppColors.green2
+                                                : AppColors.grey4,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "${stadium.price.formatWithSpace()} so'm",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: deviceHeight * 0.025,
+                                  ),
+                                ),
+                                BlocBuilder<SavedStadiumsCubit,
+                                    SavedStadiumsState>(
+                                  builder: (context, savedState) {
+                                    if (savedState
+                                        is SavedStadiumsLoadedState) {
+                                      return IconButton(
+                                        icon: Icon(
+                                          savedState.savedStadiums
+                                                  .contains(stadium)
+                                              ? Icons.bookmark
+                                              : Icons.bookmark_border,
+                                          color: AppColors.green,
+                                        ),
+                                        onPressed: () {
+                                          if (savedState.savedStadiums
+                                              .contains(stadium)) {
+                                            context
+                                                .read<SavedStadiumsCubit>()
+                                                .removeStadiumFromSaved(
+                                                    stadium);
+                                          } else {
+                                            context
+                                                .read<SavedStadiumsCubit>()
+                                                .addStadiumToSaved(stadium);
+                                          }
+                                        },
+                                      );
+                                    }
+                                    return const Icon(
+                                      Icons.bookmark_border,
+                                      color: AppColors.green,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: deviceWidth,
+                              child: Text(
+                                "Bugungi bo'sh vaqtlar",
+                                style: TextStyle(
+                                  fontSize: deviceHeight * 0.017,
+                                  color: AppColors.grey4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            SizedBox(
+                              height: deviceHeight * 0.04,
+                              child: stadium.availableSlots.isNotEmpty &&
+                                      stadium.availableSlots.values.first
+                                          .isNotEmpty
+                                  ? ListView.separated(
+                                      itemCount: stadium
+                                          .availableSlots.values.first.length,
+                                      scrollDirection: Axis.horizontal,
+                                      separatorBuilder: (context, index) =>
+                                          const SizedBox(width: 10),
+                                      itemBuilder: (context, index) {
+                                        final slots =
+                                            stadium.availableSlots.values.first;
+                                        final slot = slots[index];
+                                        final startHour = slot.startTime.hour
+                                            .toString()
+                                            .padLeft(2, '0');
+                                        final startMinute = slot
+                                            .startTime.minute
+                                            .toString()
+                                            .padLeft(2, '0');
+                                        final endHour = slot.endTime.hour
+                                            .toString()
+                                            .padLeft(2, '0');
+                                        final endMinute = slot.endTime.minute
+                                            .toString()
+                                            .padLeft(2, '0');
+
+                                        return Container(
+                                          width: 120,
+                                          decoration: const BoxDecoration(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(20)),
+                                            color: AppColors.green40,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              "$startHour:$startMinute - $endHour:$endMinute",
+                                              style: TextStyle(
+                                                color: AppColors.green,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: deviceHeight * 0.015,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Container(
+                                      width: deviceWidth * 0.9,
+                                      decoration: const BoxDecoration(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(20)),
+                                        color: AppColors.red,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          "Barcha soatlar band",
+                                          style: TextStyle(
+                                            color: AppColors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: deviceHeight * 0.018,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                            const Divider(height: 30),
+                            GestureDetector(
+                              onTap: () => context.pushNamed(
+                                AppRoutes.detailStadium,
+                                extra: stadium,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on),
+                                      SizedBox(width: deviceWidth * 0.02),
+                                      SizedBox(
+                                        width: deviceWidth - 150,
+                                        child: Text(
+                                          stadium.location.address,
+                                          maxLines: 2,
+                                          style: TextStyle(
+                                              fontSize: deviceHeight * 0.015,
+                                              color: AppColors.main,
+                                              overflow: TextOverflow.visible),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                        right: deviceWidth * 0.02),
+                                    child: const Icon(
+                                      Icons.arrow_forward_outlined,
+                                      color: AppColors.green,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+          return const Center(child: Text('No data available'));
+        },
+      ),
     );
   }
 
@@ -92,206 +413,6 @@ class AllStadiumsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStadiumCard(BuildContext context, Stadium stadium,
-      int stadiumIndex, StadiumLoaded state) {
-    final deviceWidth = MediaQuery.of(context).size.width;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
-        color: AppColors.white,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () =>
-                  context.pushNamed(AppRoutes.detailStadium, extra: stadium),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        stadium.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 25),
-                      ),
-                      Card(
-                        color: AppColors.green2,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 3, horizontal: 7),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Text(
-                                stadium.averageRating.toString(),
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.white),
-                              ),
-                              const SizedBox(width: 5),
-                              Image.asset(AppIcons.stars,
-                                  height: 15, width: 15),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Stack(
-                      children: [
-                        // CarouselSlider for images
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CarouselSlider(
-                            items: stadium.images.map((imageUrl) {
-                              return Image.asset(
-                                imageUrl,
-                                fit: BoxFit.cover,
-                              );
-                            }).toList(),
-                            options: CarouselOptions(
-                              aspectRatio: 16 / 9,
-                              viewportFraction: 1.0,
-                              initialPage: 0,
-                              enableInfiniteScroll: true,
-                              reverse: false,
-                              autoPlay: true,
-                              autoPlayInterval: const Duration(seconds: 5),
-                              autoPlayAnimationDuration:
-                                  const Duration(milliseconds: 800),
-                              autoPlayCurve: Curves.fastOutSlowIn,
-                              enlargeCenterPage: true,
-                              enlargeFactor: 0.3,
-                              onPageChanged: (index, reason) => context
-                                  .read<StadiumCubit>()
-                                  .updateCurrentIndex(index, stadiumIndex),
-                            ),
-                            //  carouselController: context.read<StadiumCubit>().getCarouselController(stadiumIndex),
-                          ),
-                        ),
-                        // Dotted Indicator
-                        Positioned(
-                          bottom: 10,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              stadium.images.length,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 5),
-                                width: state.currentIndexList[stadiumIndex] ==
-                                        index
-                                    ? 12
-                                    : 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: state.currentIndexList[stadiumIndex] ==
-                                          index
-                                      ? AppColors.green2
-                                      : AppColors.grey4,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "${stadium.price.formatWithSpace()} so'm",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 20),
-                      ),
-                      // BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
-                      //   builder: (context, savedState) {
-                      //     return IconButton(
-                      //       icon: Icon(
-                      //         savedState.savedStadiums.contains(stadium)
-                      //             ? Icons.bookmark
-                      //             : Icons.bookmark_border,
-                      //         color: AppColors.green,
-                      //         size: 30,
-                      //       ),
-                      //       onPressed: () {
-                      //         if (savedState.savedStadiums.contains(stadium)) {
-                      //           context
-                      //               .read<SavedStadiumsCubit>()
-                      //               .removeStadiumFromSaved(stadium);
-                      //         } else {
-                      //           context
-                      //               .read<SavedStadiumsCubit>()
-                      //               .addStadiumToSaved(stadium);
-                      //         }
-                      //       },
-                      //     );
-                      //   },
-                      // ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Bugungi bo'sh vaqtlar",
-                    style: TextStyle(fontSize: 14, color: AppColors.grey4),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: deviceWidth - 150,
-                        child: Text(
-                          stadium.location.address,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.main,
-                              overflow: TextOverflow.visible),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 25),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.favorite_border_rounded, size: 30),
-                ),
-                const Text("320"),
-                const SizedBox(width: 10),
-                IconButton(
-                  onPressed: () {},
-                  icon: Image.asset(AppIcons.comment, height: 30),
-                ),
-                const Text("75"),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

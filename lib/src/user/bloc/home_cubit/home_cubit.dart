@@ -7,6 +7,7 @@ import 'package:location/location.dart';
 import 'package:logger/logger.dart';
 import 'package:map_launcher/map_launcher.dart';
 
+import '../../../common/constants/config.dart';
 import '../../../common/model/facilities_model.dart';
 import '../../../common/model/location_model.dart';
 import '../../../common/model/stadium_model.dart';
@@ -30,146 +31,11 @@ class HomeCubit extends Cubit<HomeState> {
   final Location _location = Location();
 
   HomeCubit() : super(HomeInitialState()) {
-    _stadiums = fakeStadiums; // Boshlang'ich ma'lumotlarni yuklash
+    _stadiums = $fakeStadiums; // Boshlang'ich ma'lumotlarni yuklash
     fetchStadiums(); // Ma'lumotlarni yuklash
   }
 
-  List<Stadium> fakeStadiums = [
-    Stadium(
-      id: 1,
-      name: "Olimpiya Stadioni",
-      description:
-          "Zamonaviy futbol maydoni, tribuna va tungi yoritish mavjud.",
-      price: 150.0,
-      location: LocationModel(
-        address: "Olimpiya ko'chasi, 12, Toshkent",
-        latitude: 41.2995,
-        longitude: 69.2401,
-      ),
-      facilities: Facilities(
-        hasBathroom: true,
-        isIndoor: false,
-        hasUniforms: true,
-      ),
-      averageRating: 4.8,
-      images: [
-        "https://example.com/stadium1_1.jpg",
-        "https://example.com/stadium1_2.jpg",
-      ],
-      ratings: [5, 4, 5, 5, 4],
-    ),
-    Stadium(
-      id: 2,
-      name: "Bunyodkor Arenasi",
-      description: "Bunyodkor klubi stadioni, yuqori sifatli qoplamaga ega.",
-      price: 200.0,
-      location: LocationModel(
-        address: "Bunyodkor ko'chasi, 5, Toshkent",
-        latitude: 41.3275,
-        longitude: 69.2283,
-      ),
-      facilities: Facilities(
-        hasBathroom: true,
-        isIndoor: false,
-        hasUniforms: false,
-      ),
-      averageRating: 4.5,
-      images: [
-        "https://example.com/stadium2_1.jpg",
-        "https://example.com/stadium2_2.jpg",
-      ],
-      ratings: [5, 5, 4, 4, 5],
-    ),
-    Stadium(
-      id: 3,
-      name: "Paxtakor Stadioni",
-      description: "O'zbekistonning eng katta stadionlaridan biri.",
-      price: 180.0,
-      location: LocationModel(
-        address: "Paxtakor maydoni, 3, Toshkent",
-        latitude: 41.3156,
-        longitude: 69.2488,
-      ),
-      facilities: Facilities(
-        hasBathroom: false,
-        isIndoor: false,
-        hasUniforms: true,
-      ),
-      averageRating: 4.7,
-      images: [
-        "https://example.com/stadium3_1.jpg",
-        "https://example.com/stadium3_2.jpg",
-      ],
-      ratings: [5, 4, 4, 5, 5],
-    ),
-    Stadium(
-      id: 4,
-      name: "Navbahor Arenasi",
-      description: "Namangandagi eng zamonaviy stadionlardan biri.",
-      price: 130.0,
-      location: LocationModel(
-        address: "Navbahor ko'chasi, 8, Namangan",
-        latitude: 40.9983,
-        longitude: 71.6726,
-      ),
-      facilities: Facilities(
-        hasBathroom: true,
-        isIndoor: false,
-        hasUniforms: false,
-      ),
-      averageRating: 4.2,
-      images: [
-        "https://example.com/stadium4_1.jpg",
-        "https://example.com/stadium4_2.jpg",
-      ],
-      ratings: [4, 4, 5, 3, 4],
-    ),
-    Stadium(
-      id: 5,
-      name: "Dinamo Sport Majmuasi",
-      description:
-          "Multifunksional stadion, futbol va yengil atletika uchun mos.",
-      price: 120.0,
-      location: LocationModel(
-        address: "Dinamo ko'chasi, 6, Samarqand",
-        latitude: 39.6545,
-        longitude: 66.9744,
-      ),
-      facilities: Facilities(
-        hasBathroom: false,
-        isIndoor: true,
-        hasUniforms: true,
-      ),
-      averageRating: 4.4,
-      images: [
-        "https://example.com/stadium5_1.jpg",
-        "https://example.com/stadium5_2.jpg",
-      ],
-      ratings: [5, 4, 4, 4, 5],
-    ),
-    Stadium(
-      id: 6,
-      name: "Andijon Markaziy Stadioni",
-      description: "Andijondagi asosiy stadion, keng maydonga ega.",
-      price: 140.0,
-      location: LocationModel(
-        address: "Stadion ko'chasi, 2, Andijon",
-        latitude: 40.7872,
-        longitude: 72.3455,
-      ),
-      facilities: Facilities(
-        hasBathroom: true,
-        isIndoor: false,
-        hasUniforms: false,
-      ),
-      averageRating: 4.3,
-      images: [
-        "https://example.com/stadium6_1.jpg",
-        "https://example.com/stadium6_2.jpg",
-      ],
-      ratings: [4, 5, 4, 3, 5],
-    ),
-  ];
+
 
   Future<void> fetchStadiums() async {
     if (_stadiums.isNotEmpty) {

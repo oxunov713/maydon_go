@@ -8,7 +8,7 @@ import '../model/stadium_model.dart';
 import '../style/app_colors.dart';
 
 class CustomCalendar extends StatelessWidget {
-  final Map<String, List<AvailableSlot>> groupedSlots;
+  final Map<String, List<TimeSlot>> groupedSlots;
 
   const CustomCalendar({Key? key, required this.groupedSlots})
       : super(key: key);

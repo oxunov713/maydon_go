@@ -2,6 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/stadium_model.dart';
 
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -11,7 +12,9 @@ import '../../bloc/booking_cubit/booking_cubit.dart';
 import '../../bloc/booking_cubit/booking_state.dart';
 
 class StadiumDetailScreen extends StatelessWidget {
-  const StadiumDetailScreen({Key? key}) : super(key: key);
+  final Stadium stadium;
+
+  StadiumDetailScreen({required this.stadium});
 
   @override
   Widget build(BuildContext context) {
@@ -34,17 +37,17 @@ class StadiumDetailScreen extends StatelessWidget {
             ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                "Xalqlar do'stligi",
+                stadium.name,
                 style: TextStyle(
                     fontSize: 20,
                     color: AppColors.white,
                     fontWeight: FontWeight.w800),
               ),
               background: CarouselSlider.builder(
-                itemCount: 1,
+                itemCount: stadium.images.length,
                 itemBuilder: (context, index, realIndex) {
                   return Image.asset(
-                    "assets/images/stadion_image8.webp",
+                    stadium.images[index],
                     fit: BoxFit.cover,
                     width: double.infinity,
                   );
@@ -63,7 +66,7 @@ class StadiumDetailScreen extends StatelessWidget {
               [
                 Padding(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -75,7 +78,7 @@ class StadiumDetailScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "Chiroyli stadion",
+                                  stadium.description,
                                   style: TextStyle(
                                       fontSize: 16, color: AppColors.main),
                                 ),
@@ -86,10 +89,10 @@ class StadiumDetailScreen extends StatelessWidget {
                                         vertical: 3, horizontal: 7),
                                     child: Row(
                                       mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
+                                          MainAxisAlignment.spaceAround,
                                       children: [
                                         Text(
-                                          "4.9",
+                                          stadium.ratings.toString(),
                                           style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.white),
@@ -132,9 +135,7 @@ class StadiumDetailScreen extends StatelessWidget {
           dimension: 50,
           child: FloatingActionButton(
             shape: CircleBorder(),
-            onPressed: () {
-              //context.read<BookingCubit>().removeAllSlot();
-            },
+            onPressed: () {},
             child: Icon(
               Icons.delete,
               color: AppColors.red,
@@ -144,10 +145,9 @@ class StadiumDetailScreen extends StatelessWidget {
         ),
         bottomNavigationBar: BlocBuilder<BookingCubit, BookingState>(
           builder: (context, state) {
-            // Only access bookingList if the state is BookingUpdated
             int bookingCount = 0;
             if (state is BookingUpdated) {
-            //  bookingCount = state.bookingList.length;
+              bookingCount = state.bookedSlots.length;
             }
             return BottomSignButton(
               function: () => context.pushNamed(AppRoutes.paymentPage),

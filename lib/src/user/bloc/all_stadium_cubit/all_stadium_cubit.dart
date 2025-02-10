@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:carousel_slider/carousel_controller.dart';
+import 'package:maydon_go/src/common/constants/config.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/service/api_service.dart';
 import 'all_stadium_state.dart';
 
 class StadiumCubit extends Cubit<StadiumState> {
-  final ApiService apiService;
   final TextEditingController searchController = TextEditingController();
   late DateTime currentDate;
-  List<CarouselSliderController> carouselControllers = [];
+  late List<CarouselSliderController>? carouselControllers;
 
-  StadiumCubit({required this.apiService}) : super(StadiumInitial()) {
+  StadiumCubit() : super(StadiumInitial()) {
     currentDate = DateTime.now();
     fetchStadiums();
   }
@@ -20,7 +20,7 @@ class StadiumCubit extends Cubit<StadiumState> {
   Future<void> fetchStadiums() async {
     emit(StadiumLoading());
     try {
-      final List<Stadium> stadiums = await apiService.getAllStadiums();
+      final List<Stadium> stadiums = $fakeStadiums;
       carouselControllers = List.generate(stadiums.length, (_) => CarouselSliderController());
 
       emit(StadiumLoaded(
@@ -33,6 +33,7 @@ class StadiumCubit extends Cubit<StadiumState> {
       emit(StadiumError('Xatolik: ${e.toString()}'));
     }
   }
+
 
   /// **Stadionlarni qidirish**
   void filterStadiums(String query) {
@@ -57,7 +58,8 @@ class StadiumCubit extends Cubit<StadiumState> {
     if (currentState is StadiumLoaded) {
       final bool isSearching = !currentState.isSearching;
       emit(currentState.copyWith(
-        filteredStadiums: isSearching ? currentState.filteredStadiums : currentState.stadiums,
+        filteredStadiums:
+            isSearching ? currentState.filteredStadiums : currentState.stadiums,
         isSearching: isSearching,
       ));
       if (!isSearching) searchController.clear();
@@ -82,6 +84,10 @@ class StadiumCubit extends Cubit<StadiumState> {
     if (currentState is StadiumLoaded) {
       emit(currentState.copyWith());
     }
+  }
+
+  CarouselSliderController getCarouselController(int stadiumIndex) {
+    return carouselControllers![stadiumIndex];
   }
 
   @override

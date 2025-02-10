@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../common/model/stadium_model.dart';
 import 'saved_stadium_state.dart';
 
