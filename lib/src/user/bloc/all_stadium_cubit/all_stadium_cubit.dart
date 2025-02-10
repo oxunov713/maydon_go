@@ -19,9 +19,11 @@ class StadiumCubit extends Cubit<StadiumState> {
   /// **Stadionlarni yuklash**
   Future<void> fetchStadiums() async {
     emit(StadiumLoading());
+
     try {
       final List<Stadium> stadiums = $fakeStadiums;
-      carouselControllers = List.generate(stadiums.length, (_) => CarouselSliderController());
+      carouselControllers =
+          List.generate(stadiums.length, (_) => CarouselSliderController());
 
       emit(StadiumLoaded(
         stadiums: stadiums,
@@ -34,7 +36,6 @@ class StadiumCubit extends Cubit<StadiumState> {
     }
   }
 
-
   /// **Stadionlarni qidirish**
   void filterStadiums(String query) {
     final currentState = state;
@@ -42,8 +43,9 @@ class StadiumCubit extends Cubit<StadiumState> {
       final filteredList = query.isEmpty
           ? currentState.stadiums
           : currentState.stadiums
-          .where((stadium) => stadium.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+              .where((stadium) =>
+                  stadium.name.toLowerCase().contains(query.toLowerCase()))
+              .toList();
 
       emit(currentState.copyWith(
         filteredStadiums: filteredList,

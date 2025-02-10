@@ -6,7 +6,7 @@ import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../model/stadium_model.dart';
 import '../style/app_colors.dart';
 import '../style/app_icons.dart';
-import '../tools/extension_custom.dart';
+import '../tools/price_formatter_extension.dart';
 
 class StadiumCard extends StatelessWidget {
   final Stadium stadium;

@@ -3,13 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_multi_formatter/formatters/masked_input_formatter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
 import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
 
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/widgets/custom_text_field.dart';
 import '../../../common/widgets/sign_button.dart';
-import '../../../common/tools/extension_custom.dart';
+import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/tools/language_extension.dart';
 import '../../bloc/auth_cubit/auth_cubit.dart';
 import '../../bloc/auth_cubit/auth_state.dart';

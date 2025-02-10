@@ -12,7 +12,7 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
 
   // Add a stadium to the saved list
   void addStadiumToSaved(Stadium stadium) {
-    if (!_savedStadiums.contains(stadium)) {
+    if (!_savedStadiums.any((e) => e.id == stadium.id)) {
       _savedStadiums.add(stadium);
       emit(SavedStadiumsLoadedState(savedStadiums: _savedStadiums));
     }
@@ -20,7 +20,9 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
 
   // Remove a stadium from the saved list
   void removeStadiumFromSaved(Stadium stadium) {
-    _savedStadiums.remove(stadium);
+    _savedStadiums.removeWhere(
+      (element) => element.id == stadium.id,
+    );
     emit(SavedStadiumsLoadedState(savedStadiums: _savedStadiums));
   }
 
@@ -32,6 +34,8 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
 
   // Check if a stadium is saved
   bool isStadiumSaved(Stadium stadium) {
-    return _savedStadiums.contains(stadium);
+    return _savedStadiums.any(
+      (element) => element.id == stadium.id,
+    );
   }
 }

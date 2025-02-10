@@ -1,44 +1,32 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../common/model/stadium_model.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
   BookingCubit() : super(BookingInitial());
 
-  // To store the selected date
-  String selectedDate = '';
+  String selectedDate = DateTime.now().toIso8601String().split('T')[0];
+  final List<TimeSlot> _bookedSlots = [];
 
-  // To store the booking status of each slot by date
-  Map<String, List<String>> bookedSlots = {};
+  List<TimeSlot> get bookedSlots => _bookedSlots;
 
-  // Update the selected date
   void setSelectedDate(String date) {
     selectedDate = date;
-    emit(BookingDateChanged(selectedDate));
+    emit(BookingDateUpdated(date));
   }
 
-  // Add slot to the booking list for the selected date
-  void addSlot(String slot) {
-    if (bookedSlots[selectedDate] == null) {
-      bookedSlots[selectedDate] = [];
-    }
-    bookedSlots[selectedDate]!.add(slot);
-    emit(BookingUpdated(bookedSlots[selectedDate]!));
+  void addBookingSlot(TimeSlot slot) {
+    _bookedSlots.add(slot);
+    emit(BookingUpdated(_bookedSlots));
   }
 
-  // Remove slot from the booking list for the selected date
-  void removeSlot(String slot) {
-    bookedSlots[selectedDate]?.remove(slot);
-    emit(BookingUpdated(bookedSlots[selectedDate]!));
+  void removeBookingSlot(TimeSlot slot) {
+    _bookedSlots.remove(slot);
+    emit(BookingUpdated(_bookedSlots));
   }
 
-  // Check if a slot is booked for the selected date
-  bool isSlotBooked(String slot) {
-    return bookedSlots[selectedDate]?.contains(slot) ?? false;
-  }
-
-  // Remove all slots for the selected date
-  void removeAllSlots() {
-    bookedSlots[selectedDate]?.clear();
-    emit(BookingUpdated(bookedSlots[selectedDate]!));
+  bool isSlotBooked(TimeSlot slot) {
+    return _bookedSlots.contains(slot);
   }
 }
+

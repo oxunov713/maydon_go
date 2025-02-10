@@ -27,7 +27,7 @@ class Stadium {
     var availableSlotsFromJson = <DateTime, List<TimeSlot>>{};
     json['availableSlots'].forEach((key, value) {
       availableSlotsFromJson[DateTime.parse(key)] =
-      List<TimeSlot>.from(value.map((x) => TimeSlot.fromJson(x)));
+          List<TimeSlot>.from(value.map((x) => TimeSlot.fromJson(x)));
     });
 
     return Stadium(
@@ -43,6 +43,15 @@ class Stadium {
       availableSlots: availableSlotsFromJson,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Stadium && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class LocationModel {

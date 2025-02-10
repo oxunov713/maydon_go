@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
-import 'package:map_launcher/map_launcher.dart';
 
 import '../../../common/constants/config.dart';
 import '../../../common/model/facilities_model.dart';
@@ -85,9 +84,8 @@ class HomeCubit extends Cubit<HomeState> {
         infoWindow: InfoWindow(
           title: stadion.name,
           snippet: stadion.description,
-          onTap: () async {
-            await _openMapWithDirections(
-                stadion.location.latitude, stadion.location.longitude);
+          onTap: ()  {
+
           },
         ),
       );
@@ -99,16 +97,6 @@ class HomeCubit extends Cubit<HomeState> {
         currentLocation: currentLocation));
   }
 
-  // Open map with directions to the selected stadium
-  Future<void> _openMapWithDirections(double latitude, double longitude) async {
-    try {
-      final availableMaps = await MapLauncher.installedMaps;
-      final selectedMap = availableMaps.first;
-      selectedMap.showDirections(destination: Coords(latitude, longitude));
-    } catch (e) {
-      log.e(e.toString());
-    }
-  }
 
   // Load the custom marker icon
   Future<BitmapDescriptor> _getMarkerIcon() async {

@@ -1,6 +1,6 @@
 extension PriceFormatter on num {
   String formatWithSpace() {
-    final formattedPrice = this.floor().toString();
+    final formattedPrice = floor().toString();
     final length = formattedPrice.length;
 
     if (length > 3) {
@@ -10,9 +10,4 @@ extension PriceFormatter on num {
   }
 }
 
-extension PhoneCleaner on String {
-  String cleanPhoneNumber() {
-    // Telefon raqamni "+998" formatiga tozalash
-    return "+998${this.replaceAll(RegExp(r'[\(\)\s-]'), '')}";
-  }
-}
+

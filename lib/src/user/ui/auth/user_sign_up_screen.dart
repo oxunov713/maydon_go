@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
 import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
 
-import '../../../common/tools/extension_custom.dart';
+import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/tools/language_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';

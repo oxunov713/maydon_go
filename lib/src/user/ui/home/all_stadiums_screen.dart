@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import '../../../common/tools/extension_custom.dart';
+import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
+import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
@@ -113,7 +115,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                               right: deviceWidth * 0.01),
                                           child: Text(
-                                            stadium.averageRating.toString(),
+                                            stadium.ratings.average.toString(),
                                             style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.white,
@@ -141,14 +143,24 @@ class AllStadiumsScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(12),
                                     child: CarouselSlider(
                                       items: stadium.images.map((imageUrl) {
-                                        return SizedBox(
+                                        return Container(
                                           width: double.infinity,
-                                          child: DecoratedBox(
-                                            decoration: BoxDecoration(
-                                              image: DecorationImage(
-                                                image: NetworkImage(imageUrl),
-                                                fit: BoxFit.cover,
-                                              ),
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: CachedNetworkImage(
+                                            imageUrl: imageUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                const Center(
+                                                    child:
+                                                        CircularProgressIndicator()),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Center(
+                                              child: Icon(Icons.error,
+                                                  size: 50, color: Colors.red),
                                             ),
                                           ),
                                         );
@@ -221,34 +233,29 @@ class AllStadiumsScreen extends StatelessWidget {
                                 BlocBuilder<SavedStadiumsCubit,
                                     SavedStadiumsState>(
                                   builder: (context, savedState) {
+                                    final cubit =
+                                        context.read<SavedStadiumsCubit>();
+
+                                    bool isSaved = false;
                                     if (savedState
                                         is SavedStadiumsLoadedState) {
-                                      return IconButton(
-                                        icon: Icon(
-                                          savedState.savedStadiums
-                                                  .contains(stadium)
-                                              ? Icons.bookmark
-                                              : Icons.bookmark_border,
-                                          color: AppColors.green,
-                                        ),
-                                        onPressed: () {
-                                          if (savedState.savedStadiums
-                                              .contains(stadium)) {
-                                            context
-                                                .read<SavedStadiumsCubit>()
-                                                .removeStadiumFromSaved(
-                                                    stadium);
-                                          } else {
-                                            context
-                                                .read<SavedStadiumsCubit>()
-                                                .addStadiumToSaved(stadium);
-                                          }
-                                        },
-                                      );
+                                      isSaved = cubit.isStadiumSaved(stadium);
                                     }
-                                    return const Icon(
-                                      Icons.bookmark_border,
-                                      color: AppColors.green,
+
+                                    return IconButton(
+                                      icon: Icon(
+                                        isSaved
+                                            ? Icons.bookmark
+                                            : Icons.bookmark_border,
+                                        color: AppColors.green,
+                                      ),
+                                      onPressed: () {
+                                        if (isSaved) {
+                                          cubit.removeStadiumFromSaved(stadium);
+                                        } else {
+                                          cubit.addStadiumToSaved(stadium);
+                                        }
+                                      },
                                     );
                                   },
                                 ),
@@ -361,10 +368,9 @@ class AllStadiumsScreen extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        right: deviceWidth * 0.02),
-                                    child: const Icon(
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 15),
+                                    child: Icon(
                                       Icons.arrow_forward_outlined,
                                       color: AppColors.green,
                                     ),

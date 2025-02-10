@@ -55,7 +55,7 @@ List<Stadium> $fakeStadiums = [
       "https://frankfurt.apollo.olxcdn.com/v1/files/13k8pil4vcdl2-UZ/image;s=960x1280",
       "https://media.cgtrader.com/variants/VLCxBmVdo1aspXBc74XQp7Di/64d1262c1acde2eb3beef249c4695a8ad88c958dd79db36f763bf631017addd0/5d3f46ee-a175-4a58-832d-6d50a90c2d0b.jpg"
     ],
-    ratings: [5, 5, 4, 4, 5],
+    ratings: [5, 5, 4, 2, 4, 5],
     availableSlots: {
       DateTime(2025, 2, 10): [
         TimeSlot(
@@ -81,6 +81,178 @@ List<Stadium> $fakeStadiums = [
         TimeSlot(
           startTime: DateTime(2025, 2, 10, 19, 0),
           endTime: DateTime(2025, 2, 10, 20, 0),
+        ),TimeSlot(
+          startTime: DateTime(2025, 2, 10, 10, 0),
+          endTime: DateTime(2025, 2, 10, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 13, 0),
+          endTime: DateTime(2025, 2, 10, 14, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 15, 0),
+          endTime: DateTime(2025, 2, 10, 16, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 16, 0),
+          endTime: DateTime(2025, 2, 10, 17, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 17, 0),
+          endTime: DateTime(2025, 2, 10, 18, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 19, 0),
+          endTime: DateTime(2025, 2, 10, 20, 0),
+        ),TimeSlot(
+          startTime: DateTime(2025, 2, 10, 10, 0),
+          endTime: DateTime(2025, 2, 10, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 13, 0),
+          endTime: DateTime(2025, 2, 10, 14, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 15, 0),
+          endTime: DateTime(2025, 2, 10, 16, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 16, 0),
+          endTime: DateTime(2025, 2, 10, 17, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 17, 0),
+          endTime: DateTime(2025, 2, 10, 18, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 19, 0),
+          endTime: DateTime(2025, 2, 10, 20, 0),
+        ),TimeSlot(
+          startTime: DateTime(2025, 2, 10, 10, 0),
+          endTime: DateTime(2025, 2, 10, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 13, 0),
+          endTime: DateTime(2025, 2, 10, 14, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 15, 0),
+          endTime: DateTime(2025, 2, 10, 16, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 16, 0),
+          endTime: DateTime(2025, 2, 10, 17, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 17, 0),
+          endTime: DateTime(2025, 2, 10, 18, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 19, 0),
+          endTime: DateTime(2025, 2, 10, 20, 0),
+        ), TimeSlot(
+          startTime: DateTime(2025, 2, 10, 10, 0),
+          endTime: DateTime(2025, 2, 10, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 13, 0),
+          endTime: DateTime(2025, 2, 10, 14, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 15, 0),
+          endTime: DateTime(2025, 2, 10, 16, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 16, 0),
+          endTime: DateTime(2025, 2, 10, 17, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 17, 0),
+          endTime: DateTime(2025, 2, 10, 18, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 10, 19, 0),
+          endTime: DateTime(2025, 2, 10, 20, 0),
+        ),
+      ],
+      DateTime(2025, 2, 11): [
+        TimeSlot(
+          startTime: DateTime(2025, 2, 11, 10, 0),
+          endTime: DateTime(2025, 2, 11, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 11, 13, 0),
+          endTime: DateTime(2025, 2, 11, 14, 0),
+        ),
+      ],
+      DateTime(2025, 2, 14): [
+        TimeSlot(
+          startTime: DateTime(2025, 2, 14, 10, 0),
+          endTime: DateTime(2025, 2, 14, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 14, 13, 0),
+          endTime: DateTime(2025, 2, 14, 14, 0),
+        ),
+      ],
+      DateTime(2025, 2, 15): [
+        TimeSlot(
+          startTime: DateTime(2025, 2, 15, 10, 0),
+          endTime: DateTime(2025, 2, 15, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 15, 13, 0),
+          endTime: DateTime(2025, 2, 15, 14, 0),
+        ),
+      ],
+      DateTime(2025, 2, 20): [
+        TimeSlot(
+          startTime: DateTime(2025, 2, 20, 10, 0),
+          endTime: DateTime(2025, 2, 20, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 2, 20, 13, 0),
+          endTime: DateTime(2025, 2, 20, 14, 0),
+        ),
+      ],
+      DateTime(2025, 3, 14): [
+        TimeSlot(
+          startTime: DateTime(2025, 3, 14, 10, 0),
+          endTime: DateTime(2025, 3, 14, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 3, 14, 13, 0),
+          endTime: DateTime(2025, 3, 14, 14, 0),
+        ),
+      ],
+      DateTime(2025, 3, 15): [
+        TimeSlot(
+          startTime: DateTime(2025, 3, 15, 10, 0),
+          endTime: DateTime(2025, 3, 14, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 3, 15, 13, 0),
+          endTime: DateTime(2025, 3, 15, 14, 0),
+        ),
+      ],
+      DateTime(2025, 3, 2): [
+        TimeSlot(
+          startTime: DateTime(2025, 3, 2, 10, 0),
+          endTime: DateTime(2025, 3, 2, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 3, 2, 13, 0),
+          endTime: DateTime(2025, 3, 2, 14, 0),
+        ),
+      ],
+      DateTime(2025, 3, 10): [
+        TimeSlot(
+          startTime: DateTime(2025, 3, 10, 10, 0),
+          endTime: DateTime(2025, 3, 10, 11, 0),
+        ),
+        TimeSlot(
+          startTime: DateTime(2025, 3, 10, 13, 0),
+          endTime: DateTime(2025, 3, 10, 14, 0),
         ),
       ],
     },
