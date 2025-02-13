@@ -5,7 +5,7 @@ abstract class SavedStadiumsState {}
 class SavedStadiumsInitialState extends SavedStadiumsState {}
 
 class SavedStadiumsLoadedState extends SavedStadiumsState {
-  final List<Stadium> savedStadiums;
+  final List<StadiumDetail> savedStadiums;
 
   SavedStadiumsLoadedState({required this.savedStadiums});
 }

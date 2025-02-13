@@ -3,15 +3,15 @@ import '../../../common/model/stadium_model.dart';
 import 'saved_stadium_state.dart';
 
 class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
-  List<Stadium> _savedStadiums = [];
+  List<StadiumDetail> _savedStadiums = [];
 
   SavedStadiumsCubit() : super(SavedStadiumsInitialState());
 
   // Get the list of saved stadiums
-  List<Stadium> get savedStadiums => _savedStadiums;
+  List<StadiumDetail> get savedStadiums => _savedStadiums;
 
   // Add a stadium to the saved list
-  void addStadiumToSaved(Stadium stadium) {
+  void addStadiumToSaved(StadiumDetail stadium) {
     if (!_savedStadiums.any((e) => e.id == stadium.id)) {
       _savedStadiums.add(stadium);
       emit(SavedStadiumsLoadedState(savedStadiums: _savedStadiums));
@@ -19,7 +19,7 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
   }
 
   // Remove a stadium from the saved list
-  void removeStadiumFromSaved(Stadium stadium) {
+  void removeStadiumFromSaved(StadiumDetail stadium) {
     _savedStadiums.removeWhere(
       (element) => element.id == stadium.id,
     );
@@ -27,13 +27,13 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
   }
 
   // Set the saved stadiums to a new list
-  void setSavedStadiums(List<Stadium> stadiums) {
+  void setSavedStadiums(List<StadiumDetail> stadiums) {
     _savedStadiums = stadiums;
     emit(SavedStadiumsLoadedState(savedStadiums: _savedStadiums));
   }
 
   // Check if a stadium is saved
-  bool isStadiumSaved(Stadium stadium) {
+  bool isStadiumSaved(StadiumDetail stadium) {
     return _savedStadiums.any(
       (element) => element.id == stadium.id,
     );

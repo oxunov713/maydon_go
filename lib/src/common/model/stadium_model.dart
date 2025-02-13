@@ -1,4 +1,4 @@
-class Stadium {
+class StadiumDetail {
   final int id;
   final String name;
   final String description;
@@ -8,9 +8,10 @@ class Stadium {
   final double averageRating;
   final List<String> images;
   final List<int> ratings;
-  final Map<DateTime, List<TimeSlot>> availableSlots;
+  final int stadiumCount;
+  final List<Map<String, Map<DateTime, List<TimeSlot>>>> stadiumsSlots;
 
-  Stadium({
+  StadiumDetail({
     required this.id,
     required this.name,
     required this.description,
@@ -20,17 +21,26 @@ class Stadium {
     required this.averageRating,
     required this.images,
     required this.ratings,
-    required this.availableSlots,
+    required this.stadiumCount,
+    required this.stadiumsSlots,
   });
 
-  factory Stadium.fromJson(Map<String, dynamic> json) {
-    var availableSlotsFromJson = <DateTime, List<TimeSlot>>{};
-    json['availableSlots'].forEach((key, value) {
-      availableSlotsFromJson[DateTime.parse(key)] =
-          List<TimeSlot>.from(value.map((x) => TimeSlot.fromJson(x)));
-    });
+  factory StadiumDetail.fromJson(Map<String, dynamic> json) {
+    // stadiumsSlots ni JSON dan o'qish
+    final stadiumsSlotsFromJson = (json['stadiumsSlots'] as List).map((item) {
+      final stadiumSlots = <String, Map<DateTime, List<TimeSlot>>>{};
+      item.forEach((stadiumName, slots) {
+        final availableSlots = <DateTime, List<TimeSlot>>{};
+        slots.forEach((date, timeSlots) {
+          availableSlots[DateTime.parse(date)] =
+              (timeSlots as List).map((x) => TimeSlot.fromJson(x)).toList();
+        });
+        stadiumSlots[stadiumName] = availableSlots;
+      });
+      return stadiumSlots;
+    }).toList();
 
-    return Stadium(
+    return StadiumDetail(
       id: json['id'],
       name: json['name'],
       description: json['description'],
@@ -40,14 +50,15 @@ class Stadium {
       averageRating: json['averageRating'].toDouble(),
       images: List<String>.from(json['images']),
       ratings: List<int>.from(json['ratings']),
-      availableSlots: availableSlotsFromJson,
+      stadiumCount: json['stadiumCount'],
+      stadiumsSlots: stadiumsSlotsFromJson,
     );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is Stadium && other.id == id;
+    return other is StadiumDetail && other.id == id;
   }
 
   @override

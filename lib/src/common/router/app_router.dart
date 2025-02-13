@@ -72,7 +72,7 @@ final GoRouter _router = GoRouter(
                               path: "detail",
                               name: AppRoutes.detailStadium,
                               builder: (context, state) {
-                                final stadium = state.extra as Stadium;
+                                final stadium = state.extra as StadiumDetail;
                                 return StadiumDetailScreen(stadium: stadium);
                               },
                             ),

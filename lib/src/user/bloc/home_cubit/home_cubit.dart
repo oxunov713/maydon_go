@@ -5,11 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/stadium_model.dart';
 
 import '../../../common/constants/config.dart';
-import '../../../common/model/facilities_model.dart';
-import '../../../common/model/location_model.dart';
-import '../../../common/model/stadium_model.dart';
 import '../../../common/style/app_icons.dart';
 import '../../ui/home/all_stadiums_screen.dart';
 import '../../ui/home/history_screen.dart';
@@ -23,14 +21,14 @@ class HomeCubit extends Cubit<HomeState> {
 
   int get selectedIndex => _selectedIndex;
 
-  List<Stadium> _stadiums = []; // Boshlang'ich qiymat
+  List<StadiumDetail> _stadiums = []; // Boshlang'ich qiymat
   Set<Marker> markers = {};
   GoogleMapController? mapController;
   LocationData? currentLocation;
   final Location _location = Location();
 
   HomeCubit() : super(HomeInitialState()) {
-    _stadiums = $fakeStadiums; // Boshlang'ich ma'lumotlarni yuklash
+    _stadiums = $fakeData; // Boshlang'ich ma'lumotlarni yuklash
     fetchStadiums(); // Ma'lumotlarni yuklash
   }
 

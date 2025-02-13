@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
+import '../../../common/model/stadium_model.dart';
 import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -25,35 +26,35 @@ class AllStadiumsScreen extends StatelessWidget {
       backgroundColor: AppColors.white2,
       appBar: AppBar(
         automaticallyImplyLeading:
-            context.watch<StadiumCubit>().state is StadiumLoaded &&
-                    (context.watch<StadiumCubit>().state as StadiumLoaded)
-                        .isSearching
-                ? false
-                : true,
+        context.watch<StadiumCubit>().state is StadiumLoaded &&
+            (context.watch<StadiumCubit>().state as StadiumLoaded)
+                .isSearching
+            ? false
+            : true,
         title: context.watch<StadiumCubit>().state is StadiumLoaded &&
-                (context.watch<StadiumCubit>().state as StadiumLoaded)
-                    .isSearching
+            (context.watch<StadiumCubit>().state as StadiumLoaded)
+                .isSearching
             ? _buildSearchField(context)
             : const Text("Barcha maydonlar"),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: context.watch<StadiumCubit>().state is StadiumLoaded &&
-                    (context.watch<StadiumCubit>().state as StadiumLoaded)
-                        .isSearching
+                (context.watch<StadiumCubit>().state as StadiumLoaded)
+                    .isSearching
                 ? IconButton(
-                    onPressed: () =>
-                        context.read<StadiumCubit>().toggleSearchMode(),
-                    icon: const Icon(Icons.close),
-                  )
+              onPressed: () =>
+                  context.read<StadiumCubit>().toggleSearchMode(),
+              icon: const Icon(Icons.close),
+            )
                 : InkWell(
-                    child: SvgPicture.asset(
-                      AppIcons.searchIcon,
-                      height: 23,
-                    ),
-                    onTap: () =>
-                        context.read<StadiumCubit>().toggleSearchMode(),
-                  ),
+              child: SvgPicture.asset(
+                AppIcons.searchIcon,
+                height: 23,
+              ),
+              onTap: () =>
+                  context.read<StadiumCubit>().toggleSearchMode(),
+            ),
           ),
         ],
       ),
@@ -68,9 +69,12 @@ class AllStadiumsScreen extends StatelessWidget {
               itemCount: state.filteredStadiums.length,
               itemBuilder: (context, stadiumIndex) {
                 final stadium = state.filteredStadiums[stadiumIndex];
+                final today = DateTime.now();
+                final todaySlots = _getTodaySlots(stadium.stadiumsSlots, today);
+
                 return Container(
                   margin:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                   decoration: const BoxDecoration(
                     borderRadius: BorderRadius.all(Radius.circular(20)),
                     color: AppColors.white,
@@ -107,9 +111,9 @@ class AllStadiumsScreen extends StatelessWidget {
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
+                                      MainAxisAlignment.spaceAround,
                                       crossAxisAlignment:
-                                          CrossAxisAlignment.center,
+                                      CrossAxisAlignment.center,
                                       children: [
                                         Padding(
                                           padding: EdgeInsets.only(
@@ -147,18 +151,18 @@ class AllStadiumsScreen extends StatelessWidget {
                                           width: double.infinity,
                                           decoration: BoxDecoration(
                                             borderRadius:
-                                                BorderRadius.circular(12),
+                                            BorderRadius.circular(12),
                                           ),
                                           child: CachedNetworkImage(
                                             imageUrl: imageUrl,
                                             fit: BoxFit.cover,
                                             placeholder: (context, url) =>
-                                                const Center(
-                                                    child:
-                                                        CircularProgressIndicator()),
+                                            const Center(
+                                                child:
+                                                CircularProgressIndicator()),
                                             errorWidget:
                                                 (context, url, error) =>
-                                                    const Center(
+                                            const Center(
                                               child: Icon(Icons.error,
                                                   size: 50, color: Colors.red),
                                             ),
@@ -170,13 +174,13 @@ class AllStadiumsScreen extends StatelessWidget {
                                         viewportFraction: 1.0,
                                         autoPlay: true,
                                         autoPlayInterval:
-                                            const Duration(seconds: 7),
+                                        const Duration(seconds: 7),
                                         enlargeCenterPage: true,
                                         onPageChanged: (index, reason) =>
                                             context
                                                 .read<StadiumCubit>()
                                                 .updateCurrentIndex(
-                                                    index, stadiumIndex),
+                                                index, stadiumIndex),
                                       ),
                                       carouselController: context
                                           .read<StadiumCubit>()
@@ -190,24 +194,24 @@ class AllStadiumsScreen extends StatelessWidget {
                                     right: 0,
                                     child: Row(
                                       mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                      MainAxisAlignment.center,
                                       children: List.generate(
                                         stadium.images.length,
-                                        (index) => AnimatedContainer(
+                                            (index) => AnimatedContainer(
                                           duration:
-                                              const Duration(milliseconds: 300),
+                                          const Duration(milliseconds: 300),
                                           margin: const EdgeInsets.symmetric(
                                               horizontal: 5),
                                           width: state.currentIndexList[
-                                                      stadiumIndex] ==
-                                                  index
+                                          stadiumIndex] ==
+                                              index
                                               ? 12
                                               : 8,
                                           height: 8,
                                           decoration: BoxDecoration(
                                             color: state.currentIndexList[
-                                                        stadiumIndex] ==
-                                                    index
+                                            stadiumIndex] ==
+                                                index
                                                 ? AppColors.green2
                                                 : AppColors.grey4,
                                             shape: BoxShape.circle,
@@ -234,11 +238,11 @@ class AllStadiumsScreen extends StatelessWidget {
                                     SavedStadiumsState>(
                                   builder: (context, savedState) {
                                     final cubit =
-                                        context.read<SavedStadiumsCubit>();
+                                    context.read<SavedStadiumsCubit>();
 
                                     bool isSaved = false;
                                     if (savedState
-                                        is SavedStadiumsLoadedState) {
+                                    is SavedStadiumsLoadedState) {
                                       isSaved = cubit.isStadiumSaved(stadium);
                                     }
 
@@ -275,71 +279,65 @@ class AllStadiumsScreen extends StatelessWidget {
                             const SizedBox(height: 5),
                             SizedBox(
                               height: deviceHeight * 0.04,
-                              child: stadium.availableSlots.isNotEmpty &&
-                                      stadium.availableSlots.values.first
-                                          .isNotEmpty
+                              child: todaySlots.isNotEmpty
                                   ? ListView.separated(
-                                      itemCount: stadium
-                                          .availableSlots.values.first.length,
-                                      scrollDirection: Axis.horizontal,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(width: 10),
-                                      itemBuilder: (context, index) {
-                                        final slots =
-                                            stadium.availableSlots.values.first;
-                                        final slot = slots[index];
-                                        final startHour = slot.startTime.hour
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final startMinute = slot
-                                            .startTime.minute
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final endHour = slot.endTime.hour
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final endMinute = slot.endTime.minute
-                                            .toString()
-                                            .padLeft(2, '0');
+                                itemCount: todaySlots.length,
+                                scrollDirection: Axis.horizontal,
+                                separatorBuilder: (context, index) =>
+                                const SizedBox(width: 10),
+                                itemBuilder: (context, index) {
+                                  final slot = todaySlots[index];
+                                  final startHour = slot.startTime.hour
+                                      .toString()
+                                      .padLeft(2, '0');
+                                  final startMinute = slot.startTime.minute
+                                      .toString()
+                                      .padLeft(2, '0');
+                                  final endHour = slot.endTime.hour
+                                      .toString()
+                                      .padLeft(2, '0');
+                                  final endMinute = slot.endTime.minute
+                                      .toString()
+                                      .padLeft(2, '0');
 
-                                        return Container(
-                                          width: 120,
-                                          decoration: const BoxDecoration(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(20)),
-                                            color: AppColors.green40,
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              "$startHour:$startMinute - $endHour:$endMinute",
-                                              style: TextStyle(
-                                                color: AppColors.green,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: deviceHeight * 0.015,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : Container(
-                                      width: deviceWidth * 0.9,
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(20)),
-                                        color: AppColors.red,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          "Barcha soatlar band",
-                                          style: TextStyle(
-                                            color: AppColors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: deviceHeight * 0.018,
-                                          ),
+                                  return Container(
+                                    width: 120,
+                                    decoration: const BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(20)),
+                                      color: AppColors.green40,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "$startHour:$startMinute - $endHour:$endMinute",
+                                        style: TextStyle(
+                                          color: AppColors.green,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: deviceHeight * 0.015,
                                         ),
                                       ),
                                     ),
+                                  );
+                                },
+                              )
+                                  : Container(
+                                width: deviceWidth * 0.9,
+                                decoration: const BoxDecoration(
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(20)),
+                                  color: AppColors.red,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "Barcha soatlar band",
+                                    style: TextStyle(
+                                      color: AppColors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: deviceHeight * 0.018,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                             const Divider(height: 30),
                             GestureDetector(
@@ -349,7 +347,7 @@ class AllStadiumsScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
@@ -391,6 +389,20 @@ class AllStadiumsScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  List<TimeSlot> _getTodaySlots(
+      List<Map<String, Map<DateTime, List<TimeSlot>>>> stadiumsSlots, DateTime today) {
+    final todaySlots = <TimeSlot>[];
+    for (var stadiumSlot in stadiumsSlots) {
+      for (var entry in stadiumSlot.entries) {
+        final slots = entry.value[today];
+        if (slots != null) {
+          todaySlots.addAll(slots);
+        }
+      }
+    }
+    return todaySlots;
   }
 
   Widget _buildSearchField(BuildContext context) {

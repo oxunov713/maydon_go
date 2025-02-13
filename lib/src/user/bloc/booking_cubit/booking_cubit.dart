@@ -3,30 +3,72 @@ import '../../../common/model/stadium_model.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  BookingCubit() : super(BookingInitial());
-
-  String selectedDate = DateTime.now().toIso8601String().split('T')[0];
-  final List<TimeSlot> _bookedSlots = [];
-
-  List<TimeSlot> get bookedSlots => _bookedSlots;
+  BookingCubit()
+      : super(BookingLoaded(
+    selectedDate: DateTime.now().toIso8601String().split('T')[0],
+    bookedSlots: [],
+    selectedStadium: '',
+    groupedSlots: {}, // ⬅️ Bo‘sh map
+  ));
 
   void setSelectedDate(String date) {
-    selectedDate = date;
-    emit(BookingDateUpdated(date));
+    emit((state as BookingLoaded).copyWith(selectedDate: date));
   }
 
   void addBookingSlot(TimeSlot slot) {
-    _bookedSlots.add(slot);
-    emit(BookingUpdated(_bookedSlots));
+    final currentState = state as BookingLoaded;
+    if (!currentState.bookedSlots.contains(slot)) {
+      emit(currentState.copyWith(
+        bookedSlots: [...currentState.bookedSlots, slot],
+      ));
+    }
   }
 
   void removeBookingSlot(TimeSlot slot) {
-    _bookedSlots.remove(slot);
-    emit(BookingUpdated(_bookedSlots));
+    final currentState = state as BookingLoaded;
+    emit(currentState.copyWith(
+      bookedSlots: currentState.bookedSlots.where((s) => s != slot).toList(),
+    ));
+  }
+
+  void clearBooking() {
+    emit(BookingLoaded(
+      selectedDate: DateTime.now().toIso8601String().split('T')[0],
+      bookedSlots: [],
+      selectedStadium: '',
+      groupedSlots: {},
+    ));
+  }
+
+  void changeStadium(String stadiumName) {
+    final currentState = state as BookingLoaded;
+    emit(currentState.copyWith(selectedStadium: stadiumName));
   }
 
   bool isSlotBooked(TimeSlot slot) {
-    return _bookedSlots.contains(slot);
+    return (state as BookingLoaded).bookedSlots.contains(slot);
+  }
+
+  void loadStadiumSlots(List<Map<String, Map<String, List<TimeSlot>>>> stadiumsSlots) {
+    Map<String, List<TimeSlot>> groupedSlots = {};
+
+    for (var stadium in stadiumsSlots) {
+      for (var entry in stadium.entries) {
+        String stadiumName = entry.key;
+        Map<String, List<TimeSlot>> dateSlots = entry.value;
+
+        for (var dateEntry in dateSlots.entries) {
+          String date = dateEntry.key;
+          List<TimeSlot> slots = dateEntry.value;
+
+          if (!groupedSlots.containsKey(date)) {
+            groupedSlots[date] = [];
+          }
+          groupedSlots[date]!.addAll(slots);
+        }
+      }
+    }
+
+    emit((state as BookingLoaded).copyWith(groupedSlots: groupedSlots));
   }
 }
-

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:carousel_slider/carousel_controller.dart';
-import 'package:maydon_go/src/common/constants/config.dart';
-import '../../../common/model/stadium_model.dart';
-import '../../../common/service/api_service.dart';
+import 'package:maydon_go/src/common/model/stadium_model.dart';
+import '../../../common/constants/config.dart';
 import 'all_stadium_state.dart';
 
 class StadiumCubit extends Cubit<StadiumState> {
@@ -21,7 +20,7 @@ class StadiumCubit extends Cubit<StadiumState> {
     emit(StadiumLoading());
 
     try {
-      final List<Stadium> stadiums = $fakeStadiums;
+      final List<StadiumDetail> stadiums = $fakeData;
       carouselControllers =
           List.generate(stadiums.length, (_) => CarouselSliderController());
 

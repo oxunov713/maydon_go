@@ -6,7 +6,7 @@ class MainModel {
   final String phoneNumber;
   final String role;
   final UserInfo? userInfo;
-  final Stadium? stadium;
+  final StadiumDetail? stadiumDetail;
   final bool active;
 
   MainModel({
@@ -14,7 +14,7 @@ class MainModel {
     required this.phoneNumber,
     required this.role,
     this.userInfo,
-    this.stadium,
+    this.stadiumDetail,
     required this.active,
   });
 
@@ -26,12 +26,10 @@ class MainModel {
       userInfo: json['userInfo'] != null
           ? UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>)
           : null,
-      stadium: json['stadium'] != null
-          ? Stadium.fromJson(json['stadium'] as Map<String, dynamic>)
+      stadiumDetail: json['stadium'] != null
+          ? StadiumDetail.fromJson(json['stadium'] as Map<String, dynamic>)
           : null,
       active: json['active'] as bool,
     );
   }
-
-
 }

@@ -9,10 +9,10 @@ import '../style/app_icons.dart';
 import '../tools/price_formatter_extension.dart';
 
 class StadiumCard extends StatelessWidget {
-  final Stadium stadium;
+  final StadiumDetail stadium;
   final int stadiumIndex;
 
-  final Function(Stadium) onTap;
+  final Function(StadiumDetail) onTap;
 
   const StadiumCard({
     super.key,
@@ -40,7 +40,7 @@ class StadiumCard extends StatelessWidget {
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(20)),
           color: AppColors.white,
         ),
@@ -52,15 +52,15 @@ class StadiumCard extends StatelessWidget {
               _buildTitleAndRating(context, stadium, stadiumIndex),
               const SizedBox(height: 10),
               _buildCarousel(stadium, stadiumIndex),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               _buildPriceAndBookmark(context, stadium),
-              Text(
+              const Text(
                 "Bugungi bo'sh vaqtlar",
                 style: TextStyle(fontSize: 14, color: AppColors.grey4),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               _buildAvailableSlots(stadium),
-              Divider(height: 25),
+              const Divider(height: 25),
               _buildLocation(deviceWidth, stadium),
             ],
           ),
@@ -73,26 +73,26 @@ class StadiumCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Please Log In'),
-        content: Text('You need to be logged in to perform this action.'),
+        title: const Text('Please Log In'),
+        content: const Text('You need to be logged in to perform this action.'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close the dialog
               Navigator.pushNamed(context, '/login'); // Navigate to login screen
             },
-            child: Text('Log In'),
+            child: const Text('Log In'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context), // Close dialog without action
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
     );
   }
 
-  Row _buildTitleAndRating(BuildContext context, Stadium stadium, int stadiumIndex) {
+  Row _buildTitleAndRating(BuildContext context, StadiumDetail stadium, int stadiumIndex) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -109,10 +109,10 @@ class StadiumCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 7),
             child: Row(
               children: [
-                Text(
+                const Text(
                   // You can add a rating here if available
                   "",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.white,
                   ),
@@ -131,7 +131,7 @@ class StadiumCard extends StatelessWidget {
     );
   }
 
-  AspectRatio _buildCarousel(Stadium stadium, int stadiumIndex) {
+  AspectRatio _buildCarousel(StadiumDetail stadium, int stadiumIndex) {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Stack(
@@ -153,8 +153,8 @@ class StadiumCard extends StatelessWidget {
                 enableInfiniteScroll: true,
                 reverse: false,
                 autoPlay: true,
-                autoPlayInterval: Duration(seconds: 3),
-                autoPlayAnimationDuration: Duration(milliseconds: 800),
+                autoPlayInterval: const Duration(seconds: 3),
+                autoPlayAnimationDuration: const Duration(milliseconds: 800),
                 autoPlayCurve: Curves.fastOutSlowIn,
                 enlargeCenterPage: true,
                 enlargeFactor: 0.3,
@@ -167,32 +167,32 @@ class StadiumCard extends StatelessWidget {
     );
   }
 
-  Row _buildPriceAndBookmark(BuildContext context, Stadium stadium) {
+  Row _buildPriceAndBookmark(BuildContext context, StadiumDetail stadium) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           "${stadium.price.formatWithSpace()} so'm",
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
       ],
     );
   }
 
-  SizedBox _buildAvailableSlots(Stadium stadium) {
-    return SizedBox();
+  SizedBox _buildAvailableSlots(StadiumDetail stadium) {
+    return const SizedBox();
   }
 
-  Row _buildLocation(double deviceWidth, Stadium stadium) {
+  Row _buildLocation(double deviceWidth, StadiumDetail stadium) {
     return Row(
       children: [
-        Icon(Icons.location_on),
-        SizedBox(width: 10),
+        const Icon(Icons.location_on),
+        const SizedBox(width: 10),
         SizedBox(
           width: deviceWidth - 150,
           child: Text(
             stadium.location.address,
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.main,
                 overflow: TextOverflow.visible),

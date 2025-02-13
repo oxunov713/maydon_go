@@ -7,8 +7,8 @@ class StadiumInitial extends StadiumState {}
 class StadiumLoading extends StadiumState {}
 
 class StadiumLoaded extends StadiumState {
-  final List<Stadium> stadiums;
-  final List<Stadium> filteredStadiums;
+  final List<StadiumDetail> stadiums;
+  final List<StadiumDetail> filteredStadiums;
   final List<int> currentIndexList;
   final bool isSearching;
 
@@ -20,12 +20,12 @@ class StadiumLoaded extends StadiumState {
   });
 
   StadiumLoaded copyWith({
-    List<Stadium>? filteredStadiums,
+    List<StadiumDetail>? filteredStadiums,
     List<int>? currentIndexList,
     bool? isSearching,
   }) {
     return StadiumLoaded(
-      stadiums: this.stadiums,
+      stadiums: stadiums,
       filteredStadiums: filteredStadiums ?? this.filteredStadiums,
       currentIndexList: currentIndexList ?? this.currentIndexList,
       isSearching: isSearching ?? this.isSearching,

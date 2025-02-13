@@ -106,7 +106,7 @@ class ApiService {
   }
 
   // Get all stadium
-  Future<List<Stadium>> getAllStadiums() async {
+  Future<List<StadiumDetail>> getAllStadiums() async {
     try {
       final response = await dio.get('/stadium/all/info');
 
@@ -115,14 +115,14 @@ class ApiService {
         return (response.data as List)
             .map((stadiumJson) {
               try {
-                return Stadium.fromJson(stadiumJson as Map<String, Object?>);
+                return StadiumDetail.fromJson(stadiumJson as Map<String, Object?>);
               } catch (e) {
                 logger.e("Error parsing stadium data: $e");
                 return null; // Skip this stadium if parsing fails
               }
             })
             .where((stadium) => stadium != null)
-            .toList() as List<Stadium>; // Filter out null values
+            .toList() as List<StadiumDetail>; // Filter out null values
       } else {
         throw Exception("Expected a list of stadiums but got something else.");
       }

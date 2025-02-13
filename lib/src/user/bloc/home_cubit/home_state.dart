@@ -9,7 +9,7 @@ abstract class HomeState {}
 class HomeInitialState extends HomeState {}
 
 class HomeLoadedState extends HomeState {
-  final List<Stadium> stadiums;
+  final List<StadiumDetail> stadiums;
   final Set<Marker> markers;
   final LocationData? currentLocation;
 
