@@ -3,8 +3,10 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../common/tools/average_rating_extension.dart';
-import '../../../common/tools/price_formatter_extension.dart';
+import 'package:intl/intl.dart';
+import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
+import 'package:maydon_go/src/common/tools/price_formatter_extension.dart';
+
 import '../../../common/model/stadium_model.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -26,15 +28,34 @@ class StadiumDetailScreen extends StatefulWidget {
 }
 
 class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
-  String selectedStadium = "";
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    selectedStadium = widget.stadium.stadiumsSlots.first.keys.first;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookingCubit>().changeStadium(selectedStadium);
-    });
+    if (widget.stadium.stadiumsSlots.isNotEmpty) {
+      context
+          .read<BookingCubit>()
+          .setSelectedDate(widget.stadium.stadiumsSlots.first.keys.first);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToToday());
+  }
+
+  void _scrollToToday() {
+    final keys = widget.stadium.stadiumsSlots
+        .first[context.read<BookingCubit>().selectedDate]?.keys
+        .map((date) => DateFormat("yyyy-MM-dd").format(date))
+        .toList();
+    final today = DateFormat("yyyy-MM-dd").format(DateTime.now());
+
+    if (keys != null && keys.contains(today)) {
+      final todayIndex = keys.indexOf(today);
+      _scrollController.animateTo(
+        todayIndex * 60.0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -42,8 +63,19 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
     final deviceWidth = MediaQuery.of(context).size.width;
     final deviceHeight = MediaQuery.of(context).size.height;
 
+    // Responsivlik uchun asosiy o'lchamlar
+    final double titleFontSize = deviceHeight * 0.025;
+    final double addressFontSize = deviceHeight * 0.02;
+    final double priceFontSize = deviceHeight * 0.03;
+    final double ratingFontSize = deviceHeight * 0.015;
+    final double iconSize = deviceHeight * 0.02;
+    final double tabBarHeight =
+        deviceHeight * 0.7; // TabBarView uchun balandlik
+    final double paddingHorizontal = deviceWidth * 0.03;
+    final double paddingVertical = deviceHeight * 0.02;
+
     return DefaultTabController(
-      length: 2,
+      length: 2, // Ikkita tab
       child: SafeArea(
         child: Scaffold(
           body: CustomScrollView(
@@ -56,47 +88,61 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                   BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
                     builder: (context, savedState) {
                       final cubit = context.read<SavedStadiumsCubit>();
-                      bool isSaved = savedState is SavedStadiumsLoadedState &&
-                          cubit.isStadiumSaved(widget.stadium);
+
+                      bool isSaved = false;
+                      if (savedState is SavedStadiumsLoadedState) {
+                        isSaved = cubit.isStadiumSaved(widget.stadium);
+                      }
+
                       return IconButton(
                         icon: Icon(
                           isSaved ? Icons.bookmark : Icons.bookmark_border,
                           color: AppColors.white,
                         ),
                         onPressed: () {
-                          isSaved
-                              ? cubit.removeStadiumFromSaved(widget.stadium)
-                              : cubit.addStadiumToSaved(widget.stadium);
+                          if (isSaved) {
+                            cubit.removeStadiumFromSaved(widget.stadium);
+                          } else {
+                            cubit.addStadiumToSaved(widget.stadium);
+                          }
                         },
                       );
                     },
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    widget.stadium.name,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: deviceHeight * 0.025,
-                      color: AppColors.white,
-                      fontWeight: FontWeight.w800,
-                      overflow: TextOverflow.clip,
+                  title: Padding(
+                    padding: EdgeInsets.only(right: deviceWidth * 0.1),
+                    child: Text(
+                      widget.stadium.name,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w800,
+                        overflow: TextOverflow.clip,
+                      ),
                     ),
                   ),
                   background: CarouselSlider.builder(
                     itemCount: widget.stadium.images.length,
                     itemBuilder: (context, index, realIndex) {
-                      return CachedNetworkImage(
-                        imageUrl: widget.stadium.images[index],
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.error, size: 50),
+                      return SizedBox(
+                        width: deviceWidth,
+                        child: CachedNetworkImage(
+                          imageUrl: widget.stadium.images[index],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error, size: 50),
+                        ),
                       );
                     },
                     options: CarouselOptions(
                       viewportFraction: 1.0,
+                      initialPage: 0,
                       autoPlay: true,
                       autoPlayInterval: const Duration(seconds: 5),
                     ),
@@ -108,48 +154,179 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                   [
                     Padding(
                       padding: EdgeInsets.symmetric(
-                        horizontal: deviceWidth * 0.03,
-                        vertical: deviceHeight * 0.02,
+                        horizontal: paddingHorizontal,
+                        vertical: paddingVertical,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            widget.stadium.location.address,
-                            style: TextStyle(
-                              fontSize: deviceHeight * 0.02,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(height: 10),
+                          Center(
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        widget.stadium.location.address,
+                                        style: TextStyle(
+                                          fontSize: addressFontSize,
+                                          color: AppColors.main,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    Card(
+                                      color: AppColors.green2,
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: deviceHeight * 0.005,
+                                          horizontal: deviceWidth * 0.02,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  right: deviceWidth * 0.01),
+                                              child: Text(
+                                                widget.stadium.ratings.average
+                                                    .toString(),
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.white,
+                                                  fontSize: ratingFontSize,
+                                                ),
+                                              ),
+                                            ),
+                                            Image.asset(
+                                              AppIcons.stars,
+                                              height: iconSize,
+                                              width: iconSize,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    BlocBuilder<BookingCubit, BookingState>(
+                                      builder: (context, state) {
+                                        return DropdownMenu<String>(
+                                          initialSelection: context
+                                              .read<BookingCubit>()
+                                              .selectedDate,
+                                          onSelected: (String? value) {
+                                            if (value != null) {
+                                              context
+                                                  .read<BookingCubit>()
+                                                  .setSelectedDate(value);
+
+                                              context
+                                                  .read<BookingCubit>()
+                                                  .changeStadium(value);
+                                              _scrollToToday();
+                                            }
+                                          },
+                                          dropdownMenuEntries: widget
+                                              .stadium.stadiumsSlots
+                                              .map((stadiumSlot) {
+                                            final stadiumName =
+                                                stadiumSlot.keys.first;
+                                            return DropdownMenuEntry<String>(
+                                              value: stadiumName,
+                                              label: stadiumName,
+                                            );
+                                          }).toList(),
+                                          menuStyle: MenuStyle(
+                                            backgroundColor:
+                                                const WidgetStatePropertyAll(
+                                                    AppColors.white),
+                                            shape: WidgetStatePropertyAll<
+                                                RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                side: const BorderSide(
+                                                  color: AppColors.green,
+                                                  width: 1,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          textStyle: TextStyle(
+                                            fontSize: deviceHeight * 0.02,
+                                            color: AppColors.green,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          inputDecorationTheme:
+                                              InputDecorationTheme(
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.green,
+                                                width: 1,
+                                              ),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.green,
+                                                width: 1,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.green,
+                                                width: 2,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          "Narxi:",
+                                          style: TextStyle(
+                                            fontSize: deviceHeight * 0.02,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: deviceWidth * 0.45,
+                                          child: Text(
+                                            textAlign: TextAlign.center,
+                                            "${widget.stadium.price.formatWithSpace()} so'm",
+                                            style: TextStyle(
+                                                fontSize: priceFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.green,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 20),
-                          BlocBuilder<BookingCubit, BookingState>(
-                            builder: (context, state) {
-                              String selectedStadium = "";
-                              if (state is BookingLoaded) {
-                                selectedStadium = state.selectedStadium;
-                              }
-                              return DropdownButton<String>(
-                                value: selectedStadium.isNotEmpty
-                                    ? selectedStadium
-                                    : null,
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    context.read<BookingCubit>().clearBooking();
-                                    context
-                                        .read<BookingCubit>()
-                                        .changeStadium(value);
-                                  }
-                                },
-                                items: widget.stadium.stadiumsSlots
-                                    .map((stadiumSlot) {
-                                  final stadiumName = stadiumSlot.keys.first;
-                                  return DropdownMenuItem(
-                                    value: stadiumName,
-                                    child: Text(stadiumName),
-                                  );
-                                }).toList(),
-                              );
-                            },
                           ),
                           const SizedBox(height: 15),
                           const TabBar(
@@ -158,29 +335,62 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                               Tab(text: "Qo'shimcha"),
                             ],
                             labelColor: AppColors.green,
+                            labelStyle: TextStyle(
+                                letterSpacing: 1, fontWeight: FontWeight.w600),
+                            unselectedLabelColor: AppColors.grey4,
                             indicatorColor: AppColors.green,
                           ),
+                          // TabBarView uchun joy
                           SizedBox(
-                            height: deviceHeight * 0.7,
+                            height: tabBarHeight,
                             child: TabBarView(
                               physics: const NeverScrollableScrollPhysics(),
                               children: [
                                 BlocBuilder<BookingCubit, BookingState>(
                                   builder: (context, state) {
-                                    if (state is BookingLoaded) {
-                                      return CustomCalendar(
-                                          groupedSlots: state.groupedSlots);
+                                    final groupedSlots =
+                                        <String, List<TimeSlot>>{};
+                                    final selectedStadiumSlots =
+                                        widget.stadium.stadiumsSlots.firstWhere(
+                                              (stadium) =>
+                                                  stadium.keys.first ==
+                                                  context
+                                                      .read<BookingCubit>()
+                                                      .selectedDate,
+                                              orElse: () => {},
+                                            )[context
+                                                .read<BookingCubit>()
+                                                .selectedDate] ??
+                                            {};
+
+                                    for (var entry
+                                        in selectedStadiumSlots.entries) {
+                                      final dateKey = DateFormat("yyyy-MM-dd")
+                                          .format(entry.key);
+                                      if (!groupedSlots.containsKey(dateKey)) {
+                                        groupedSlots[dateKey] = [];
+                                      }
+                                      groupedSlots[dateKey]!
+                                          .addAll(entry.value);
                                     }
-                                    return Center(
-                                        child:
-                                            CircularProgressIndicator()); // Agar yuklanyotgan bo‘lsa
+
+                                    return CustomCalendar(
+                                        scrollController: _scrollController,
+                                        groupedSlots: groupedSlots);
                                   },
                                 ),
-                                const Center(
-                                  child: Text(
-                                    "Qo'shimcha ma'lumotlar",
-                                    style: TextStyle(fontSize: 18),
-                                  ),
+                                ListView(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  children: const [
+                                    Text(
+                                      "Qo'shimcha ma'lumotlar",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -195,12 +405,10 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
           ),
           bottomNavigationBar: BlocBuilder<BookingCubit, BookingState>(
             builder: (context, state) {
-              int bookingCount =
-                  state is BookingLoaded ? state.bookedSlots.length : 0;
               return BottomSignButton(
                 function: () => context.pushNamed(AppRoutes.paymentPage),
-                text: "Booking $bookingCount hours",
-                isdisabledBT: bookingCount != 0,
+                text: "Booking  hours",
+                isdisabledBT: true,
               );
             },
           ),
