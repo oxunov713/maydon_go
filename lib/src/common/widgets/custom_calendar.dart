@@ -6,6 +6,7 @@ import '../../user/bloc/booking_cubit/booking_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_state.dart';
 import '../model/stadium_model.dart';
 import '../style/app_colors.dart';
+
 class CustomCalendar extends StatefulWidget {
   final Map<String, List<TimeSlot>> groupedSlots;
   final ScrollController scrollController;
@@ -57,7 +58,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     final bookingCubit = context.read<BookingCubit>();
     final bookingState = context.watch<BookingCubit>().state;
 
-    if (bookingState is! BookingLoaded) {
+    if ((bookingState is! BookingLoaded)) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -67,9 +68,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return BlocListener<BookingCubit, BookingState>(
       listenWhen: (previous, current) => current is BookingLoaded,
       listener: (context, state) {
-        // if (state is BookingLoaded && state.bookedSlots.isNotEmpty) {
-        //   _scrollToToday();
-        // }
+        // Handle state changes if needed
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +88,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
   }
 
   String _formatDate(String date) {
-    // Extract the date part if the input includes a time component
+    // Ensure the date is in the correct format
     final dateOnly = date.split('T')[0];
     return DateFormat("dd MMMM, yyyy", 'uz').format(DateTime.parse(dateOnly));
   }

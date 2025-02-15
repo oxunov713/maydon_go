@@ -2,13 +2,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
 import 'package:maydon_go/src/common/tools/price_formatter_extension.dart';
-
 import '../../../common/model/stadium_model.dart';
-import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 import '../../../common/widgets/custom_calendar.dart';
@@ -33,20 +32,33 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
   @override
   void initState() {
     super.initState();
+    final bookingCubit = context.read<BookingCubit>();
     if (widget.stadium.stadiumsSlots.isNotEmpty) {
-      context
-          .read<BookingCubit>()
-          .setSelectedDate(widget.stadium.stadiumsSlots.first.keys.first);
+      final initialStadium = widget.stadium.stadiumsSlots.first.keys.first;
+      bookingCubit.setSelectedStadium(initialStadium);
+      bookingCubit.setSelectedDate(_getTodayDate());
+      bookingCubit.getGroupedSlots(widget.stadium);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToToday());
   }
 
+  String _getTodayDate() {
+    return DateTime.now().toIso8601String().split('T')[0];
+  }
+
   void _scrollToToday() {
-    final keys = widget.stadium.stadiumsSlots
-        .first[context.read<BookingCubit>().selectedDate]?.keys
+    final bookingCubit = context.read<BookingCubit>();
+    final stadiumSlots = widget.stadium.stadiumsSlots.firstWhere(
+      (stadium) => stadium.containsKey(bookingCubit.selectedStadium),
+      orElse: () => {},
+    );
+
+    final keys = stadiumSlots[bookingCubit.selectedStadium]
+        ?.keys
         .map((date) => DateFormat("yyyy-MM-dd").format(date))
         .toList();
-    final today = DateFormat("yyyy-MM-dd").format(DateTime.now());
+
+    final today = _getTodayDate();
 
     if (keys != null && keys.contains(today)) {
       final todayIndex = keys.indexOf(today);
@@ -75,7 +87,8 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
     final double paddingVertical = deviceHeight * 0.02;
 
     return DefaultTabController(
-      length: 2, // Ikkita tab
+      length: 2,
+      // Ikkita tab
       child: SafeArea(
         child: Scaffold(
           body: CustomScrollView(
@@ -222,20 +235,20 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                   children: [
                                     BlocBuilder<BookingCubit, BookingState>(
                                       builder: (context, state) {
+                                        final bookingCubit =
+                                            context.read<BookingCubit>();
                                         return DropdownMenu<String>(
-                                          initialSelection: context
-                                              .read<BookingCubit>()
-                                              .selectedDate,
+                                          initialSelection:
+                                              bookingCubit.selectedStadium,
                                           onSelected: (String? value) {
                                             if (value != null) {
-                                              context
-                                                  .read<BookingCubit>()
-                                                  .setSelectedDate(value);
-
-                                              context
-                                                  .read<BookingCubit>()
-                                                  .changeStadium(value);
+                                              bookingCubit
+                                                  .setSelectedStadium(value);
+                                              bookingCubit.getGroupedSlots(
+                                                  widget.stadium);
                                               _scrollToToday();
+                                              bookingCubit.setSelectedDate(
+                                                  _getTodayDate());
                                             }
                                           },
                                           dropdownMenuEntries: widget
@@ -348,49 +361,144 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                               children: [
                                 BlocBuilder<BookingCubit, BookingState>(
                                   builder: (context, state) {
-                                    final groupedSlots =
-                                        <String, List<TimeSlot>>{};
-                                    final selectedStadiumSlots =
-                                        widget.stadium.stadiumsSlots.firstWhere(
-                                              (stadium) =>
-                                                  stadium.keys.first ==
-                                                  context
-                                                      .read<BookingCubit>()
-                                                      .selectedDate,
-                                              orElse: () => {},
-                                            )[context
-                                                .read<BookingCubit>()
-                                                .selectedDate] ??
-                                            {};
-
-                                    for (var entry
-                                        in selectedStadiumSlots.entries) {
-                                      final dateKey = DateFormat("yyyy-MM-dd")
-                                          .format(entry.key);
-                                      if (!groupedSlots.containsKey(dateKey)) {
-                                        groupedSlots[dateKey] = [];
-                                      }
-                                      groupedSlots[dateKey]!
-                                          .addAll(entry.value);
-                                    }
-
                                     return CustomCalendar(
                                         scrollController: _scrollController,
-                                        groupedSlots: groupedSlots);
+                                        groupedSlots: (state is BookingLoaded)
+                                            ? state.groupedSlots
+                                            : {});
                                   },
                                 ),
-                                ListView(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  children: const [
-                                    Text(
-                                      "Qo'shimcha ma'lumotlar",
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Column(
+                                    spacing: 10,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SvgPicture.asset(
+                                                height: deviceHeight * 0.04,
+                                                AppIcons.ballIcon,
+                                                color: AppColors.green,
+                                              ),
+                                              SizedBox(
+                                                  width: deviceWidth * 0.02),
+                                              Text(
+                                                "Stadionlar soni",
+                                                style: TextStyle(
+                                                    fontSize: addressFontSize,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            "3 ta",
+                                            style: TextStyle(
+                                                fontSize: addressFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.grey4),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SvgPicture.asset(
+                                                height: deviceHeight * 0.04,
+                                                AppIcons.shirtsIcon,
+                                              ),
+                                              SizedBox(
+                                                  width: deviceWidth * 0.02),
+                                              Text(
+                                                "Forma",
+                                                style: TextStyle(
+                                                    fontSize: addressFontSize,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            "Bor",
+                                            style: TextStyle(
+                                                fontSize: addressFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.grey4),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SvgPicture.asset(
+                                                height: deviceHeight * 0.04,
+                                                AppIcons.roofIcon,
+                                              ),
+                                              SizedBox(
+                                                  width: deviceWidth * 0.02),
+                                              Text(
+                                                "Usti yopiq stadion",
+                                                style: TextStyle(
+                                                    fontSize: addressFontSize,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            "Yo'q",
+                                            style: TextStyle(
+                                                fontSize: addressFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.grey4),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SvgPicture.asset(
+                                                height: deviceHeight * 0.04,
+                                                AppIcons.showerIcon,
+                                              ),
+                                              SizedBox(
+                                                  width: deviceWidth * 0.02),
+                                              Text(
+                                                "Yuvinish xonasi",
+                                                style: TextStyle(
+                                                    fontSize: addressFontSize,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                          Text(
+                                            "Bor",
+                                            style: TextStyle(
+                                                fontSize: addressFontSize,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.grey4),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -403,17 +511,177 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
               ),
             ],
           ),
-          bottomNavigationBar: BlocBuilder<BookingCubit, BookingState>(
-            builder: (context, state) {
-              return BottomSignButton(
-                function: () => context.pushNamed(AppRoutes.paymentPage),
-                text: "Booking  hours",
-                isdisabledBT: true,
-              );
+          bottomNavigationBar: BlocListener<BookingCubit, BookingState>(
+            listener: (context, state) {
+              if (state is BookingLoaded && state.confirmed) {
+                _showConfirmationDialog(context);
+              }
             },
+            child: BlocBuilder<BookingCubit, BookingState>(
+              builder: (context, state) {
+                final bookingCubit = context.read<BookingCubit>();
+                if (state is BookingLoaded) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: deviceWidth,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: const Color(0xff148A03),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            state.confirmed
+                                ? "Tasdiqlandi!"
+                                : "Surib tasdiqlang",
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                        ),
+                        Positioned(
+                          left: state.position,
+                          child: GestureDetector(
+                            onHorizontalDragUpdate: (details) {
+                              bookingCubit.updatePosition(details.primaryDelta!,
+                                  deviceWidth - deviceWidth * 0.2);
+                            },
+                            onHorizontalDragEnd: (details) {
+                              bookingCubit.confirmPosition(
+                                  deviceWidth - deviceWidth * 0.2);
+                            },
+                            child: Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.arrow_forward,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return BottomSignButton(
+                  function: () {},
+                  text: "Waiting",
+                  isdisabledBT: false,
+                );
+              },
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+void _showConfirmationDialog(BuildContext context) {
+  final bookingCubit = context.read<BookingCubit>();
+  final bookedSlots = bookingCubit.bookedSlots;
+
+  // Vaqtlarni sanalar bo'yicha guruhlash
+  final groupedSlots = groupSlotsByDate(bookedSlots);
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Center(
+          child: Text(
+            "Buyurtma",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...groupedSlots.entries.map((entry) {
+                final date = entry.key;
+                final slots = entry.value;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Tanlangan sana:",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          " ${DateFormat('dd.MM.yyyy').format(DateTime.parse(date))}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.red),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ...slots.map((slot) => Center(
+                          child: Text(
+                            "${DateFormat('HH:mm').format(slot.startTime)} - ${DateFormat('HH:mm').format(slot.endTime)}",
+                          ),
+                        )),
+                    const SizedBox(height: 20),
+                    // Har bir sana orasida bo'sh joy
+                  ],
+                );
+              }),
+            ],
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            onPressed: () {
+              context.pop(context); // Dialogni yopish
+            },
+            child: const Text(
+              "Bron qilish",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.green,
+                  fontSize: 18),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              context.pop(context); // Dialogni yopish
+            },
+            child: const Text(
+              "Bekor qilish",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.red,
+                  fontSize: 18),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+Map<String, List<TimeSlot>> groupSlotsByDate(List<TimeSlot> slots) {
+  final Map<String, List<TimeSlot>> groupedSlots = {};
+  for (var slot in slots) {
+    final dateKey = DateFormat('yyyy-MM-dd').format(slot.startTime);
+    if (!groupedSlots.containsKey(dateKey)) {
+      groupedSlots[dateKey] = [];
+    }
+    groupedSlots[dateKey]!.add(slot);
+  }
+  return groupedSlots;
 }

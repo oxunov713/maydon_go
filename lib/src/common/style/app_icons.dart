@@ -25,5 +25,8 @@ class AppIcons {
 
   static const stars = "assets/images/stars_icon.png";
 
-  static const comment = "assets/icons/chat-bubble.png";
+  static const showerIcon = "assets/icons/shower.svg";
+  static const roofIcon = "assets/icons/roof.svg";
+  static const ballIcon = "assets/icons/ball.svg";
+  static const shirtsIcon = "assets/icons/shirt.svg";
 }
