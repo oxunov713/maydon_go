@@ -11,8 +11,10 @@ class BookingLoaded extends BookingState {
   final Map<String, List<TimeSlot>> groupedSlots;
   final double position;
   final bool confirmed;
+  final bool dialogShown; // ✅ Dialog chiqarilgan-chiqarilmaganligini kuzatadi
 
   BookingLoaded({
+    required this.dialogShown,
     required this.groupedSlots,
     required this.selectedDate,
     required this.bookedSlots,
@@ -21,7 +23,7 @@ class BookingLoaded extends BookingState {
     this.confirmed = false,
   });
 
-  // copyWith method
+  // ✅ `dialogShown` ni ham copyWith ichiga qo‘shamiz
   BookingLoaded copyWith({
     String? selectedDate,
     List<TimeSlot>? bookedSlots,
@@ -29,6 +31,7 @@ class BookingLoaded extends BookingState {
     Map<String, List<TimeSlot>>? groupedSlots,
     double? position,
     bool? confirmed,
+    bool? dialogShown,
   }) {
     return BookingLoaded(
       selectedDate: selectedDate ?? this.selectedDate,
@@ -37,6 +40,7 @@ class BookingLoaded extends BookingState {
       groupedSlots: groupedSlots ?? this.groupedSlots,
       position: position ?? this.position,
       confirmed: confirmed ?? this.confirmed,
+      dialogShown: dialogShown ?? this.dialogShown, // ✅ Yangi qiymat
     );
   }
 }

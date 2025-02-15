@@ -1,16 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-
 import '../../../common/model/stadium_model.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
   BookingCubit()
       : super(BookingLoaded(
-            selectedDate: DateTime.now().toIso8601String().split('T')[0],
-            bookedSlots: [],
-            selectedStadium: '',
-            groupedSlots: {}));
+          selectedDate: DateTime.now().toIso8601String().split('T')[0],
+          bookedSlots: [],
+          selectedStadium: '',
+          groupedSlots: {},
+          position: 0.0,
+          confirmed: false,
+          dialogShown: false,
+        ));
 
   // bookedSlots getteri
   List<TimeSlot> get bookedSlots {
@@ -20,6 +23,23 @@ class BookingCubit extends Cubit<BookingState> {
     return []; // Agar state BookingLoaded bo'lmasa, bo'sh ro'yxat qaytariladi
   }
 
+  // selectedDate getteri
+  String get selectedDate {
+    if (state is BookingLoaded) {
+      return (state as BookingLoaded).selectedDate;
+    }
+    return DateTime.now().toIso8601String().split('T')[0];
+  }
+
+  // selectedStadium getteri
+  String get selectedStadium {
+    if (state is BookingLoaded) {
+      return (state as BookingLoaded).selectedStadium;
+    }
+    return '';
+  }
+
+  // Slider pozitsiyasini yangilash
   void updatePosition(double delta, double width) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -30,32 +50,25 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  // Slider tasdiqlash
   void confirmPosition(double width) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
-      bool newConfirmed = currentState.position >= width;
-      double newPosition = newConfirmed ? width : 0;
-      emit(currentState.copyWith(
-          position: newPosition, confirmed: newConfirmed));
+
+      if (!currentState.confirmed) {
+        bool newConfirmed = currentState.position >= width;
+        double newPosition = newConfirmed ? width : 0;
+
+        emit(currentState.copyWith(
+          position: newPosition,
+          confirmed: newConfirmed,
+          dialogShown: true,
+        ));
+      }
     }
   }
 
-  // selectedDate getteri
-  String get selectedDate {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).selectedDate;
-    }
-    return DateTime.now().toIso8601String().split(
-        'T')[0]; // Agar state BookingLoaded bo'lmasa, bugungi sana qaytariladi
-  }
-
-  String get selectedStadium {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).selectedStadium;
-    }
-    return '';
-  }
-
+  // Sana tanlash
   void setSelectedDate(String date) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -63,6 +76,7 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  // Stadion tanlash
   void setSelectedStadium(String stadium) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -70,6 +84,7 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  // Vaqt qo'shish
   void addBookingSlot(TimeSlot slot) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -81,6 +96,7 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  // Vaqtni olib tashlash
   void removeBookingSlot(TimeSlot slot) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -90,6 +106,27 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+  // Barcha vaqtlarni tozalash
+  void clearBookingSlots() {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      emit(currentState.copyWith(
+          bookedSlots: [],
+          confirmed: false,
+          dialogShown: false,
+          position: 0.0));
+    }
+  }
+
+  // Dialog ko'rsatilganligini belgilash
+  void setDialogShown(bool shown) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      emit(currentState.copyWith(dialogShown: shown));
+    }
+  }
+
+  // Vaqt band qilinganligini tekshirish
   bool isSlotBooked(TimeSlot slot) {
     if (state is BookingLoaded) {
       return (state as BookingLoaded).bookedSlots.contains(slot);
@@ -97,37 +134,34 @@ class BookingCubit extends Cubit<BookingState> {
     return false;
   }
 
+  // Vaqtlarni sanalar bo'yicha guruhlash
   void getGroupedSlots(StadiumDetail stadium) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
       final Map<String, List<TimeSlot>> groupedSlots = {};
 
-      // **1. Stadion topilishi kerak**
+      // Stadionni topish
       for (var stadiumSlot in stadium.stadiumsSlots) {
         if (stadiumSlot.containsKey(selectedStadium)) {
-          final slots = stadiumSlot[selectedStadium]; // stadion nomi bilan bog‘liq vaqtlar
+          final slots = stadiumSlot[selectedStadium];
 
           if (slots != null) {
             for (var entry in slots.entries) {
-              final DateTime dateKey = entry.key; // Sana (DateTime)
-              final List<TimeSlot> timeSlots = entry.value; // Shu sanaga tegishli vaqtlar
+              final DateTime dateKey = entry.key;
+              final List<TimeSlot> timeSlots = entry.value;
 
-              // **2. Sanani `yyyy-MM-dd` formatiga o‘tkazish**
               final String dateOnly = DateFormat("yyyy-MM-dd").format(dateKey);
 
-              // **3. Agar sana mavjud bo‘lmasa, yangi ro‘yxat yaratish**
               groupedSlots.putIfAbsent(dateOnly, () => []);
 
-              // **4. Shu sanaga tegishli vaqtlarni qo‘shish**
               groupedSlots[dateOnly]!.addAll(timeSlots);
             }
           }
         }
       }
 
-      // **5. Yangi state bilan UI-ni yangilash**
+      // Yangi state bilan UI-ni yangilash
       emit(currentState.copyWith(groupedSlots: groupedSlots));
     }
   }
-
 }

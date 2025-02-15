@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
-import 'package:maydon_go/src/common/tools/price_formatter_extension.dart';
+import '../../../common/tools/average_rating_extension.dart';
+import '../../..//common/tools/price_formatter_extension.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
@@ -552,7 +552,7 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                             },
                             onHorizontalDragEnd: (details) {
                               bookingCubit.confirmPosition(
-                                  deviceWidth - deviceWidth * 0.2);
+                                  deviceWidth - deviceWidth * 0.25);
                             },
                             child: Container(
                               width: 60,
@@ -588,8 +588,6 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
 void _showConfirmationDialog(BuildContext context) {
   final bookingCubit = context.read<BookingCubit>();
   final bookedSlots = bookingCubit.bookedSlots;
-
-  // Vaqtlarni sanalar bo'yicha guruhlash
   final groupedSlots = groupSlotsByDate(bookedSlots);
 
   showDialog(
@@ -606,59 +604,87 @@ void _showConfirmationDialog(BuildContext context) {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...groupedSlots.entries.map((entry) {
-                final date = entry.key;
-                final slots = entry.value;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: (groupedSlots.isNotEmpty)
+                ? groupedSlots.entries.map((entry) {
+                    final date = entry.key;
+                    final slots = entry.value;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Tanlangan sana:",
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Tanlangan sana:",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              " ${DateFormat('dd.MM.yyyy').format(DateTime.parse(date))}",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.red),
+                            ),
+                          ],
                         ),
-                        Text(
-                          " ${DateFormat('dd.MM.yyyy').format(DateTime.parse(date))}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.red),
+                        const SizedBox(height: 10),
+                        Column(
+                          children: slots.map((slot) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Center(
+                                child: Text(
+                                  "${DateFormat('HH:mm').format(slot.startTime)} - ${DateFormat('HH:mm').format(slot.endTime)}",
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
+                        const SizedBox(
+                            height: 20), // Har bir sana orasida bo'sh joy
                       ],
-                    ),
-                    const SizedBox(height: 10),
-                    ...slots.map((slot) => Center(
-                          child: Text(
-                            "${DateFormat('HH:mm').format(slot.startTime)} - ${DateFormat('HH:mm').format(slot.endTime)}",
-                          ),
-                        )),
-                    const SizedBox(height: 20),
-                    // Har bir sana orasida bo'sh joy
-                  ],
-                );
-              }),
-            ],
+                    );
+                  }).toList()
+                : [const Center(child: Text("Siz hali vaqt tanlamadingiz"))],
           ),
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
+          groupedSlots.isNotEmpty
+              ? TextButton(
+                  onPressed: () {
+                    context.pop();
+                    List<String> friendsAvatars = [
+                      "https://randomuser.me/api/portraits/men/1.jpg",
+                      "https://randomuser.me/api/portraits/women/2.jpg",
+                      "https://randomuser.me/api/portraits/men/3.jpg",
+                      "https://randomuser.me/api/portraits/women/4.jpg",
+                      "https://randomuser.me/api/portraits/men/1.jpg",
+                      "https://randomuser.me/api/portraits/women/2.jpg",
+                      "https://randomuser.me/api/portraits/men/3.jpg",
+                      "https://randomuser.me/api/portraits/women/4.jpg",
+                      "https://randomuser.me/api/portraits/men/1.jpg",
+                      "https://randomuser.me/api/portraits/women/2.jpg",
+                      "https://randomuser.me/api/portraits/men/3.jpg",
+                      "https://randomuser.me/api/portraits/women/4.jpg",
+                    ]; // Do‘stlarning rasm URL'lari
+
+                    _showBookingConfirmationSheet(context, friendsAvatars);
+                  },
+                  child: const Text(
+                    "Bron qilish",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.green,
+                        fontSize: 18),
+                  ),
+                )
+              : const SizedBox(),
           TextButton(
             onPressed: () {
-              context.pop(context); // Dialogni yopish
-            },
-            child: const Text(
-              "Bron qilish",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.green,
-                  fontSize: 18),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              context.pop(context); // Dialogni yopish
+              context.pop();
+              context.read<BookingCubit>().clearBookingSlots();
             },
             child: const Text(
               "Bekor qilish",
@@ -676,12 +702,89 @@ void _showConfirmationDialog(BuildContext context) {
 
 Map<String, List<TimeSlot>> groupSlotsByDate(List<TimeSlot> slots) {
   final Map<String, List<TimeSlot>> groupedSlots = {};
+
   for (var slot in slots) {
-    final dateKey = DateFormat('yyyy-MM-dd').format(slot.startTime);
-    if (!groupedSlots.containsKey(dateKey)) {
-      groupedSlots[dateKey] = [];
-    }
+    // Sana faqat yyy-MM-dd formatida olinadi
+    final String dateKey = DateFormat('yyyy-MM-dd').format(slot.startTime);
+
+    // Agar bu sana mavjud bo'lmasa, yangi bo'sh list yaratamiz
+    groupedSlots.putIfAbsent(dateKey, () => []);
+
+    // O'sha sanaga tegishli slotlarni qo'shamiz
     groupedSlots[dateKey]!.add(slot);
   }
+
   return groupedSlots;
+}
+
+void _showBookingConfirmationSheet(
+    BuildContext context, List<String> friendsAvatars) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      //TODO do'stlarni tanlay olishi kerak,select all,
+      //TODO okni yonida send degan button chiqishi kerak
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 50),
+            const SizedBox(height: 10),
+            const Text(
+              "Bron qilindi!",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              "Do‘stlaringiz bilan baham ko‘ring:",
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 10),
+            _buildFriendsAvatars(friendsAvatars), // Do‘stlar avatari
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              onPressed: () {
+                context.read<BookingCubit>().clearBookingSlots();
+                context.pop();
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+                child: Text("OK",
+                    style: TextStyle(fontSize: 18, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildFriendsAvatars(List<String> avatars) {
+  return SizedBox(
+    height: 60,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: avatars.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: CircleAvatar(
+            radius: 30,
+            backgroundImage: NetworkImage(avatars[index]),
+          ),
+        );
+      },
+    ),
+  );
 }

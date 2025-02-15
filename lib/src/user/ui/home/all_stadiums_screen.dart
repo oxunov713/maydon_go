@@ -396,9 +396,14 @@ class AllStadiumsScreen extends StatelessWidget {
     final todaySlots = <TimeSlot>[];
     for (var stadiumSlot in stadiumsSlots) {
       for (var entry in stadiumSlot.entries) {
-        final slots = entry.value[today];
-        if (slots != null) {
-          todaySlots.addAll(slots);
+        for (var date in entry.value.keys) {
+
+          if (date.year == today.year && date.month == today.month && date.day == today.day) {
+            final slots = entry.value[date];
+            if (slots != null) {
+              todaySlots.addAll(slots);
+            }
+          }
         }
       }
     }
