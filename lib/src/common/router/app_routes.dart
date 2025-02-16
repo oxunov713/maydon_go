@@ -9,6 +9,7 @@ class AppRoutes {
   static const String locationScreen = 'location';
   static const String allStadiums = 'stadiums';
   static const String detailStadium = 'detailStadiums';
-  static const String paymentPage = 'payment';
   static const String welcome = 'welcome';
+  static const String saved = 'saved';
+  static const String myClub = 'myClub';
 }

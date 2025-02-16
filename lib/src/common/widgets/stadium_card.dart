@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:maydon_go/src/user/bloc/auth_cubit/auth_state.dart';
-import 'package:provider/provider.dart';
-import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../model/stadium_model.dart';
 import '../style/app_colors.dart';
 import '../style/app_icons.dart';
@@ -26,18 +23,12 @@ class StadiumCard extends StatelessWidget {
     final deviceWidth = MediaQuery.of(context).size.width;
 
     // Fetch authentication state
-    final authState = context.watch<AuthCubit>().state;
 
     return GestureDetector(
       onTap: () {
-        if (authState is AuthState) {
-          // Proceed with the action if the user is authenticated
-          onTap(stadium);
-        } else {
-          // Show login prompt if the user is not authenticated
-          _showLoginPrompt(context);
-        }
-      },
+        // Proceed with the action if the user is authenticated
+        onTap(stadium);
+            },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         decoration: const BoxDecoration(
@@ -69,28 +60,6 @@ class StadiumCard extends StatelessWidget {
     );
   }
 
-  void _showLoginPrompt(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Please Log In'),
-        content: const Text('You need to be logged in to perform this action.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close the dialog
-              Navigator.pushNamed(context, '/login'); // Navigate to login screen
-            },
-            child: const Text('Log In'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context), // Close dialog without action
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
 
   Row _buildTitleAndRating(BuildContext context, StadiumDetail stadium, int stadiumIndex) {
     return Row(

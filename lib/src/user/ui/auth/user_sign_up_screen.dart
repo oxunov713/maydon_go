@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
 import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
 
-import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/tools/language_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -66,10 +65,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               labelText: "Ismingiz",
               isName: true, // ✅ Ism kiritish rejimi
               validator: (value) {
-                if (value == null || value.isEmpty)
+                if (value == null || value.isEmpty) {
                   return "Iltimos, Ismingizni kiriting!";
-                if (value.length < 3)
+                }
+                if (value.length < 3) {
                   return "Ism kamida 3 ta harf bo‘lishi kerak!";
+                }
                 return null;
               },
             ),
@@ -101,8 +102,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       context.read<AuthCubit>().togglePassword(type: 1),
                   validator: (value) {
                     if (value!.isEmpty) return context.lan.passwordError;
-                    if (value.length < 6)
+                    if (value.length < 6) {
                       return context.lan.passwordMinLengthError;
+                    }
                     return null;
                   },
                 );

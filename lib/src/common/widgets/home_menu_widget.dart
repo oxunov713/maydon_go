@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
-import 'package:provider/provider.dart';
 
 import '../../user/ui/home/all_stadiums_screen.dart';
 import '../style/app_colors.dart';
@@ -39,7 +39,7 @@ Widget buildIconButton({
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AllStadiumsScreen(),
+                builder: (context) => const AllStadiumsScreen(),
               ));
         }
       },

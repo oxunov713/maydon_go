@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/screens/welcome_screen.dart';
+import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
 
 import '../../user/ui/auth/user_log_in_screen.dart';
 import '../../owner/screens/auth/owner_sign_up.dart';
@@ -7,13 +7,13 @@ import '../../user/ui/auth/user_sign_up_screen.dart';
 import '../../user/ui/home/all_stadiums_screen.dart';
 import '../../user/ui/home/home_screen.dart';
 import '../../user/ui/home/locations_screen.dart';
-import '../../user/ui/home/payment_page.dart';
 
+import '../../user/ui/home/saved_stadiums.dart';
 import '../../user/ui/home/stadium_detail.dart';
 import '../model/stadium_model.dart';
 import '../screens/choose_language_screens.dart';
 import '../screens/role_screen.dart';
-import '../screens/splash_screen.dart';
+import '../screens/welcome_screen.dart';
 import '../widgets/sms_verification.dart';
 import 'app_routes.dart';
 
@@ -61,12 +61,7 @@ final GoRouter _router = GoRouter(
                             GoRoute(
                               path: "stadiums",
                               name: AppRoutes.allStadiums,
-                              builder: (context, state) => AllStadiumsScreen(),
-                            ),
-                            GoRoute(
-                              path: "payment",
-                              name: AppRoutes.paymentPage,
-                              builder: (context, state) => PaymentPage(),
+                              builder: (context, state) => const AllStadiumsScreen(),
                             ),
                             GoRoute(
                               path: "detail",
@@ -75,6 +70,16 @@ final GoRouter _router = GoRouter(
                                 final stadium = state.extra as StadiumDetail;
                                 return StadiumDetailScreen(stadium: stadium);
                               },
+                            ),
+                            GoRoute(
+                              path: "saved",
+                              name: AppRoutes.saved,
+                              builder: (context, state) => const SavedStadiums(),
+                            ),
+                            GoRoute(
+                              path: "myClub",
+                              name: AppRoutes.myClub,
+                              builder: (context, state) => const MyClubScreen(),
                             ),
                           ]),
                       GoRoute(

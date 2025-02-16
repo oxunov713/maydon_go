@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -86,7 +85,7 @@ class _SmsVerificationState extends State<SmsVerification> {
                   child: Text(
                     isResendButtonEnabled
                         ? context.lan.resend_code
-                        : '${context.lan.otp_verification_resend_timer(context.read<AuthCubit>().remainingSeconds)}',
+                        : context.lan.otp_verification_resend_timer(context.read<AuthCubit>().remainingSeconds),
                     style: TextStyle(
                       color: isResendButtonEnabled
                           ? AppColors.green

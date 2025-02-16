@@ -14,8 +14,8 @@ class ApiService {
     dio = Dio(
       BaseOptions(
         baseUrl: Config.baseUrl, // Backend API manzili
-        connectTimeout: Duration(seconds: 100),
-        receiveTimeout: Duration(seconds: 100),
+        connectTimeout: const Duration(seconds: 100),
+        receiveTimeout: const Duration(seconds: 100),
       ),
     );
 
@@ -33,7 +33,6 @@ class ApiService {
       onError: (error, handler) {
         if (error.response?.statusCode == 401) {
           // Agar 401 qaytsa, token muddati tugagan
-          print('Token muddati o‘tgan, foydalanuvchini logout qilish kerak.');
         }
         return handler.next(error);
       },

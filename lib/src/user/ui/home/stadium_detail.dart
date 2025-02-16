@@ -103,7 +103,7 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                       final cubit = context.read<SavedStadiumsCubit>();
 
                       bool isSaved = false;
-                      if (savedState is SavedStadiumsLoadedState) {
+                      if (savedState is SavedStadiumsLoaded) {
                         isSaved = cubit.isStadiumSaved(widget.stadium);
                       }
 
@@ -592,8 +592,10 @@ void _showConfirmationDialog(BuildContext context) {
 
   showDialog(
     context: context,
+    barrierDismissible: false,
     builder: (context) {
       return AlertDialog(
+
         title: const Center(
           child: Text(
             "Buyurtma",
@@ -695,6 +697,7 @@ void _showConfirmationDialog(BuildContext context) {
             ),
           ),
         ],
+
       );
     },
   );

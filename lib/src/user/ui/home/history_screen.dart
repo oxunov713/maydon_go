@@ -24,7 +24,7 @@ class HistoryScreen extends StatelessWidget {
             "Panda",
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
-          subtitle: Text(
+          subtitle: const Text(
             "+998 (50) 002-07-13",
             style: TextStyle(),
           ),
@@ -34,20 +34,20 @@ class HistoryScreen extends StatelessWidget {
             children: [
               Text(
                 "$index soat",
-                style: TextStyle(
+                style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: AppColors.green,
                     fontSize: 15),
               ),
               Text(
                 parsedDate.toString().substring(0, 10),
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ],
           ),
           shape: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide(color: AppColors.main)),
+              borderSide: const BorderSide(color: AppColors.main)),
           tileColor: AppColors.green40,
         ),
         separatorBuilder: (context, index) => const SizedBox(height: 15),

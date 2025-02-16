@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../model/stadium_model.dart';
+import '../model/userinfo_model.dart';
 
 final class Config {
   const Config._();
@@ -11,6 +12,42 @@ final class Config {
 List parsedJson = jsonDecode(_jsonData);
 List<StadiumDetail> $fakeData =
     parsedJson.map((json) => StadiumDetail.fromJson(json)).toList();
+List<Map<String, Object?>> _fakeUserData = [
+  {
+    "firstName": "John",
+    "lastName": "Doe",
+    "imageUrl": "https://randomuser.me/api/portraits/men/1.jpg",
+    "contactNumber": "+1234567890"
+  },
+  {
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "imageUrl": "https://randomuser.me/api/portraits/women/2.jpg",
+    "contactNumber": "+9876543210"
+  },
+  {
+    "firstName": "Alice",
+    "lastName": "Brown",
+    "imageUrl": "https://randomuser.me/api/portraits/women/3.jpg",
+    "contactNumber": "+1122334455"
+  },
+  {
+    "firstName": "Michael",
+    "lastName": "Johnson",
+    "imageUrl": "https://randomuser.me/api/portraits/men/4.jpg",
+    "contactNumber": "+5566778899"
+  },
+  {
+    "firstName": "Emily",
+    "lastName": "Davis",
+    "imageUrl": "",
+    "contactNumber": "+6677889900"
+  }
+];
+
+// JSONni UserInfo modeliga aylantirish
+List<UserInfo> $users =
+    _fakeUserData.map((json) => UserInfo.fromJson(json)).toList();
 
 const String _jsonData = """[
   {

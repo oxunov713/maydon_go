@@ -12,7 +12,14 @@ class HomeLoadedState extends HomeState {
   final List<StadiumDetail> stadiums;
   final Set<Marker> markers;
   final LocationData? currentLocation;
+  final List<StadiumDetail> searchResults;
 
-  HomeLoadedState(
-      {required this.stadiums, required this.markers, this.currentLocation});
+  HomeLoadedState({
+    required this.stadiums,
+    required this.markers,
+    required this.currentLocation,
+    required this.searchResults,
+  });
 }
+
+class HomeLoadingState extends HomeState {}

@@ -17,7 +17,7 @@ Widget customListTile({
         : Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => goToScreen!,
+              builder: (context) => goToScreen,
             ),
           ),
   );

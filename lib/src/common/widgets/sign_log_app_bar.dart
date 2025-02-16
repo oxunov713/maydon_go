@@ -11,7 +11,7 @@ Widget signLogAppBar(BuildContext context, String title) {
     Text(
       textAlign: TextAlign.center,
       title,
-      style: TextStyle(
+      style: const TextStyle(
           color: AppColors.green, fontSize: 25, fontWeight: FontWeight.bold),
     ),
   ]);

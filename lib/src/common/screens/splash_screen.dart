@@ -10,7 +10,7 @@ import '../style/app_colors.dart';
 import '../style/app_icons.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -47,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _showPermissionDialog() async {
-    final title = "Location Permission Required";
+    const title = "Location Permission Required";
     final content = Platform.isIOS
         ? "Please enable location services in your device settings to use this app and find nearby stadiums."
         : "Please grant location access to use this app and find nearby stadiums. You can enable it in your device settings.";
@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(title),
+        title: const Text(title),
         content: Text(content),
         actions: [
           TextButton(

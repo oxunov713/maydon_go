@@ -1,11 +1,9 @@
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 
-import '../../common/tools/language_extension.dart';
 import '../../user/bloc/locale_cubit/locale_cubit.dart';
 import '../router/app_routes.dart';
 import '../widgets/sign_button.dart';
@@ -57,10 +55,10 @@ class ChooseLanguageScreens extends StatelessWidget {
     return ListTile(
       onTap: () => context.read<LocaleCubit>().setLocale(locale),
       shape:
-          StadiumBorder(side: BorderSide(color: AppColors.grey4, width: 1.5)),
+          const StadiumBorder(side: BorderSide(color: AppColors.grey4, width: 1.5)),
       leading: CountryFlag.fromLanguageCode(
         locale,
-        shape: Circle(),
+        shape: const Circle(),
       ),
       title: Text(text),
       trailing: CircleAvatar(
@@ -70,7 +68,7 @@ class ChooseLanguageScreens extends StatelessWidget {
           backgroundColor: AppColors.white,
           radius: 10.5,
           child: isSelected
-              ? CircleAvatar(
+              ? const CircleAvatar(
                   backgroundColor: AppColors.green,
                   radius: 7,
                 )

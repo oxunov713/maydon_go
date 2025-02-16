@@ -16,18 +16,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final homeCubit = context.read<HomeCubit>();
 
-    // Initialize location and markers only once
-    if (homeCubit.currentLocation == null) {
-      homeCubit.initializeLocation(context);
-      homeCubit.fetchStadiums().then((_) {
-        homeCubit.setMarkers();
-      });
+    if (!_isInitialized) {
+      _isInitialized = true;
+      homeCubit.initializeApp(context);
     }
   }
 
@@ -41,12 +39,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SafeArea(
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
+        // ✅ Klaviatura UI-ni ko'tarmasligi uchun
         key: _scaffoldKey,
-        body: BlocBuilder<HomeCubit, HomeState>(
-          builder: (context, state) {
-            return context.read<HomeCubit>().currentPage();
-          },
+        body: Column(
+          children: [
+            Expanded(
+              // ✅ Oq bo'sh joyni yo'q qiladi
+              child: BlocBuilder<HomeCubit, HomeState>(
+                builder: (context, state) {
+                  return context.read<HomeCubit>().currentPage();
+                },
+              ),
+            ),
+          ],
         ),
         floatingActionButton: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -59,15 +65,14 @@ class _HomeScreenState extends State<HomeScreen> {
               radius: floatingButtonInnerRadius,
               backgroundColor: AppColors.green,
               child: SvgPicture.asset(
-                AppIcons.locationIcon, // Replace with your custom SVG icon
+                AppIcons.locationIcon,
                 height: floatingButtonIconSize,
-                color: AppColors.white, // Customize icon color if needed
               ),
             ),
           ),
         ),
         floatingActionButtonLocation:
-        FloatingActionButtonLocation.miniCenterDocked,
+            FloatingActionButtonLocation.miniCenterDocked,
         bottomNavigationBar: BlocBuilder<HomeCubit, HomeState>(
           builder: (context, state) {
             return BottomNavigationBar(
@@ -89,17 +94,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   label: "Stadionlar",
                 ),
-                BottomNavigationBarItem(
+                const BottomNavigationBarItem(
                   icon: Icon(Icons.bookmark_border),
                   label: "Saqlangan",
                 ),
-                BottomNavigationBarItem(
+                const BottomNavigationBarItem(
                   icon: SizedBox.shrink(),
                   label: "",
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.history),
-                  label: "Tarix",
+                  icon: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: SvgPicture.asset(
+                      AppIcons.ballIcon,
+                      color: AppColors.white,
+                      height: floatingButtonIconSize * 0.9,
+                    ),
+                  ),
+                  label: "My Club",
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(

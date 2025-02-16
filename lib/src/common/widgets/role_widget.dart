@@ -31,7 +31,7 @@ Widget buildRoleCard({
               backgroundColor: AppColors.white,
               radius: isSelected ? 16 : 17,
               child: isSelected
-                  ? CircleAvatar(
+                  ? const CircleAvatar(
                       backgroundColor: AppColors.green,
                       radius: 11,
                     )
@@ -45,7 +45,7 @@ Widget buildRoleCard({
               Text(
                 title,
                 textAlign: TextAlign.start,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.main,
                   fontSize: 20,
@@ -54,7 +54,7 @@ Widget buildRoleCard({
               Text(
                 subtitle,
                 textAlign: TextAlign.start,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: AppColors.secondary,
                   fontSize: 12,
