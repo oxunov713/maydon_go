@@ -3,6 +3,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
 import '../../bloc/my_club_cubit/my_club_cubit.dart';
 
@@ -12,6 +14,7 @@ class MyClubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white2,
       appBar: AppBar(title: const Text("MaydonGo")),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
@@ -20,13 +23,22 @@ class MyClubScreen extends StatelessWidget {
             if (state is MyClubLoaded) {
               return CustomScrollView(
                 slivers: [
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.only(bottom: 15),
-                      child: Text(
-                        "Your friends",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Your friends",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                          Text(
+                            "${state.connections.length}/15",
+                            style: TextStyle(fontSize: 15),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -47,7 +59,7 @@ class MyClubScreen extends StatelessWidget {
                                   backgroundColor: AppColors.green,
                                   child: CircleAvatar(
                                     radius: 30,
-                                    backgroundColor: Colors.blueGrey.shade100,
+                                    backgroundColor: AppColors.white,
                                     child: IconButton(
                                       icon: const Icon(
                                         Icons.add,
@@ -78,15 +90,18 @@ class MyClubScreen extends StatelessWidget {
                           final user = state.connections[index - 1];
                           return Column(
                             children: [
-                              CircleAvatar(
-                                radius: 35,
-                                backgroundColor: Colors.blueGrey.shade100,
-                                backgroundImage: user.imageUrl != null &&
-                                        user.imageUrl!.isNotEmpty
-                                    ? NetworkImage(user.imageUrl!)
-                                    : const AssetImage(
-                                            "assets/images/ronaldu_avatar.jpg")
-                                        as ImageProvider,
+                              GestureDetector(
+                                onTap: () => context.pushNamed(AppRoutes.chat,extra: user),
+                                child: CircleAvatar(
+                                  radius: 35,
+                                  backgroundColor: AppColors.white,
+                                  backgroundImage: user.imageUrl != null &&
+                                          user.imageUrl!.isNotEmpty
+                                      ? NetworkImage(user.imageUrl!)
+                                      : const AssetImage(
+                                              "assets/images/ronaldu_avatar.jpg")
+                                          as ImageProvider,
+                                ),
                               ),
                               const SizedBox(height: 5),
                               Text(
@@ -98,6 +113,110 @@ class MyClubScreen extends StatelessWidget {
                             ],
                           );
                         },
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                      child: Padding(
+                    padding: EdgeInsets.only(bottom: 15),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Your clubs",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                        Text(
+                          "2/2",
+                          style: TextStyle(fontSize: 15),
+                        ),
+                      ],
+                    ),
+                  )),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 300,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(width: 5),
+                        itemCount: 2,
+                        itemBuilder: (context, index) => Container(
+                          width: 200,
+                          decoration: BoxDecoration(
+                              color: AppColors.green3,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(15))),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Players",
+                                      style: TextStyle(
+                                          color: AppColors.white,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    Text(
+                                      "3/11",
+                                      style: TextStyle(
+                                          color: AppColors.white,
+                                          fontWeight: FontWeight.w600),
+                                    )
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Center(
+                                      child: CircleAvatar(
+                                        radius: 50,
+                                        backgroundImage: NetworkImage(
+                                          "https://brandlogos.net/wp-content/uploads/2020/08/real-madrid-logo.png",
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 30),
+                                    Text(
+                                      "Tashkent Bulls",
+                                      style: TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => context
+                                          .pushNamed(AppRoutes.clubDetail),
+                                      child: Container(
+                                        height: 30,
+                                        width: 200,
+                                        margin: EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 20),
+                                        decoration: BoxDecoration(
+                                            color: AppColors.blue,
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(8))),
+                                        child: Center(
+                                          child: Text(
+                                            "View",
+                                            style: TextStyle(
+                                                color: AppColors.white,
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -185,7 +304,6 @@ class UserSearchDelegate extends SearchDelegate<String> {
                   icon: const Icon(Icons.person_add, color: Colors.green),
                   onPressed: () {
                     myClubCubit.addConnection(user);
-
                     close(context, "");
                   },
                 ),

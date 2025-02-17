@@ -10,39 +10,39 @@ class MyClubCubit extends Cubit<MyClubState> {
     _loadUsers();
   }
 
-  final List<UserInfo> _allUsers = []; // Barcha foydalanuvchilar
-  final List<UserInfo> _connections = []; // Qo‘shilgan connectionlar
+  final List<UserInfo> _allUsers = [];
+  final List<UserInfo> _connections = [];
 
   void _loadUsers() {
-    // Fake user data
-    _allUsers.addAll($users);
-
-    emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
+    Future.delayed(Duration.zero, () {
+      _allUsers.addAll($users);
+      emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
+    });
   }
 
   void addConnection(UserInfo user) {
     if (!_connections.contains(user)) {
       _connections.add(user);
-      emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
+      emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
     }
   }
 
   void removeConnection(UserInfo user) {
     _connections.remove(user);
-    emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
+    emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
   }
 
   void searchUsers(String query) {
     if (query.isEmpty) {
-      emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
+      emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
       return;
     }
 
     final results = _allUsers.where((user) {
-      return user.contactNumber != null &&
-          user.contactNumber!.contains(query);
+      return user.contactNumber != null && user.contactNumber!.contains(query);
     }).toList();
 
-    emit(MyClubLoaded(connections: _connections, searchResults: results));
+    emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(results)));
   }
 }
+

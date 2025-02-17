@@ -1,4 +1,8 @@
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/userinfo_model.dart';
+import 'package:maydon_go/src/user/ui/home/chat_screen.dart';
+import 'package:maydon_go/src/user/ui/home/club_detail_screen.dart';
+import 'package:maydon_go/src/user/ui/home/club_teammates.dart';
 import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
 
 import '../../user/ui/auth/user_log_in_screen.dart';
@@ -61,7 +65,8 @@ final GoRouter _router = GoRouter(
                             GoRoute(
                               path: "stadiums",
                               name: AppRoutes.allStadiums,
-                              builder: (context, state) => const AllStadiumsScreen(),
+                              builder: (context, state) =>
+                                  const AllStadiumsScreen(),
                             ),
                             GoRoute(
                               path: "detail",
@@ -74,12 +79,33 @@ final GoRouter _router = GoRouter(
                             GoRoute(
                               path: "saved",
                               name: AppRoutes.saved,
-                              builder: (context, state) => const SavedStadiums(),
+                              builder: (context, state) =>
+                                  const SavedStadiums(),
                             ),
                             GoRoute(
                               path: "myClub",
                               name: AppRoutes.myClub,
                               builder: (context, state) => const MyClubScreen(),
+                            ),
+                            GoRoute(
+                              path: "chat",
+                              name: AppRoutes.chat,
+                              builder: (context, state) {
+                                final user = state.extra as UserInfo;
+                                return ChatScreen(user: user);
+                              },
+                            ),
+                            GoRoute(
+                              path: "clubDetail",
+                              name: AppRoutes.clubDetail,
+                              builder: (context, state) =>
+                                  const ClubDetailScreen(),
+                            ),
+                            GoRoute(
+                              path: "clubTeammates",
+                              name: AppRoutes.clubTeammates,
+                              builder: (context, state) =>
+                                  const ClubTeammates(),
                             ),
                           ]),
                       GoRoute(

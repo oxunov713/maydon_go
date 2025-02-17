@@ -12,4 +12,7 @@ class AppRoutes {
   static const String welcome = 'welcome';
   static const String saved = 'saved';
   static const String myClub = 'myClub';
+  static const String clubDetail = 'clubDetail';
+  static const String clubTeammates = 'clubTeammates';
+  static const String chat = 'chat';
 }
