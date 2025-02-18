@@ -72,7 +72,7 @@ class HomeCubit extends Cubit<HomeState> {
       case 2:
         return const LocationsScreen();
       case 3:
-        return const MyClubScreen();
+        return  MyClubScreen();
       case 4:
         return const ProfileScreen();
       default:

@@ -4,6 +4,7 @@ import 'package:maydon_go/src/user/ui/home/chat_screen.dart';
 import 'package:maydon_go/src/user/ui/home/club_detail_screen.dart';
 import 'package:maydon_go/src/user/ui/home/club_teammates.dart';
 import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
+import 'package:maydon_go/src/user/ui/home/user_coins_ranking.dart';
 
 import '../../user/ui/auth/user_log_in_screen.dart';
 import '../../owner/screens/auth/owner_sign_up.dart';
@@ -85,7 +86,12 @@ final GoRouter _router = GoRouter(
                             GoRoute(
                               path: "myClub",
                               name: AppRoutes.myClub,
-                              builder: (context, state) => const MyClubScreen(),
+                              builder: (context, state) => MyClubScreen(),
+                            ),
+                            GoRoute(
+                              path: "coinsRanking",
+                              name: AppRoutes.coinsRanking,
+                              builder: (context, state) => UserCoinsRanking(),
                             ),
                             GoRoute(
                               path: "chat",

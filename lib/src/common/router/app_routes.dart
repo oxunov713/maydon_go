@@ -15,4 +15,5 @@ class AppRoutes {
   static const String clubDetail = 'clubDetail';
   static const String clubTeammates = 'clubTeammates';
   static const String chat = 'chat';
+  static const String coinsRanking = 'coinsRanking';
 }

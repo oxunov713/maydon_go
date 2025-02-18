@@ -14,27 +14,31 @@ class MyClubCubit extends Cubit<MyClubState> {
   final List<UserInfo> _connections = [];
 
   void _loadUsers() {
-    Future.delayed(Duration.zero, () {
-      _allUsers.addAll($users);
-      emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
-    });
+    _allUsers.addAll($users);
+    emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
   }
 
   void addConnection(UserInfo user) {
     if (!_connections.contains(user)) {
       _connections.add(user);
-      emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
+      emit(MyClubLoaded(
+          connections: List.from(_connections),
+          searchResults: List.from(_allUsers)));
     }
   }
 
   void removeConnection(UserInfo user) {
     _connections.remove(user);
-    emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
+    emit(MyClubLoaded(
+        connections: List.from(_connections),
+        searchResults: List.from(_allUsers)));
   }
 
   void searchUsers(String query) {
     if (query.isEmpty) {
-      emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(_allUsers)));
+      emit(MyClubLoaded(
+          connections: List.from(_connections),
+          searchResults: List.from(_allUsers)));
       return;
     }
 
@@ -42,7 +46,8 @@ class MyClubCubit extends Cubit<MyClubState> {
       return user.contactNumber != null && user.contactNumber!.contains(query);
     }).toList();
 
-    emit(MyClubLoaded(connections: List.from(_connections), searchResults: List.from(results)));
+    emit(MyClubLoaded(
+        connections: List.from(_connections),
+        searchResults: List.from(results)));
   }
 }
-

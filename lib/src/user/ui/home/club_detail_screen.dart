@@ -20,7 +20,7 @@ class ClubDetailScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () =>context.pushNamed(AppRoutes.clubTeammates),
+            onPressed: () => context.pushNamed(AppRoutes.clubTeammates),
             icon: Icon(Icons.edit),
           )
         ],
@@ -99,7 +99,7 @@ class ClubDetailScreen extends StatelessWidget {
                   PlayerCircleAvatar(
                     deviceHeight: deviceHeight,
                     position: "RB",
-                    user: $users[7],
+                    user: null,
                   ),
                 ],
               ),

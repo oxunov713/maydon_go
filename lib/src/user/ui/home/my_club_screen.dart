@@ -1,18 +1,29 @@
-// ignore_for_file: unnecessary_const
-
 import 'dart:async';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
+import '../../../common/constants/config.dart';
 import '../../../common/style/app_colors.dart';
 import '../../bloc/my_club_cubit/my_club_cubit.dart';
 
 class MyClubScreen extends StatelessWidget {
-  const MyClubScreen({super.key});
+  MyClubScreen({super.key});
+
+  final List<Map<String, dynamic>> users = [
+    {'name': 'Alisher', 'coins': 1200},
+    {'name': 'Durbek', 'coins': 980},
+    {'name': 'Muhamadali', 'coins': 860},
+    {'name': 'Rahimjon', 'coins': 750},
+    {'name': 'Azizbek', 'coins': 900},
+    {'name': 'Murod', 'coins': 620},
+    {'name': 'Nodir', 'coins': 590},
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height;
     return Scaffold(
       backgroundColor: AppColors.white2,
       appBar: AppBar(title: const Text("MaydonGo")),
@@ -35,7 +46,7 @@ class MyClubScreen extends StatelessWidget {
                                 fontWeight: FontWeight.bold, fontSize: 20),
                           ),
                           Text(
-                            "${state.connections.length}/15",
+                            "${state.connections.length}/10",
                             style: TextStyle(fontSize: 15),
                           ),
                         ],
@@ -58,7 +69,7 @@ class MyClubScreen extends StatelessWidget {
                                   radius: 35,
                                   backgroundColor: AppColors.green,
                                   child: CircleAvatar(
-                                    radius: 30,
+                                    radius: 32,
                                     backgroundColor: AppColors.white,
                                     child: IconButton(
                                       icon: const Icon(
@@ -78,7 +89,7 @@ class MyClubScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 5),
                                 const Text(
-                                  "Add",
+                                  "Add friends",
                                   style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500),
@@ -91,7 +102,8 @@ class MyClubScreen extends StatelessWidget {
                           return Column(
                             children: [
                               GestureDetector(
-                                onTap: () => context.pushNamed(AppRoutes.chat,extra: user),
+                                onTap: () => context.pushNamed(AppRoutes.chat,
+                                    extra: user),
                                 child: CircleAvatar(
                                   radius: 35,
                                   backgroundColor: AppColors.white,
@@ -220,12 +232,149 @@ class MyClubScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 15, top: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "World ranking",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                context.pushNamed(AppRoutes.coinsRanking),
+                            child: Text(
+                              "Barchasi",
+                              style: TextStyle(
+                                  fontSize: 15, color: AppColors.blue),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: height * 0.62,
+                      child: ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: users.length,
+                        itemBuilder: (context, index) {
+                          final maxCoins = users
+                              .map((user) => user['coins'])
+                              .reduce((a, b) => a > b ? a : b);
+                          return UserCoinsDiagram(
+                            userName: users[index]["name"],
+                            maxCoins: maxCoins,
+                            index: index,
+                            userAvatarUrl: $users[index].imageUrl!,
+                            coins: users[index]['coins'],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               );
             }
             return const Center(child: CircularProgressIndicator());
           },
         ),
+      ),
+    );
+  }
+}
+
+class UserCoinsDiagram extends StatelessWidget {
+  final String userName;
+  final String userAvatarUrl;
+  final int coins;
+  final int maxCoins;
+  final int index;
+
+  UserCoinsDiagram({
+    required this.userName,
+    required this.userAvatarUrl,
+    required this.coins,
+    required this.maxCoins,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height;
+    final width = MediaQuery.sizeOf(context).width;
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 5),
+      child: Row(
+        children: [
+          Center(
+            child: Text(
+              "${index + 1}) ",
+              style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: height * 0.03),
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                backgroundImage: NetworkImage(userAvatarUrl),
+                radius: height * 0.025,
+              ),
+              SizedBox(
+                width: width * 0.15,
+                child: Text(
+                  userName,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontSize: height * 0.012,
+                      fontWeight: FontWeight.bold,
+                      overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(width: 16.0),
+          Expanded(
+            child: Stack(
+              children: [
+                Container(
+                  height: height * 0.03,
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: coins / maxCoins,
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    height: height * 0.03,
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$coins coins',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
