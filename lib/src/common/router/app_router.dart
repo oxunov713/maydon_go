@@ -4,6 +4,7 @@ import 'package:maydon_go/src/user/ui/home/chat_screen.dart';
 import 'package:maydon_go/src/user/ui/home/club_detail_screen.dart';
 import 'package:maydon_go/src/user/ui/home/club_teammates.dart';
 import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
+import 'package:maydon_go/src/user/ui/home/other_user_profile.dart';
 import 'package:maydon_go/src/user/ui/home/user_coins_ranking.dart';
 
 import '../../user/ui/auth/user_log_in_screen.dart';
@@ -101,6 +102,7 @@ final GoRouter _router = GoRouter(
                                 return ChatScreen(user: user);
                               },
                             ),
+
                             GoRoute(
                               path: "clubDetail",
                               name: AppRoutes.clubDetail,

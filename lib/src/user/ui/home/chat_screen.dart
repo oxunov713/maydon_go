@@ -1,6 +1,7 @@
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -20,7 +21,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<types.Message> _messages = [];
   final TextEditingController _textController = TextEditingController();
   late types.User _user;
-
   late types.User _otherUser;
 
   @override
@@ -61,7 +61,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-//TODO createdAt,Last seen,updatedAt hammasi intda keladi
   void _loadFakeMessages() {
     final messages = [
       types.TextMessage(
@@ -80,11 +79,11 @@ class _ChatScreenState extends State<ChatScreen> {
           author: _otherUser,
           createdAt: DateTime.april,
           id: '3',
-          text: 'Men ham yaxshi, rahmat!',
+          text: 'Futbolga borasizmi?',
           status: types.Status.delivered),
     ];
     setState(() {
-      _messages.addAll(messages);
+      _messages.addAll(messages.reversed);
     });
   }
 
@@ -106,8 +105,33 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          IconButton(
-              onPressed: () {}, icon: Icon(CupertinoIcons.ellipsis_vertical))
+          // Lokatsiya uchun PopupMenuButton
+          PopupMenuButton(
+            icon: Icon(Icons.more_vert),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.location_on),
+                  title: Text("Lokatsiya jo'natish"),
+                  onTap: () {},
+                ),
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.add),
+                  title: Text("Klubga qo'shish"),
+                  onTap: () {},
+                ),
+              ),
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(Icons.delete),
+                  title: Text("Tarixni tozalash"),
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
         ],
         title: Row(
           children: [

@@ -16,6 +16,7 @@ class AppIcons {
   static const favouriteIcon = "assets/icons/favourite_icon.svg";
   static const profileIcon = "assets/icons/profile_icon.svg";
   static const historyIcon = "assets/icons/history_icon.svg";
+  static const notificationIcon = "assets/icons/notification.svg";
   static const settingsIcon = "assets/icons/settings_icon.svg";
   static const faqIcon = "assets/icons/faq_icon.svg";
   static const chatIcon = "assets/icons/chat_icon.svg";
@@ -24,6 +25,7 @@ class AppIcons {
   static const myLocation = Icons.my_location;
 
   static const stars = "assets/images/stars_icon.png";
+  static const mCoins = "assets/icons/MCoin.png";
 
   static const showerIcon = "assets/icons/shower.svg";
   static const roofIcon = "assets/icons/roof.svg";

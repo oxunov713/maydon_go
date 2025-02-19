@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
+import 'package:maydon_go/src/user/ui/home/other_user_profile.dart';
 import '../../../common/constants/config.dart';
 import '../../../common/style/app_colors.dart';
 import '../../bloc/my_club_cubit/my_club_cubit.dart';
@@ -102,8 +103,16 @@ class MyClubScreen extends StatelessWidget {
                           return Column(
                             children: [
                               GestureDetector(
-                                onTap: () => context.pushNamed(AppRoutes.chat,
-                                    extra: user),
+                                onTap: () => showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  // Agar kontent katta bo'lsa, scroll qilish uchun
+                                  backgroundColor: Colors.transparent,
+                                  // Orqa fonni shaffof qilish
+                                  builder: (context) {
+                                    return OtherUserProfile(user: user);
+                                  },
+                                ),
                                 child: CircleAvatar(
                                   radius: 35,
                                   backgroundColor: AppColors.white,
