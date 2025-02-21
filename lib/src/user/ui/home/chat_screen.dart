@@ -111,13 +111,6 @@ class _ChatScreenState extends State<ChatScreen> {
             itemBuilder: (context) => [
               PopupMenuItem(
                 child: ListTile(
-                  leading: Icon(Icons.location_on),
-                  title: Text("Lokatsiya jo'natish"),
-                  onTap: () {},
-                ),
-              ),
-              PopupMenuItem(
-                child: ListTile(
                   leading: Icon(Icons.add),
                   title: Text("Klubga qo'shish"),
                   onTap: () {},

@@ -595,7 +595,6 @@ void _showConfirmationDialog(BuildContext context) {
     barrierDismissible: false,
     builder: (context) {
       return AlertDialog(
-
         title: const Center(
           child: Text(
             "Buyurtma",
@@ -697,7 +696,6 @@ void _showConfirmationDialog(BuildContext context) {
             ),
           ),
         ],
-
       );
     },
   );
@@ -727,46 +725,105 @@ void _showBookingConfirmationSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
+    isScrollControlled: true, // To'liq ekranga yaqin ochilishi uchun
     builder: (context) {
-      //TODO do'stlarni tanlay olishi kerak,select all,
-      //TODO okni yonida send degan button chiqishi kerak
       return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 50),
-            const SizedBox(height: 10),
-            const Text(
-              "Bron qilindi!",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Do‘stlaringiz bilan baham ko‘ring:",
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 10),
-            _buildFriendsAvatars(friendsAvatars), // Do‘stlar avatari
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+        padding: const EdgeInsets.all(8),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Scroll uchun min ishlatamiz
+            children: [
+              Container(
+                height: 5,
+                width: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(15)),
+                  color: AppColors.secondary,
                 ),
               ),
-              onPressed: () {
-                context.read<BookingCubit>().clearBookingSlots();
-                context.pop();
-              },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                child: Text("OK",
-                    style: TextStyle(fontSize: 18, color: Colors.white)),
+              SizedBox(height: 20),
+              const Icon(Icons.check_circle, color: Colors.green, size: 50),
+              const SizedBox(height: 10),
+              const Text(
+                "Bron qilindi!",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              const Text(
+                "+10 coins",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orangeAccent),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Do‘stlaringiz bilan baham ko‘ring:",
+                style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _buildFriendsAvatars(friendsAvatars),
+              const SizedBox(height: 20),
+              Text(
+                "Jamoadoshlaringiz bilan baham ko‘ring:",
+                style: TextStyle(
+                    fontSize: 16,
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              _buildTeamsAvatars(friendsAvatars),
+
+              const SizedBox(height: 10),
+
+              // **Share va Location Iconlari**
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      // Location funksiyasi
+                    },
+                    icon: Icon(
+                      Icons.location_on,
+                      size: 30,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      //todo share service yozish tashqi appga silka berib otadi
+                    },
+                    icon: Icon(
+                      Icons.share,
+                      size: 30,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // OK tugmasi
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                onPressed: () {
+                  context.read<BookingCubit>().clearBookingSlots();
+                  context.pop();
+                },
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+                  child: Text("OK",
+                      style: TextStyle(fontSize: 18, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     },
@@ -775,16 +832,45 @@ void _showBookingConfirmationSheet(
 
 Widget _buildFriendsAvatars(List<String> avatars) {
   return SizedBox(
-    height: 60,
+    height: 80,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: avatars.length,
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4.0),
-          child: CircleAvatar(
-            radius: 30,
-            backgroundImage: NetworkImage(avatars[index]),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: NetworkImage(avatars[index]),
+              ),
+              Text("Alisher"),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+Widget _buildTeamsAvatars(List<String> avatars) {
+  return SizedBox(
+    height: 80,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: avatars.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundImage: NetworkImage(avatars[index]),
+              ),
+              Text("Tashkent Bulls"),
+            ],
           ),
         );
       },

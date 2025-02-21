@@ -20,6 +20,7 @@ class BottomSignButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: ElevatedButton(
+
         onPressed: isdisabledBT && !isLoading ? function : null,
         // ✅ Yuklanayotganda bosilmaydi
         style: ElevatedButton.styleFrom(

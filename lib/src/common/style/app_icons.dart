@@ -4,6 +4,11 @@ class AppIcons {
   static const locationIcon = "assets/icons/location_icon.svg";
   static const searchIcon = "assets/icons/search_icon.svg";
   static const menuIcon = "assets/icons/menu_icon.svg";
+  static const uzbIcon = "assets/images/uzb_maydon.png";
+
+  static const instagram = "assets/images/instagram-1_svgrepo.com.png";
+  static const gmail = "assets/images/gmail_svgrepo.com.png";
+  static const telegram = "assets/images/telegram_svgrepo.com.png";
 
   static const downloadLottie = "assets/lottie/downloading.json";
   static const splashScreen = "assets/images/splash.png";

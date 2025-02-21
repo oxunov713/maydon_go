@@ -21,9 +21,9 @@ class AuthCubit extends Cubit<AuthState> {
 
   void navigateBasedOnSelection(BuildContext context) {
     if (selectedRole == UserRole.user) {
-      context.pushNamed(AppRoutes.signUp);
+      context.pushNamed(AppRoutes.home);
     } else if (selectedRole == UserRole.owner) {
-      context.pushNamed(AppRoutes.ownerSignUp);
+      context.pushNamed(AppRoutes.ownerDashboard);
     }
   }
 

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:maydon_go/src/owner/bloc/home/owner_home_cubit.dart';
 import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
 import 'package:maydon_go/src/user/bloc/home_cubit/home_cubit.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
+import 'package:maydon_go/src/user/bloc/quizzes_cubit/quizzes_cubit.dart';
 import 'package:maydon_go/src/user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import 'package:maydon_go/src/common/service/location_service.dart';
 import 'package:maydon_go/src/common/service/stadiums_service.dart';
@@ -14,10 +17,13 @@ import 'package:maydon_go/src/common/service/marker_service.dart';
 import 'src/common/screens/app.dart';
 import 'src/user/bloc/locale_cubit/locale_cubit.dart';
 
-void main() {
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
+  await initNotifications();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]).then((_) {
@@ -38,9 +44,21 @@ void main() {
           BlocProvider(create: (_) => SavedStadiumsCubit()),
           BlocProvider(create: (_) => StadiumCubit()),
           BlocProvider(create: (_) => MyClubCubit()),
+          BlocProvider(create: (_) => QuizzesCubit()),
+          BlocProvider(create: (_) => OwnerHomeCubit()),
         ],
         child: const App(),
       ),
     );
   });
+}
+
+Future<void> initNotifications() async {
+  const AndroidInitializationSettings androidInitSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings =
+      InitializationSettings(android: androidInitSettings);
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
 }

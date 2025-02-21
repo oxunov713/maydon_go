@@ -16,4 +16,14 @@ class AppRoutes {
   static const String clubTeammates = 'clubTeammates';
   static const String chat = 'chat';
   static const String coinsRanking = 'coinsRanking';
+  static const String profile = 'profile';
+  static const String profileView = 'profileView';
+  static const String notification = 'notification';
+  static const String subscription = 'subscription';
+  static const String quizzes = 'quizzes_cubit';
+  static const String settings = 'settings';
+  static const String history = 'history';
+  static const String about = 'about';
+
+  static const String ownerDashboard = "dashboard";
 }

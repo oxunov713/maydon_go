@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../common/tools/language_extension.dart';
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../../user/bloc/auth_cubit/auth_state.dart';
+import '../router/app_routes.dart';
 import '../style/app_colors.dart';
 import '../widgets/role_widget.dart';
 import '../widgets/sign_button.dart';
@@ -56,17 +58,10 @@ class RoleScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final isButtonEnabled =
-              state is AuthRoleSelected && state.selectedRole == UserRole.none;
-          return BottomSignButton(
-            function: () =>
-                context.read<AuthCubit>().navigateBasedOnSelection(context),
-            text: context.lan.continueBt,
-            isdisabledBT: !isButtonEnabled,
-          );
-        },
+      bottomNavigationBar: BottomSignButton(
+        function: () => context.pushNamed(AppRoutes.welcome),
+        text: context.lan.continueBt,
+        isdisabledBT: true,
       ),
     );
   }

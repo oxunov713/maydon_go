@@ -41,7 +41,7 @@ class ChooseLanguageScreens extends StatelessWidget {
       ),
       bottomNavigationBar: BottomSignButton(
         isdisabledBT: true,
-        function: () => context.pushNamed(AppRoutes.welcome),
+        function: () => context.pushNamed(AppRoutes.role),
         text: "Continue",
       ),
     );
