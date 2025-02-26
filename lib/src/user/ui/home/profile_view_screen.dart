@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
-import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
+import 'package:maydon_go/src/common/tools/phone_formatter_extension.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({super.key});
@@ -37,13 +37,13 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         content: Text("Are you sure you want to logout?"),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(context),
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
               context.pop();
-              context.pushReplacementNamed(AppRoutes.role);
+              context.goNamed(AppRoutes.welcome);
             },
             child: Text("Logout", style: TextStyle(color: Colors.red)),
           ),

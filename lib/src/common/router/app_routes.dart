@@ -26,4 +26,9 @@ class AppRoutes {
   static const String about = 'about';
 
   static const String ownerDashboard = "dashboard";
+  static const String ownerDetail = "owDetail";
+  static const String locationPicker = "locationPicker";
+  static const String addStadium = "addStadium";
+  static const String ownerSubs = "ownerSubs";
+  static const String ownerProfileDetail = "ownerProfileDetail";
 }

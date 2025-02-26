@@ -30,6 +30,7 @@ class RoleScreen extends StatelessWidget {
             ),
             const SizedBox(height: 50),
             BlocBuilder<AuthCubit, AuthState>(
+              buildWhen: (previous, current) => current is AuthRoleSelected,
               builder: (context, state) {
                 final selectedRole = (state is AuthRoleSelected)
                     ? state.selectedRole
@@ -58,10 +59,27 @@ class RoleScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomSignButton(
-        function: () => context.pushNamed(AppRoutes.welcome),
-        text: context.lan.continueBt,
-        isdisabledBT: true,
+      bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          return BottomSignButton(
+            function: () => _onContinuePressed(context, state),
+            text: context.lan.continueBt,
+            isdisabledBT: (state is AuthRoleSelected),
+          );
+        },
+      ),
+    );
+  }
+}
+
+void _onContinuePressed(BuildContext context, AuthState state) {
+  if (state is AuthRoleSelected) {
+    context.pushNamed(AppRoutes.signUp);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Iltimos, avval rolni tanlang!"),
+        backgroundColor: Colors.red,
       ),
     );
   }

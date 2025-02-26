@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_cubit.dart';
 import 'package:maydon_go/src/owner/bloc/home/owner_home_cubit.dart';
 import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
@@ -46,6 +47,7 @@ void main() async {
           BlocProvider(create: (_) => MyClubCubit()),
           BlocProvider(create: (_) => QuizzesCubit()),
           BlocProvider(create: (_) => OwnerHomeCubit()),
+          BlocProvider(create: (_) => AddStadiumCubit()),
         ],
         child: const App(),
       ),

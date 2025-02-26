@@ -1,167 +1,174 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc/bloc.dart';
+import 'package:equatable/equatable.dart';
 import 'package:intl/intl.dart';
 import '../../../common/model/stadium_model.dart';
+import '../../../common/model/substadium_model.dart';
+import '../../../common/model/time_slot_model.dart';
+import '../../../common/service/api_service.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  BookingCubit()
-      : super(BookingLoaded(
-          selectedDate: DateTime.now().toIso8601String().split('T')[0],
-          bookedSlots: [],
-          selectedStadium: '',
-          groupedSlots: {},
-          position: 0.0,
-          confirmed: false,
-          dialogShown: false,
-        ));
+  final apiService = ApiService();
 
-  // bookedSlots getteri
-  List<TimeSlot> get bookedSlots {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).bookedSlots;
-    }
-    return []; // Agar state BookingLoaded bo'lmasa, bo'sh ro'yxat qaytariladi
-  }
+  BookingCubit() : super(BookingInitial());
 
-  // selectedDate getteri
-  String get selectedDate {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).selectedDate;
-    }
-    return DateTime.now().toIso8601String().split('T')[0];
-  }
+  String selectedStadium = '';
+  String selectedDate = '';
+  double position = 0.0;
+  bool confirmed = false;
+  List<TimeSlot> bookedSlots = []; // 📌 Band qilingan slotlarni saqlash
 
-  // selectedStadium getteri
-  String get selectedStadium {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).selectedStadium;
-    }
-    return '';
-  }
-
-  // Slider pozitsiyasini yangilash
-  void updatePosition(double delta, double width) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      double newPosition = currentState.position + delta;
-      if (newPosition < 0) newPosition = 0;
-      if (newPosition > width) newPosition = width;
-      emit(currentState.copyWith(position: newPosition));
+  /// 📌 **Stadionlar API dan olinadi**
+  Future<void> fetchStadiums() async {
+    emit(BookingLoading());
+    try {
+      final stadiums = await apiService.getAllStadiums();
+      if (stadiums.isNotEmpty) {
+        fetchAvailableSlots(stadiums.first); // 📌 Default birinchi stadion ko‘rsatiladi
+      }
+      emit(BookingStadiumsLoaded(stadiums));
+    } catch (e) {
+      emit(BookingError(e.toString()));
     }
   }
 
-  // Slider tasdiqlash
-  void confirmPosition(double width) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
 
-      if (!currentState.confirmed) {
-        bool newConfirmed = currentState.position >= width;
-        double newPosition = newConfirmed ? width : 0;
+  /// 📌 30 kunlik bo‘sh slotlarni qaytaradi (faqat band qilinganlar tashlab yuboriladi)
+  /// 📌 30 kunlik bo‘sh slotlarni yaratish (band qilingan vaqtlarni olib tashlash)
+  void fetchAvailableSlots(StadiumDetail stadium) {
+    emit(BookingLoading());
 
-        emit(currentState.copyWith(
-          position: newPosition,
-          confirmed: newConfirmed,
-          dialogShown: true,
-        ));
+    final now = DateTime.now();
+    final next30Days = List.generate(30, (index) => now.add(Duration(days: index)));
+
+    List<TimeSlot> allSlots = [];
+
+    for (var day in next30Days) {
+      DateTime slotStart = DateTime(day.year, day.month, day.day, 0, 0);
+      DateTime slotEnd = slotStart.add(Duration(hours: 1));
+
+      while (slotEnd.day == day.day) {
+        allSlots.add(TimeSlot(startTime: slotStart, endTime: slotEnd));
+        slotStart = slotEnd;
+        slotEnd = slotStart.add(Duration(hours: 1));
       }
     }
+
+    // 📌 Har bir substadiumdagi band qilingan vaqtlarni yig‘amiz
+    final bookedTimes = stadium.fields
+        ?.expand((field) => field.bookings ?? [])
+        .toList() ??
+        [];
+
+    // 📌 Band qilingan vaqtlarni olib tashlaymiz
+    allSlots.removeWhere((slot) {
+      return bookedTimes.any((booking) =>
+      slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
+          (slot.startTime!.isAfter(booking.startTime!) &&
+              slot.startTime!.isBefore(booking.endTime!)));
+    });
+
+    // 📌 UI ni yangilash
+    emit(BookingUpdated(
+      selectedStadium: stadium.name ?? '',
+      selectedDate: '',
+      groupedSlots: _groupSlotsByDate(allSlots),
+      position: position,
+      confirmed: confirmed,
+    ));
   }
 
-  // Sana tanlash
+
+  /// 📌 Slotlarni sanalar bo‘yicha guruhlash
+  Map<String, List<TimeSlot>> _groupSlotsByDate(List<TimeSlot> slots) {
+    final Map<String, List<TimeSlot>> groupedSlots = {};
+    for (var slot in slots) {
+      final dateKey = DateFormat("yyyy-MM-dd").format(slot.startTime!);
+      groupedSlots.putIfAbsent(dateKey, () => []);
+      groupedSlots[dateKey]!.add(slot);
+    }
+    return groupedSlots;
+  }
+
+
+  /// 📌 **Tanlangan stadion va sana yangilash**
+  void setSelectedStadium(StadiumDetail stadium) {
+    selectedStadium = stadium.name ?? '';
+    fetchAvailableSlots(stadium); // 📌 Yangi stadion bo‘sh slotlarini yuklash
+  }
+
+
   void setSelectedDate(String date) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(selectedDate: date));
-    }
+    selectedDate = date;
+    _updateState();
   }
 
-  // Stadion tanlash
-  void setSelectedStadium(String stadium) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(selectedStadium: stadium));
-    }
-  }
-
-  // Vaqt qo'shish
-  void addBookingSlot(TimeSlot slot) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      if (!currentState.bookedSlots.contains(slot)) {
-        emit(currentState.copyWith(
-          bookedSlots: [...currentState.bookedSlots, slot],
-        ));
-      }
-    }
-  }
-
-  // Vaqtni olib tashlash
-  void removeBookingSlot(TimeSlot slot) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(
-        bookedSlots: currentState.bookedSlots.where((s) => s != slot).toList(),
-      ));
-    }
-  }
-
-  // Barcha vaqtlarni tozalash
-  void clearBookingSlots() {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(
-          bookedSlots: [],
-          confirmed: false,
-          dialogShown: false,
-          position: 0.0));
-    }
-  }
-
-  // Dialog ko'rsatilganligini belgilash
-  void setDialogShown(bool shown) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(dialogShown: shown));
-    }
-  }
-
-  // Vaqt band qilinganligini tekshirish
-  bool isSlotBooked(TimeSlot slot) {
-    if (state is BookingLoaded) {
-      return (state as BookingLoaded).bookedSlots.contains(slot);
-    }
-    return false;
-  }
-
-  // Vaqtlarni sanalar bo'yicha guruhlash
+  /// 📌 **Slotlarni guruhlash**
   void getGroupedSlots(StadiumDetail stadium) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      final Map<String, List<TimeSlot>> groupedSlots = {};
+    final selectedField = stadium.fields?.firstWhere(
+      (field) => field.name == selectedStadium,
+      orElse: () => Substadiums(id: 0, name: 'Nomaʼlum stadion', bookings: []),
+    );
 
-      // Stadionni topish
-      for (var stadiumSlot in stadium.stadiumsSlots) {
-        if (stadiumSlot.containsKey(selectedStadium)) {
-          final slots = stadiumSlot[selectedStadium];
-
-          if (slots != null) {
-            for (var entry in slots.entries) {
-              final DateTime dateKey = entry.key;
-              final List<TimeSlot> timeSlots = entry.value;
-
-              final String dateOnly = DateFormat("yyyy-MM-dd").format(dateKey);
-
-              groupedSlots.putIfAbsent(dateOnly, () => []);
-
-              groupedSlots[dateOnly]!.addAll(timeSlots);
-            }
-          }
-        }
+    final Map<String, List<TimeSlot>> groupedSlots = {};
+    selectedField?.bookings?.forEach((slot) {
+      final date =
+          DateFormat("yyyy-MM-dd").format(slot.startTime ?? DateTime.now());
+      if (!groupedSlots.containsKey(date)) {
+        groupedSlots[date] = [];
       }
+      groupedSlots[date]?.add(slot);
+    });
 
-      // Yangi state bilan UI-ni yangilash
-      emit(currentState.copyWith(groupedSlots: groupedSlots));
+    _updateState(groupedSlots: groupedSlots);
+  }
+
+  /// 📌 **Swipe tugmachani surish**
+  void updatePosition(double delta, double maxWidth) {
+    position += delta;
+    if (position < 0) position = 0;
+    if (position > maxWidth) position = maxWidth;
+    _updateState();
+  }
+
+  /// 📌 **Swipe tasdiqlash**
+  void confirmPosition(double confirmThreshold) {
+    if (position >= confirmThreshold) {
+      confirmed = true;
+    } else {
+      position = 0;
     }
+    _updateState();
+  }
+
+  /// 📌 **Vaqt slotlarini boshqarish**
+  void addBookingSlot(TimeSlot slot) {
+    if (!bookedSlots.contains(slot)) {
+      bookedSlots.add(slot);
+      _updateState();
+    }
+  }
+
+  void removeBookingSlot(TimeSlot slot) {
+    bookedSlots.remove(slot);
+    _updateState();
+  }
+
+  bool isSlotBooked(TimeSlot slot) {
+    return bookedSlots.contains(slot);
+  }
+
+  /// 📌 **State yangilash**
+  void _updateState({Map<String, List<TimeSlot>>? groupedSlots}) {
+    emit(BookingUpdated(
+      selectedStadium: selectedStadium,
+      selectedDate: selectedDate,
+      groupedSlots: groupedSlots ??
+          (state is BookingUpdated
+              ? (state as BookingUpdated).groupedSlots
+              : {}),
+      position: position,
+      confirmed: confirmed,
+    ));
   }
 }

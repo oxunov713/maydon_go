@@ -93,7 +93,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signupButtonText => 'Sign Up';
 
   @override
-  String get loginPassworEmpty => 'Please enter the password';
+  String get loginPasswordEmpty => 'Please enter the password';
 
   @override
   String get otp_verification_title => 'OTP Verification';
@@ -116,4 +116,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resend_code => 'Resend Code';
+
+  @override
+  String get stadiums => 'Stadiums';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get myClub => 'My Club';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get all_stadiums => 'All stadiums';
+
+  @override
+  String get search_placeholder => 'Stadium name';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get empty_slots => 'Today\'s available slots';
+
+  @override
+  String get all_slots_booked => 'All slots are booked';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get noData => 'No data available';
 }

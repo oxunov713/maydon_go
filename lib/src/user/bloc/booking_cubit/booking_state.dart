@@ -1,48 +1,53 @@
-import '../../../common/model/stadium_model.dart';
+import 'package:equatable/equatable.dart';
 
-abstract class BookingState {
+import '../../../common/model/stadium_model.dart';
+import '../../../common/model/time_slot_model.dart';
+
+abstract class BookingState extends Equatable {
   const BookingState();
+
+  @override
+  List<Object?> get props => [];
 }
 
-class BookingLoaded extends BookingState {
-  final String selectedDate;
-  final List<TimeSlot> bookedSlots;
+class BookingInitial extends BookingState {}
+
+class BookingLoading extends BookingState {}
+
+class BookingStadiumsLoaded extends BookingState {
+  final List<StadiumDetail> stadiums;
+
+  BookingStadiumsLoaded(this.stadiums);
+
+  @override
+  List<Object?> get props => [stadiums];
+}
+
+class BookingError extends BookingState {
+  final String message;
+
+  BookingError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class BookingUpdated extends BookingState {
   final String selectedStadium;
+  final String selectedDate;
   final Map<String, List<TimeSlot>> groupedSlots;
   final double position;
   final bool confirmed;
-  final bool dialogShown; // ✅ Dialog chiqarilgan-chiqarilmaganligini kuzatadi
 
-  BookingLoaded({
-    required this.dialogShown,
-    required this.groupedSlots,
-    required this.selectedDate,
-    required this.bookedSlots,
+  BookingUpdated({
     required this.selectedStadium,
-    this.position = 0.0,
-    this.confirmed = false,
+    required this.selectedDate,
+    required this.groupedSlots,
+    required this.position,
+    required this.confirmed,
   });
 
-  // ✅ `dialogShown` ni ham copyWith ichiga qo‘shamiz
-  BookingLoaded copyWith({
-    String? selectedDate,
-    List<TimeSlot>? bookedSlots,
-    String? selectedStadium,
-    Map<String, List<TimeSlot>>? groupedSlots,
-    double? position,
-    bool? confirmed,
-    bool? dialogShown,
-  }) {
-    return BookingLoaded(
-      selectedDate: selectedDate ?? this.selectedDate,
-      bookedSlots: bookedSlots ?? this.bookedSlots,
-      selectedStadium: selectedStadium ?? this.selectedStadium,
-      groupedSlots: groupedSlots ?? this.groupedSlots,
-      position: position ?? this.position,
-      confirmed: confirmed ?? this.confirmed,
-      dialogShown: dialogShown ?? this.dialogShown, // ✅ Yangi qiymat
-    );
-  }
+  @override
+  List<Object?> get props =>
+      [selectedStadium, selectedDate, groupedSlots, position, confirmed];
 }
-
-class BookingConfirm extends BookingState {}

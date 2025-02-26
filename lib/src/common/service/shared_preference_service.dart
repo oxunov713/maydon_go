@@ -12,4 +12,5 @@ class ShPService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
   }
+
 }

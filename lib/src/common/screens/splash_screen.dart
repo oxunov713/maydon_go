@@ -1,9 +1,11 @@
 import 'dart:io'; // For platform-specific checks
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import 'package:lottie/lottie.dart';
+import 'package:maydon_go/src/common/service/shared_preference_service.dart';
+import 'package:maydon_go/src/common/tools/language_extension.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../router/app_routes.dart';
 import '../style/app_colors.dart';
@@ -25,21 +27,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _requestLocationPermission() async {
     int retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 2;
 
     while (retryCount < maxRetries) {
       final status = await Permission.location.request();
+      final status2 = await Permission.notification.request();
 
-      if (status.isGranted) {
-        // Permission granted, navigate based on token
+      if (status.isGranted && status2.isGranted) {
         _navigateBasedOnToken();
         break;
-      } else if (status.isDenied) {
-        // Show retry dialog
+      } else if (status.isDenied && status2.isDenied) {
         await _showPermissionDialog();
         retryCount++;
-      } else if (status.isPermanentlyDenied) {
-        // Open app settings for permanently denied permission
+      } else if (status.isPermanentlyDenied && status2.isPermanentlyDenied) {
         await openAppSettings();
         break;
       }
@@ -61,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
+              context.pop(); // Close dialog
             },
             child: const Text("Retry"),
           ),
@@ -72,8 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _navigateBasedOnToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('authToken');
+      final String? token = await ShPService.getToken();
 
       Future.delayed(
         const Duration(seconds: 3),
@@ -86,8 +85,7 @@ class _SplashScreenState extends State<SplashScreen> {
         },
       );
     } catch (e) {
-      // Handle SharedPreferences initialization error
-      debugPrint("Error accessing SharedPreferences: $e");
+      Logger().e(e);
     }
   }
 
@@ -106,8 +104,8 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  "Maydon Go",
+                Text(
+                  context.lan.appName,
                   style: TextStyle(
                     color: AppColors.main,
                     fontWeight: FontWeight.w700,

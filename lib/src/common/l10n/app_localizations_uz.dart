@@ -93,7 +93,7 @@ class AppLocalizationsUz extends AppLocalizations {
   String get signupButtonText => 'Ro\'yxatdan o\'tish';
 
   @override
-  String get loginPassworEmpty => 'Iltimos, parol kiriting';
+  String get loginPasswordEmpty => 'Iltimos, parol kiriting';
 
   @override
   String get otp_verification_title => 'OTP kodini tekshirish';
@@ -116,4 +116,40 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get resend_code => 'Qayta yuborish';
+
+  @override
+  String get stadiums => 'Stadionlar';
+
+  @override
+  String get saved => 'Saqlanganlar';
+
+  @override
+  String get myClub => 'My club';
+
+  @override
+  String get profile => 'Profil';
+
+  @override
+  String get all_stadiums => 'Barcha maydonlar';
+
+  @override
+  String get search_placeholder => 'Maydon nomi';
+
+  @override
+  String get rating => 'Reyting';
+
+  @override
+  String get price => 'Narx';
+
+  @override
+  String get empty_slots => 'Bugungi bo\'sh vaqtlar';
+
+  @override
+  String get all_slots_booked => 'Barcha soatlar band';
+
+  @override
+  String get location => 'Manzil';
+
+  @override
+  String get noData => 'Ma\'lumot mavjud emas';
 }

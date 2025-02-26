@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:maydon_go/src/common/constants/config.dart';
+import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
@@ -115,6 +116,16 @@ class _BronListScreenState extends State<BronListScreen> {
             onTap: () => _showBottomSheet(context, index),
           ),
           separatorBuilder: (context, index) => SizedBox(height: 15),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.green,
+        shape: CircleBorder(),
+        onPressed: () =>
+            context.pushNamed(AppRoutes.ownerDetail),
+        child: Icon(
+          Icons.add,
+          color: AppColors.white,
         ),
       ),
     );

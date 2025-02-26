@@ -5,8 +5,7 @@ import '../model/userinfo_model.dart';
 
 final class Config {
   const Config._();
-
-  static const baseUrl = "https://careful-terrier-pure.ngrok-free.app/api";
+  static const baseUrl = "https://maydon.mavlyanova.uz/api";
 }
 
 List parsedJson = jsonDecode(_jsonData);
@@ -101,8 +100,10 @@ const String _jsonData = """[
     "name": "Stadium Complex 1",
     "description": "A large stadium complex with multiple fields.",
     "price": 100000,
-    "location": {
-      "address": "Shayxontohur tuman, Chilonzor ko'chasi, 50",
+     "location": {
+      "city": "Tashkent",
+      "country": "Uzbekistan",
+      "street": "Chilonzor ko'chasi, 50",
       "latitude": 41.311081,
       "longitude": 69.240562
     },
@@ -325,11 +326,13 @@ const String _jsonData = """[
     "name": "Stadium Complex 2",
     "description": "A modern stadium with advanced facilities.",
     "price": 150000,
-    "location": {
-      "address": "Samarkand, Rudaki ko'chasi, 12",
+  "location": {
+      "city": "Samarkand",
+      "country": "Uzbekistan",
+      "street": "Rudaki ko'chasi, 12",
       "latitude": 39.654167,
       "longitude": 66.959722
-    },
+    },  
     "facilities": {"hasBathroom": true, "isIndoor": true, "hasUniforms": false},
     "averageRating": 4.7,
     "images": [
@@ -391,8 +394,10 @@ const String _jsonData = """[
     "name": "Stadium Complex 3",
     "description": "A cozy stadium with a great atmosphere.",
     "price": 120000,
-    "location": {
-      "address": "Bukhara, Mustaqillik ko'chasi, 8",
+     "location": {
+      "city": "Bukhara",
+      "country": "Uzbekistan",
+      "street": "Mustaqillik ko'chasi, 8",
       "latitude": 39.775556,
       "longitude": 64.428611
     },
@@ -502,7 +507,9 @@ const String _jsonData = """[
     "description": "A family-friendly stadium with great amenities.",
     "price": 90000,
     "location": {
-      "address": "Khiva, Ichan-Qala ko'chasi, 20",
+      "city": "Khiva",
+      "country": "Uzbekistan",
+      "street": "Ichan-Qala ko'chasi, 20",
       "latitude": 41.378333,
       "longitude": 60.361944
     },

@@ -119,17 +119,19 @@ class _LocationsScreenState extends State<LocationsScreen> {
                                     final stadium = searchResults[index];
                                     return ListTile(
                                       title: Text(
-                                        stadium.name,
+                                        stadium.name ?? "Name is empty",
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 18),
                                       ),
-                                      subtitle: Text("Stadionlari soni  ${stadium.stadiumCount} ta"),
+                                      subtitle: Text(
+                                          "Stadionlari soni  ${stadium.stadiumCount} ta"),
                                       onTap: () {
                                         context.read<HomeCubit>().moveCamera(
                                               LatLng(
-                                                stadium.location.latitude,
-                                                stadium.location.longitude,
+                                                stadium.location!.latitude ?? 0,
+                                                stadium.location!.longitude ??
+                                                    0,
                                               ),
                                               context,
                                             );

@@ -44,13 +44,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             radius: floatingButtonOuterRadius,
             backgroundColor: AppColors.white,
             child: CircleAvatar(
-                radius: floatingButtonInnerRadius,
-                backgroundColor: AppColors.green,
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 30,
-                )),
+              radius: floatingButtonInnerRadius,
+              backgroundColor: AppColors.green,
+              child: SvgPicture.asset(
+                AppIcons.stadionsIcon,
+                color: AppColors.white,
+                height: 30,
+              ),
+            ),
           ),
         ),
         floatingActionButtonLocation:
@@ -67,7 +68,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               items: [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.menu),
-                  label: "Stadionlar",
+                  label: "Bronlar",
                 ),
                 const BottomNavigationBarItem(
                   icon: SizedBox.shrink(),

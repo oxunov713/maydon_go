@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:maydon_go/src/common/tools/language_extension.dart';
 
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
@@ -92,11 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: floatingButtonIconSize * 0.7,
                     ),
                   ),
-                  label: "Stadionlar",
+                  label: context.lan.stadiums,
                 ),
-                const BottomNavigationBarItem(
+                BottomNavigationBarItem(
                   icon: Icon(Icons.bookmark_border),
-                  label: "Saqlangan",
+                  label: context.lan.saved,
                 ),
                 const BottomNavigationBarItem(
                   icon: SizedBox.shrink(),
@@ -111,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: floatingButtonIconSize * 0.9,
                     ),
                   ),
-                  label: "My Club",
+                  label: context.lan.myClub,
                 ),
                 BottomNavigationBarItem(
                   icon: Padding(
@@ -122,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: floatingButtonIconSize * 0.8,
                     ),
                   ),
-                  label: "Profile",
+                  label: context.lan.profile,
                 ),
               ],
             );

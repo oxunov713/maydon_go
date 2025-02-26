@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/screens/owner_subscription.dart';
 import 'package:maydon_go/src/common/model/userinfo_model.dart';
 import 'package:maydon_go/src/common/screens/splash_screen.dart';
+import 'package:maydon_go/src/owner/screens/home/location_picker_screen.dart';
 import 'package:maydon_go/src/owner/screens/home/owner_dashboard.dart';
+import 'package:maydon_go/src/owner/screens/home/owner_detail_screen.dart';
+import 'package:maydon_go/src/owner/screens/home/owner_stadium_detail.dart';
 import 'package:maydon_go/src/user/ui/home/about_app.dart';
 import 'package:maydon_go/src/user/ui/home/chat_screen.dart';
 import 'package:maydon_go/src/user/ui/home/club_detail_screen.dart';
@@ -9,7 +13,6 @@ import 'package:maydon_go/src/user/ui/home/club_teammates.dart';
 import 'package:maydon_go/src/user/ui/home/history_screen.dart';
 import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
 import 'package:maydon_go/src/user/ui/home/notification_screen.dart';
-import 'package:maydon_go/src/user/ui/home/other_user_profile.dart';
 import 'package:maydon_go/src/user/ui/home/profile_screen.dart';
 import 'package:maydon_go/src/user/ui/home/profile_view_screen.dart';
 import 'package:maydon_go/src/user/ui/home/quizzes_screen.dart';
@@ -17,6 +20,7 @@ import 'package:maydon_go/src/user/ui/home/settings_screen.dart';
 import 'package:maydon_go/src/user/ui/home/subscription_screen.dart';
 import 'package:maydon_go/src/user/ui/home/user_coins_ranking.dart';
 
+import '../../owner/screens/home/add_stadium_screen.dart';
 import '../../user/ui/home/all_stadiums_screen.dart';
 import '../../user/ui/home/home_screen.dart';
 import '../../user/ui/home/locations_screen.dart';
@@ -39,7 +43,7 @@ class AppRouter {
 final GoRouter _router = GoRouter(
   initialLocation: "/",
   routes: <RouteBase>[
-    GoRoute(path: '/', builder: (context, state) => OwnerDashboard(), routes: [
+    GoRoute(path: '/', builder: (context, state) => SplashScreen(), routes: [
       GoRoute(
         path: "lan",
         name: AppRoutes.chooseLanguage,
@@ -178,6 +182,31 @@ final GoRouter _router = GoRouter(
               path: "owner",
               name: AppRoutes.ownerDashboard,
               builder: (context, state) => const OwnerDashboard(),
+            ),
+            GoRoute(
+              path: "ownerStadiumDetail",
+              name: AppRoutes.ownerDetail,
+              builder: (context, state) => OwnerDetailScreen(),
+            ),
+            GoRoute(
+              path: "locationPicker",
+              name: AppRoutes.locationPicker,
+              builder: (context, state) => LocationPickerScreen(),
+            ),
+            GoRoute(
+              path: "addStadium",
+              name: AppRoutes.addStadium,
+              builder: (context, state) => AddStadiumScreen(),
+            ),
+            GoRoute(
+              path: "ownerSubs",
+              name: AppRoutes.ownerSubs,
+              builder: (context, state) => OwnerSubscriptionPage(),
+            ),
+            GoRoute(
+              path: "ownerProfileDetail",
+              name: AppRoutes.ownerProfileDetail,
+              builder: (context, state) => OwnerDetailScreen(),
             ),
           ]),
     ]),

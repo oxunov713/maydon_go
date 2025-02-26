@@ -16,28 +16,31 @@ class StadiumService {
   Set<Marker> createStadiumMarkers(
       List<StadiumDetail> stadiums, BitmapDescriptor icon) {
     return stadiums.map((stadium) {
+      final location = stadium.location;
+      if (location == null) return null; // ✅ location null bo‘lsa, marker qo‘shmaymiz
+
       return Marker(
-        markerId: MarkerId(stadium.location.address),
-        position: LatLng(stadium.location.latitude, stadium.location.longitude),
+        markerId: MarkerId(location.city ?? "Unknown"), // ✅ city nullable
+        position: LatLng(location.latitude ?? 0.0, location.longitude ?? 0.0),
         icon: icon,
         infoWindow: InfoWindow(
-          title: stadium.name,
-          snippet: stadium.description,
+          title: stadium.name ?? "Noma'lum stadion", // ✅ name nullable
+          snippet: stadium.description ?? "Tavsif mavjud emas", // ✅ description nullable
         ),
       );
-    }).toSet();
+    }).whereType<Marker>().toSet(); // ✅ Null markerlarni chiqarib tashlash
   }
 
   /// Masofani hisoblash (Haversine formula)
   static double calculateDistance(LatLng start, LatLng end) {
     const double earthRadius = 6371; // Yer radiusi (km)
 
-    double dLat = _degreeToRadian(end.latitude - start.latitude);
-    double dLon = _degreeToRadian(end.longitude - start.longitude);
+    double dLat = _degreeToRadian((end.latitude ?? 0.0) - (start.latitude ?? 0.0));
+    double dLon = _degreeToRadian((end.longitude ?? 0.0) - (start.longitude ?? 0.0));
 
     double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degreeToRadian(start.latitude)) *
-            cos(_degreeToRadian(end.latitude)) *
+        cos(_degreeToRadian(start.latitude ?? 0.0)) *
+            cos(_degreeToRadian(end.latitude ?? 0.0)) *
             sin(dLon / 2) *
             sin(dLon / 2);
 

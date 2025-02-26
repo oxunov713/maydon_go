@@ -93,7 +93,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signupButtonText => 'Зарегистрироваться';
 
   @override
-  String get loginPassworEmpty => ' Пожалуйста, введите пароль';
+  String get loginPasswordEmpty => ' Пожалуйста, введите пароль';
 
   @override
   String get otp_verification_title => 'Проверка OTP';
@@ -116,4 +116,40 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resend_code => 'Отправить снова';
+
+  @override
+  String get stadiums => 'Стадионы';
+
+  @override
+  String get saved => 'Сохраненные';
+
+  @override
+  String get myClub => 'Мой клуб';
+
+  @override
+  String get profile => 'Профиль';
+
+  @override
+  String get all_stadiums => 'Все стадионы';
+
+  @override
+  String get search_placeholder => 'Название стадиона';
+
+  @override
+  String get rating => 'Рейтинг';
+
+  @override
+  String get price => 'Цена';
+
+  @override
+  String get empty_slots => 'Свободные часы на сегодня';
+
+  @override
+  String get all_slots_booked => 'Все часы заняты';
+
+  @override
+  String get location => 'Адрес';
+
+  @override
+  String get noData => 'Данные отсутствуют';
 }

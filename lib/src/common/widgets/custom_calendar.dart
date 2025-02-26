@@ -4,16 +4,14 @@ import 'package:intl/intl.dart';
 
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_state.dart';
-import '../model/stadium_model.dart';
+import '../model/time_slot_model.dart';
 import '../style/app_colors.dart';
 
 class CustomCalendar extends StatefulWidget {
-  final Map<String, List<TimeSlot>> groupedSlots;
   final ScrollController scrollController;
 
   const CustomCalendar({
     super.key,
-    required this.groupedSlots,
     required this.scrollController,
   });
 
@@ -26,8 +24,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final bookingCubit = context.read<BookingCubit>();
-    if (bookingCubit.state is BookingLoaded &&
-        (bookingCubit.state as BookingLoaded).selectedDate.isEmpty) {
+    final state = bookingCubit.state;
+
+    if (state is BookingUpdated && state.selectedDate.isEmpty) {
       bookingCubit.setSelectedDate(_getTodayDate());
     }
   }
@@ -55,21 +54,19 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
-    final bookingCubit = context.read<BookingCubit>();
     final bookingState = context.watch<BookingCubit>().state;
 
-    if ((bookingState is! BookingLoaded)) {
+    if (bookingState is! BookingUpdated) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final selectedDate = bookingState.selectedDate;
     final formattedDate = _formatDate(selectedDate);
+    final groupedSlots = bookingState.groupedSlots;
 
     return BlocListener<BookingCubit, BookingState>(
-      listenWhen: (previous, current) => current is BookingLoaded,
-      listener: (context, state) {
-        // Handle state changes if needed
-      },
+      listenWhen: (previous, current) => current is BookingUpdated,
+      listener: (context, state) {},
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -79,22 +76,21 @@ class _CustomCalendarState extends State<CustomCalendar> {
             style: TextStyle(fontSize: height * 0.02),
           ),
           SizedBox(height: height * 0.02),
-          _buildDatePicker(height, bookingCubit, selectedDate),
+          _buildDatePicker(height, selectedDate, groupedSlots),
           const Divider(),
-          _buildTimeSlots(height, bookingCubit, selectedDate),
+          _buildTimeSlots(height, selectedDate, groupedSlots),
         ],
       ),
     );
   }
 
   String _formatDate(String date) {
-    // Ensure the date is in the correct format
     final dateOnly = date.split('T')[0];
     return DateFormat("dd MMMM, yyyy", 'uz').format(DateTime.parse(dateOnly));
   }
 
   Widget _buildDatePicker(
-      double height, BookingCubit bookingCubit, String selectedDate) {
+      double height, String selectedDate, Map<String, List<TimeSlot>> groupedSlots) {
     return Row(
       children: [
         IconButton(
@@ -107,10 +103,10 @@ class _CustomCalendarState extends State<CustomCalendar> {
             child: ListView.builder(
               controller: widget.scrollController,
               scrollDirection: Axis.horizontal,
-              itemCount: widget.groupedSlots.keys.length,
+              itemCount: groupedSlots.keys.length,
               itemBuilder: (context, index) {
-                final date = widget.groupedSlots.keys.toList()[index];
-                return _buildDateItem(height, bookingCubit, selectedDate, date);
+                final date = groupedSlots.keys.toList()[index];
+                return _buildDateItem(height, selectedDate, date);
               },
             ),
           ),
@@ -123,15 +119,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
     );
   }
 
-  Widget _buildDateItem(double height, BookingCubit bookingCubit,
-      String selectedDate, String date) {
+  Widget _buildDateItem(double height, String selectedDate, String date) {
     final parsedDate = DateTime.parse(date.split('T')[0]);
     final today = _getTodayDate();
-    final isSelected =
-        selectedDate == date || (selectedDate.isEmpty && date == today);
+    final isSelected = selectedDate == date || (selectedDate.isEmpty && date == today);
 
     return GestureDetector(
-      onTap: () => bookingCubit.setSelectedDate(date),
+      onTap: () => context.read<BookingCubit>().setSelectedDate(date),
       child: Container(
         width: height * 0.05,
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -155,8 +149,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
               radius: height * 0.018,
               child: Text(
                 DateFormat("dd").format(parsedDate),
-                style:
-                TextStyle(fontSize: height * 0.02, color: AppColors.main),
+                style: TextStyle(fontSize: height * 0.02, color: AppColors.main),
               ),
             ),
           ],
@@ -166,8 +159,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
   }
 
   Widget _buildTimeSlots(
-      double height, BookingCubit bookingCubit, String selectedDate) {
-    final slots = widget.groupedSlots[selectedDate] ?? [];
+      double height, String selectedDate, Map<String, List<TimeSlot>> groupedSlots) {
+    final slots = groupedSlots[selectedDate] ?? [];
 
     if (slots.isEmpty) {
       return Container(
@@ -204,13 +197,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
         itemCount: slots.length,
         itemBuilder: (context, index) {
           final slot = slots[index];
-          return _buildTimeSlotItem(bookingCubit, slot);
+          return _buildTimeSlotItem(slot);
         },
       ),
     );
   }
 
-  Widget _buildTimeSlotItem(BookingCubit bookingCubit, TimeSlot slot) {
+  Widget _buildTimeSlotItem(TimeSlot slot) {
+    final bookingCubit = context.read<BookingCubit>();
     final isBooked = bookingCubit.isSlotBooked(slot);
 
     return DecoratedBox(
@@ -229,7 +223,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
             : bookingCubit.addBookingSlot(slot),
         child: Center(
           child: Text(
-            "${DateFormat('HH:mm').format(slot.startTime)} - ${DateFormat('HH:mm').format(slot.endTime)}",
+            "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",
             style: TextStyle(
               fontSize: 14,
               color: isBooked ? AppColors.green : AppColors.main,

@@ -28,7 +28,7 @@ class StadiumCard extends StatelessWidget {
       onTap: () {
         // Proceed with the action if the user is authenticated
         onTap(stadium);
-            },
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         decoration: const BoxDecoration(
@@ -60,8 +60,8 @@ class StadiumCard extends StatelessWidget {
     );
   }
 
-
-  Row _buildTitleAndRating(BuildContext context, StadiumDetail stadium, int stadiumIndex) {
+  Row _buildTitleAndRating(
+      BuildContext context, StadiumDetail stadium, int stadiumIndex) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -109,7 +109,7 @@ class StadiumCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: CarouselSlider(
-              items: stadium.images.map((imageUrl) {
+              items: stadium.images?.map((imageUrl) {
                 return Image.asset(
                   imageUrl,
                   fit: BoxFit.cover,
@@ -141,7 +141,7 @@ class StadiumCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          "${stadium.price.formatWithSpace()} so'm",
+          "${stadium.price?.formatWithSpace()} so'm",
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
         ),
       ],
@@ -160,7 +160,7 @@ class StadiumCard extends StatelessWidget {
         SizedBox(
           width: deviceWidth - 150,
           child: Text(
-            stadium.location.address,
+            stadium.location?.city ?? "Nowhere",
             style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.main,

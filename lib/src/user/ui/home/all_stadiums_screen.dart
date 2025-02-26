@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
+import 'package:maydon_go/src/common/tools/language_extension.dart';
 import '../../../common/model/stadium_model.dart';
+import '../../../common/model/time_slot_model.dart';
 import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -22,21 +25,17 @@ class AllStadiumsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final deviceWidth = MediaQuery.of(context).size.width;
     final deviceHeight = MediaQuery.of(context).size.height;
+    final lan = context.lan;
     return Scaffold(
       backgroundColor: AppColors.white2,
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        automaticallyImplyLeading:
-            context.watch<StadiumCubit>().state is StadiumLoaded &&
-                    (context.watch<StadiumCubit>().state as StadiumLoaded)
-                        .isSearching
-                ? false
-                : true,
+        automaticallyImplyLeading: false,
         title: context.watch<StadiumCubit>().state is StadiumLoaded &&
                 (context.watch<StadiumCubit>().state as StadiumLoaded)
                     .isSearching
             ? _buildSearchField(context)
-            : const Text("Barcha maydonlar"),
+            : Text(lan.all_stadiums),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -71,7 +70,8 @@ class AllStadiumsScreen extends StatelessWidget {
               itemBuilder: (context, stadiumIndex) {
                 final stadium = state.filteredStadiums[stadiumIndex];
                 final today = DateTime.now();
-                final todaySlots = _getTodaySlots(stadium.stadiumsSlots, today);
+                final todaySlots = _getAvailableTodaySlots(
+                    state.filteredStadiums[stadiumIndex].fields!, today);
 
                 return Container(
                   margin:
@@ -94,7 +94,7 @@ class AllStadiumsScreen extends StatelessWidget {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    stadium.name,
+                                    stadium.name.toString(),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -120,7 +120,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                           padding: EdgeInsets.only(
                                               right: deviceWidth * 0.01),
                                           child: Text(
-                                            stadium.ratings.average.toString(),
+                                            stadium.averageRating.toString(),
                                             style: TextStyle(
                                               fontWeight: FontWeight.w700,
                                               color: AppColors.white,
@@ -147,7 +147,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: CarouselSlider(
-                                      items: stadium.images.map((imageUrl) {
+                                      items: stadium.images?.map((imageUrl) {
                                         return Container(
                                           width: double.infinity,
                                           decoration: BoxDecoration(
@@ -197,7 +197,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: List.generate(
-                                        stadium.images.length,
+                                        stadium.images!.length,
                                         (index) => AnimatedContainer(
                                           duration:
                                               const Duration(milliseconds: 300),
@@ -229,7 +229,7 @@ class AllStadiumsScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "${stadium.price.formatWithSpace()} so'm",
+                                  "${stadium.price?.formatWithSpace()} so'm",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: deviceHeight * 0.025,
@@ -269,7 +269,7 @@ class AllStadiumsScreen extends StatelessWidget {
                             SizedBox(
                               width: deviceWidth,
                               child: Text(
-                                "Bugungi bo'sh vaqtlar",
+                                lan.empty_slots,
                                 style: TextStyle(
                                   fontSize: deviceHeight * 0.017,
                                   color: AppColors.grey4,
@@ -287,17 +287,17 @@ class AllStadiumsScreen extends StatelessWidget {
                                           const SizedBox(width: 10),
                                       itemBuilder: (context, index) {
                                         final slot = todaySlots[index];
-                                        final startHour = slot.startTime.hour
+                                        final startHour = slot.startTime?.hour
                                             .toString()
                                             .padLeft(2, '0');
                                         final startMinute = slot
-                                            .startTime.minute
+                                            .startTime?.minute
                                             .toString()
                                             .padLeft(2, '0');
-                                        final endHour = slot.endTime.hour
+                                        final endHour = slot.endTime?.hour
                                             .toString()
                                             .padLeft(2, '0');
-                                        final endMinute = slot.endTime.minute
+                                        final endMinute = slot.endTime?.minute
                                             .toString()
                                             .padLeft(2, '0');
 
@@ -330,7 +330,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                       ),
                                       child: Center(
                                         child: Text(
-                                          "Barcha soatlar band",
+                                          lan.all_slots_booked,
                                           style: TextStyle(
                                             color: AppColors.white,
                                             fontWeight: FontWeight.w700,
@@ -357,7 +357,7 @@ class AllStadiumsScreen extends StatelessWidget {
                                       SizedBox(
                                         width: deviceWidth - 150,
                                         child: Text(
-                                          stadium.location.address,
+                                          "${stadium.location?.city}, ${stadium.location?.street}",
                                           maxLines: 2,
                                           style: TextStyle(
                                               fontSize: deviceHeight * 0.015,
@@ -386,31 +386,43 @@ class AllStadiumsScreen extends StatelessWidget {
               },
             );
           }
-          return const Center(child: Text('No data available'));
+          return Center(child: Text(lan.noData));
         },
       ),
     );
   }
 
-  List<TimeSlot> _getTodaySlots(
-      List<Map<String, Map<DateTime, List<TimeSlot>>>> stadiumsSlots,
-      DateTime today) {
-    final todaySlots = <TimeSlot>[];
-    for (var stadiumSlot in stadiumsSlots) {
-      for (var entry in stadiumSlot.entries) {
-        for (var date in entry.value.keys) {
-          if (date.year == today.year &&
-              date.month == today.month &&
-              date.day == today.day) {
-            final slots = entry.value[date];
-            if (slots != null) {
-              todaySlots.addAll(slots);
-            }
+  List<TimeSlot> _getAvailableTodaySlots(
+      List<Substadiums> fields, DateTime today) {
+    final List<TimeSlot> allSlots = [];
+    final Set<TimeSlot> bookedSlots = {};
+
+    // 1️⃣ 24 soatlik barcha slotlarni yaratamiz
+    for (int i = 0; i < 24; i++) {
+      DateTime startTime = DateTime(today.year, today.month, today.day, i, 0);
+      DateTime endTime = startTime.add(Duration(hours: 1));
+
+      allSlots.add(TimeSlot(startTime: startTime, endTime: endTime));
+    }
+
+    // 2️⃣ Band qilingan vaqtlarni yig'amiz
+    for (var field in fields) {
+      if (field.bookings != null) {
+        for (var booking in field.bookings!) {
+          if (booking.startTime?.year == today.year &&
+              booking.startTime?.month == today.month &&
+              booking.startTime?.day == today.day) {
+            bookedSlots.add(TimeSlot(
+              startTime: booking.startTime,
+              endTime: booking.endTime,
+            ));
           }
         }
       }
     }
-    return todaySlots;
+
+    // 3️⃣ Bo'sh slotlarni qaytarish (faqat booking bo'lmaganlari)
+    return allSlots.where((slot) => !bookedSlots.contains(slot)).toList();
   }
 
   Widget _buildSearchField(BuildContext context) {
@@ -430,8 +442,8 @@ class AllStadiumsScreen extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: cubit.searchController,
-              decoration: const InputDecoration(
-                hintText: 'Maydon nomi',
+              decoration: InputDecoration(
+                hintText: context.lan.search_placeholder,
                 border: InputBorder.none,
               ),
               style: const TextStyle(color: Colors.black),

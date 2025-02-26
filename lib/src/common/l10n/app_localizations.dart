@@ -265,11 +265,11 @@ abstract class AppLocalizations {
   /// **'Sign Up'**
   String get signupButtonText;
 
-  /// No description provided for @loginPassworEmpty.
+  /// No description provided for @loginPasswordEmpty.
   ///
   /// In en, this message translates to:
   /// **'Please enter the password'**
-  String get loginPassworEmpty;
+  String get loginPasswordEmpty;
 
   /// No description provided for @otp_verification_title.
   ///
@@ -306,6 +306,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resend Code'**
   String get resend_code;
+
+  /// No description provided for @stadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadiums'**
+  String get stadiums;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// No description provided for @myClub.
+  ///
+  /// In en, this message translates to:
+  /// **'My Club'**
+  String get myClub;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @all_stadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'All stadiums'**
+  String get all_stadiums;
+
+  /// No description provided for @search_placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium name'**
+  String get search_placeholder;
+
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// No description provided for @price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get price;
+
+  /// No description provided for @empty_slots.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s available slots'**
+  String get empty_slots;
+
+  /// No description provided for @all_slots_booked.
+  ///
+  /// In en, this message translates to:
+  /// **'All slots are booked'**
+  String get all_slots_booked;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @noData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get noData;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

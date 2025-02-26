@@ -6,7 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 
 import '../style/app_icons.dart';
-import '../model/stadium_model.dart'; // ✅ StadiumDetail modelini import qiling
+import '../model/stadium_model.dart'; // ✅ StadiumDetail modelini import qildik
 import 'location_service.dart';
 
 class MarkerService {
@@ -17,20 +17,28 @@ class MarkerService {
     Set<Marker> markers = {};
 
     for (var stadium in stadiums) {
-      double distance = await LocationService.calculateDistance(userLocation,
-          LatLng(stadium.location.latitude, stadium.location.longitude));
+      // ✅ stadium.location nullable bo‘lgani uchun tekshirish kerak
+      if (stadium.location == null) continue;
+
+      final latitude = stadium.location?.latitude ?? 0.0;
+      final longitude = stadium.location?.longitude ?? 0.0;
+
+      double distance = await LocationService.calculateDistance(
+        userLocation,
+        LatLng(latitude, longitude),
+      );
 
       markers.add(
         Marker(
-          markerId: MarkerId(stadium.id.toString()), // ✅ ID dan foydalanish
-          position:
-              LatLng(stadium.location.latitude, stadium.location.longitude),
+          markerId: MarkerId(stadium.id?.toString() ?? 'unknown'), // ✅ ID nullable
+          position: LatLng(latitude, longitude),
           icon: icon,
           infoWindow: InfoWindow(
-            title: stadium.name,
-            onTap: () =>
-                context.pushNamed(AppRoutes.detailStadium, extra: stadium),
-            // ✅ Stadion nomi qo‘shildi
+            title: stadium.name ?? "Noma'lum stadion", // ✅ Name nullable
+            onTap: () => context.pushNamed(
+              AppRoutes.detailStadium,
+              extra: stadium,
+            ),
             snippet: "Sizdan ${distance.toStringAsFixed(2)} km uzoqlikda",
           ),
         ),

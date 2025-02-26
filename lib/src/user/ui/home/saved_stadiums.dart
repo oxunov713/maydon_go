@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/tools/language_extension.dart';
 import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -24,8 +25,8 @@ class _SavedStadiumsState extends State<SavedStadiums> {
     return Scaffold(
       backgroundColor: AppColors.white2,
       appBar: AppBar(
-        title: const Text("Saqlanganlar"),
-        centerTitle: true,
+        title:  Text(context.lan.saved),
+        centerTitle: true,automaticallyImplyLeading: false,
       ),
       body: BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
         builder: (context, state) {
@@ -52,7 +53,7 @@ class _SavedStadiumsState extends State<SavedStadiums> {
                     ),
                     tileColor: AppColors.white,
                     title: Text(
-                      stadium.name,
+                      stadium.name??"is empty",
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -64,7 +65,7 @@ class _SavedStadiumsState extends State<SavedStadiums> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${stadium.price.formatWithSpace()} so'm",
+                          "${stadium.price!.formatWithSpace()} so'm",
                           style: TextStyle(
                             fontSize: deviceHeight * 0.017,
                             color: AppColors.green,

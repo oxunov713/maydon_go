@@ -24,7 +24,7 @@ class OwnerHomeCubit extends Cubit<OwnerHomeState> {
       case 1:
         return const AddSlotScreen();
       case 2:
-        return const OwnerProfileScreen();
+        return  OwnerProfileScreen();
 
       default:
         return const AddSlotScreen();

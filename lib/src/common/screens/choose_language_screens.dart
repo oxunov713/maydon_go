@@ -2,10 +2,10 @@ import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/style/app_colors.dart';
 
 import '../../user/bloc/locale_cubit/locale_cubit.dart';
 import '../router/app_routes.dart';
+import '../style/app_colors.dart';
 import '../widgets/sign_button.dart';
 
 class ChooseLanguageScreens extends StatelessWidget {
@@ -41,21 +41,24 @@ class ChooseLanguageScreens extends StatelessWidget {
       ),
       bottomNavigationBar: BottomSignButton(
         isdisabledBT: true,
-        function: () => context.pushNamed(AppRoutes.role),
+        function: () => context.pushNamed(AppRoutes.welcome),
         text: "Continue",
       ),
     );
   }
 
-  /// Tugmalarni yaratish funksiyasi
   Widget _buildLanguageButton(
-      BuildContext context, String locale, String text, Locale selectedLocale) {
+    BuildContext context,
+    String locale,
+    String text,
+    Locale selectedLocale,
+  ) {
     bool isSelected = selectedLocale.languageCode == locale;
 
     return ListTile(
       onTap: () => context.read<LocaleCubit>().setLocale(locale),
-      shape:
-          const StadiumBorder(side: BorderSide(color: AppColors.grey4, width: 1.5)),
+      shape: const StadiumBorder(
+          side: BorderSide(color: AppColors.grey4, width: 1.5)),
       leading: CountryFlag.fromLanguageCode(
         locale,
         shape: const Circle(),

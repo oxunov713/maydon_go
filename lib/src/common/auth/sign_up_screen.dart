@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/tools/language_extension.dart';
-import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
-import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
-
+import '../tools/language_extension.dart';
+import '../tools/phone_formatter_extension.dart';
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../../user/bloc/auth_cubit/auth_state.dart';
 import '../../user/bloc/locale_cubit/locale_cubit.dart';
@@ -13,6 +11,7 @@ import '../router/app_routes.dart';
 import '../style/app_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/sign_button.dart';
+import '../widgets/sign_log_app_bar.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -139,14 +138,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
+        final _role = context.read<AuthCubit>().selectedRole;
         if (state is AuthSignUpSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ro\'yxatdan o\'tish muvaffaqiyatli!'),
-              backgroundColor: AppColors.green,
-            ),
-          );
-          context.goNamed(AppRoutes.home);
+          (_role == UserRole.user)
+              ? context.goNamed(AppRoutes.home)
+              : context.goNamed(AppRoutes.ownerDashboard);
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -178,23 +174,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
             return _buildForm();
           },
         ),
-        bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            final isLoading = context
-                .watch<AuthCubit>()
-                .isLoadingSignUp; // ✅ AuthCubit dan yuklanish holatini olish
-            return BottomSignButton(
-              function: () {
-                context.read<AuthCubit>().navigateBasedOnSelection(context);
-                context.pushNamed(AppRoutes.sms);
-              },
-             // function: isLoading ? () {} : _onSignup,
-              // ✅ Yuklanayotganda bosish bloklanadi
-              text: context.lan.signUp,
-              isdisabledBT: true,
-              isLoading: isLoading, // ✅ Yuklanish holatini uzatish
-            );
-          },
+        bottomNavigationBar: BottomSignButton(
+          function: _onSignup,
+          text: context.lan.signUp,
+          isdisabledBT: true,
+          isLoading: false,
         ),
       ),
     );

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_multi_formatter/formatters/masked_input_formatter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
-import 'package:maydon_go/src/common/tools/phone_fromatter_extension.dart';
+import 'package:maydon_go/src/common/tools/phone_formatter_extension.dart';
 import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
 
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
@@ -37,9 +37,8 @@ class _LogInScreenState extends State<LogInScreen> {
       await authCubit.login(
         phone: phone,
         password: password,
-        language: context.read<LocaleCubit>().state.languageCode,
       );
-      context.read<AuthCubit>().navigateBasedOnSelection(context);
+
       if (authCubit.state is AuthLoginSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -50,17 +49,23 @@ class _LogInScreenState extends State<LogInScreen> {
             backgroundColor: AppColors.green,
           ),
         );
-        context.goNamed(AppRoutes.home);
+
+        // Barcha oldingi sahifalarni tozalab, faqat `home` yoki `ownerDashboard` sahifasiga o'tish
+        if (authCubit.selectedRole == UserRole.user) {
+          context.goNamed(AppRoutes.home);
+        } else {
+          context.goNamed(AppRoutes.ownerDashboard);
+        }
       } else if (authCubit.state is AuthError) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text(
-        //       (authCubit.state as AuthError).message,
-        //       style: const TextStyle(color: AppColors.white),
-        //     ),
-        //     backgroundColor: AppColors.red,
-        //   ),
-        // );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              (authCubit.state as AuthError).message,
+              style: const TextStyle(color: AppColors.white),
+            ),
+            backgroundColor: AppColors.red,
+          ),
+        );
       }
     }
   }
@@ -112,7 +117,7 @@ class _LogInScreenState extends State<LogInScreen> {
                         context.read<AuthCubit>().togglePassword(type: 3),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return context.lan.loginPassworEmpty;
+                        return context.lan.loginPasswordEmpty;
                       }
                       if (value.length < 6) {
                         return context.lan.passwordMinLengthError;

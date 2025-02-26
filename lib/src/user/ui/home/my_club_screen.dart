@@ -27,7 +27,7 @@ class MyClubScreen extends StatelessWidget {
     final height = MediaQuery.sizeOf(context).height;
     return Scaffold(
       backgroundColor: AppColors.white2,
-      appBar: AppBar(title: const Text("MaydonGo")),
+      appBar: AppBar(title: const Text("MaydonGo"),automaticallyImplyLeading: false,),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
         child: BlocBuilder<MyClubCubit, MyClubState>(

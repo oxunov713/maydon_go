@@ -8,7 +8,7 @@ import 'shared_preference_service.dart';
 class ApiService {
   final logger = Logger();
   late Dio dio;
-  static String? token; // Tokenni saqlash
+  static String? token;
 
   ApiService() {
     dio = Dio(
@@ -20,47 +20,49 @@ class ApiService {
     );
 
     // Interceptor qo'shish
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        // Tokenni har bir so'rovga qo'shish
-        token = await ShPService
-            .getToken(); // Ensure token is fetched from local storage
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options); // So'rovni davom ettirish
-      },
-      onError: (error, handler) {
-        if (error.response?.statusCode == 401) {
-          // Agar 401 qaytsa, token muddati tugagan
-        }
-        return handler.next(error);
-      },
-    ));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          // Tokenni har bir so'rovga qo'shish
+          token = await ShPService
+              .getToken(); // Ensure token is fetched from local storage
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) {
+          if (error.response?.statusCode == 401) {
+            logger.w("Tokeni muddati tugadi");
+          }
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
   // User SignUp
-  Future userSignUp({
+  Future signUp({
     required String name,
     required String phoneNumber,
     required String password,
-    required String language,
+    required String role,
   }) async {
     try {
       final response = await dio.post(
         "/auth/sign-up",
-        queryParameters: {'lang': language},
         data: {
           'phoneNumber': phoneNumber,
           'password': password,
-          'role': "CLIENT",
+          'fullName': name,
+          'role': role,
         },
       );
 
-      final String newToken = response.data['token']; // Tokenni javobdan olish
-      token = newToken; // Runtime saqlash
-      await ShPService.saveToken(newToken); // Local saqlash
-
+      final String newToken = response.data['token'];
+      token = newToken;
+      await ShPService.saveToken(newToken);
+      logger.e(role);
       logger.d('Signup Token: $newToken');
       return response.data;
     } on DioException catch (e) {
@@ -73,15 +75,13 @@ class ApiService {
   }
 
   //User LogIn
-  Future userLogin({
+  Future login({
     required String phoneNumber,
     required String password,
-    required String language,
   }) async {
     try {
       final response = await dio.post(
         "/auth/login",
-        queryParameters: {'lang': language},
         data: {
           'phoneNumber': phoneNumber,
           'password': password,
@@ -109,25 +109,40 @@ class ApiService {
     try {
       final response = await dio.get('/stadium/all/info');
 
-      // Ensure the data is a list of maps before converting it
-      if (response.data is List) {
-        return (response.data as List)
-            .map((stadiumJson) {
-              try {
-                return StadiumDetail.fromJson(stadiumJson as Map<String, Object?>);
-              } catch (e) {
-                logger.e("Error parsing stadium data: $e");
-                return null; // Skip this stadium if parsing fails
-              }
-            })
-            .where((stadium) => stadium != null)
-            .toList() as List<StadiumDetail>; // Filter out null values
-      } else {
-        throw Exception("Expected a list of stadiums but got something else.");
+      // Log the API response to debug its structure
+      logger.d("API Response: ${response.data}");
+
+      // Handle null response
+      if (response.data == null) {
+        throw Exception("API response is null");
       }
+
+      // Ensure response.data is a list
+      if (response.data is! List) {
+        throw Exception("Expected a list but got ${response.data.runtimeType}");
+      }
+
+      final List<dynamic> rawList = response.data;
+
+      final List<StadiumDetail> stadiums = rawList
+          .whereType<Map<String, dynamic>>() // Only process valid maps
+          .map((item) {
+        try {
+          return StadiumDetail.fromJson(item);
+        } catch (e) {
+          logger.e("Error parsing stadium data: $e, Data: $item");
+          return null; // Skip invalid items
+        }
+      })
+          .whereType<StadiumDetail>() // Remove null values
+          .toList();
+
+      return stadiums;
     } catch (e) {
-      logger.e(e);
+      logger.e("Error fetching stadiums: $e");
       throw Exception('Error fetching stadiums: $e');
     }
   }
+
+
 }

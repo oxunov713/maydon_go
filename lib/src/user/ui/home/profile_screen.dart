@@ -26,7 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final width = MediaQuery.sizeOf(context).width;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Profile"),
+        title: Text("Profile"),automaticallyImplyLeading: false,
       ),
       backgroundColor: Color(0xffF2F3F5),
       body: SingleChildScrollView(

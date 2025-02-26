@@ -222,12 +222,12 @@ class HomeCubit extends Cubit<HomeState> {
       } else {
         _searchResults = _stadiums
             .where((stadium) =>
-            stadium.name.toLowerCase().contains(query.toLowerCase()))
+            stadium.name!.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
 
       // Sort by name
-      _searchResults.sort((a, b) => a.name.compareTo(b.name));
+      _searchResults.sort((a, b) => a.name!.compareTo(b.name!));
 
       _searchStreamController.add(_searchResults);
 

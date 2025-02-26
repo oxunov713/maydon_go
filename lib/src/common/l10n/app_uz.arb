@@ -27,11 +27,25 @@
   "confirmPasswordError": "Yaratgan parolingizni qayta kiriting!",
   "signupInProgress": "Ro'yxatdan o'tish davom etmoqda...",
   "signupButtonText": "Ro'yxatdan o'tish",
-  "loginPassworEmpty": "Iltimos, parol kiriting",
+  "loginPasswordEmpty": "Iltimos, parol kiriting",
   "otp_verification_title": "OTP kodini tekshirish",
   "otp_verification_subtitle": "Biz telefon raqamingizga OTP kodini yubordik --- --- ---{last2numbers}. Davomi ostidagi OTP kodini kiriting davom etish uchun.",
   "otp_verification_resend_timer": "Sizga kodni {remaining_seconds} soniyada qayta yuboramiz",
   "otp_verification_button": "Tasdiqlash",
   "forgot_password": "Parolni unutdingizmi?",
-  "resend_code": "Qayta yuborish"
+  "resend_code": "Qayta yuborish",
+  "stadiums": "Stadionlar",
+  "saved": "Saqlanganlar",
+  "myClub": "My club",
+  "profile": "Profil",
+  "all_stadiums": "Barcha maydonlar",
+  "search_placeholder": "Maydon nomi",
+  "rating": "Reyting",
+  "price": "Narx",
+  "empty_slots": "Bugungi bo'sh vaqtlar",
+  "all_slots_booked": "Barcha soatlar band",
+  "location": "Manzil",
+  "noData": "Ma'lumot mavjud emas"
 }
+
+

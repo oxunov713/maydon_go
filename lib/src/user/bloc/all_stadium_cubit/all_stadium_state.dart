@@ -35,5 +35,6 @@ class StadiumLoaded extends StadiumState {
 
 class StadiumError extends StadiumState {
   final String message;
+
   StadiumError(this.message);
 }

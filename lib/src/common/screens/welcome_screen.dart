@@ -89,7 +89,7 @@ class WelcomeScreen extends StatelessWidget {
                               elevation: 5,
                             ),
                             onPressed: () =>
-                                context.pushNamed(AppRoutes.signUp),
+                                context.pushNamed(AppRoutes.role),
                             child: Text(
                               context.lan.signUp,
                               style: const TextStyle(

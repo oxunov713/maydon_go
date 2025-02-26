@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/service/api_service.dart';
 import 'auth_state.dart';
@@ -19,12 +20,8 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthRoleSelected(selectedRole));
   }
 
-  void navigateBasedOnSelection(BuildContext context) {
-    if (selectedRole == UserRole.user) {
-      context.pushNamed(AppRoutes.home);
-    } else if (selectedRole == UserRole.owner) {
-      context.pushNamed(AppRoutes.ownerDashboard);
-    }
+  String _chosenRole() {
+    return (selectedRole == UserRole.user) ? "CLIENT" : "OWNER";
   }
 
   bool isContinueButtonEnabled() {
@@ -60,11 +57,12 @@ class AuthCubit extends Cubit<AuthState> {
     isLoadingSignUp = true;
     emit(AuthLoading());
     try {
-      final response = await apiService.userSignUp(
-          name: name,
-          phoneNumber: phone,
-          password: password,
-          language: language);
+      final response = await apiService.signUp(
+        name: name,
+        phoneNumber: phone,
+        password: password,
+        role: _chosenRole(),
+      );
 
       if (response is Map && response.containsKey('token')) {
         emit(AuthSignUpSuccess());
@@ -84,16 +82,21 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> login({
     required String phone,
     required String password,
-    required String language,
   }) async {
     isLoadingLogIn = true;
     emit(AuthLoading());
 
     try {
-      final response = await apiService.userLogin(
-          phoneNumber: phone, password: password, language: language);
+      final response = await apiService.login(
+        phoneNumber: phone,
+        password: password,
+      );
 
       if (response is Map && response.containsKey('token')) {
+        selectedRole = (response['user']['role'] == "OWNER")
+            ? UserRole.owner
+            : UserRole.user;
+        Logger().e(selectedRole);
         emit(AuthLoginSuccess());
       } else {
         emit(AuthError(response['message'] ?? 'Unknown error occurred.'));
@@ -111,14 +114,12 @@ class AuthCubit extends Cubit<AuthState> {
   bool isResendEnabled = false;
 
   void startTimer() {
-    // Avvalgi timer ni to'xtatamiz
     _timer?.cancel();
 
     remainingSeconds = 60;
     isResendEnabled = false;
     emit(AuthTimerUpdated(remainingSeconds, isResendEnabled));
 
-    // Yangi timer yaratamiz
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
         remainingSeconds--;
