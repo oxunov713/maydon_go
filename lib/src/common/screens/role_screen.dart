@@ -14,59 +14,61 @@ class RoleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 10),
-            Text(
-              context.lan.appName,
-              style: const TextStyle(
-                color: AppColors.main,
-                fontWeight: FontWeight.w700,
-                fontSize: 40,
+    return SafeArea(
+      child: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 10),
+              Text(
+                context.lan.appName,
+                style: const TextStyle(
+                  color: AppColors.main,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 40,
+                ),
               ),
-            ),
-            const SizedBox(height: 50),
-            BlocBuilder<AuthCubit, AuthState>(
-              buildWhen: (previous, current) => current is AuthRoleSelected,
-              builder: (context, state) {
-                final selectedRole = (state is AuthRoleSelected)
-                    ? state.selectedRole
-                    : UserRole.none;
-                return Column(
-                  children: [
-                    buildRoleCard(
-                      title: context.lan.roleUserTitle,
-                      subtitle: context.lan.roleUserSubTitle,
-                      isSelected: selectedRole == UserRole.user,
-                      onTap: () =>
-                          context.read<AuthCubit>().onRoleSelect(UserRole.user),
-                    ),
-                    buildRoleCard(
-                      title: context.lan.roleOwnerTitle,
-                      subtitle: context.lan.roleOwnerSubTitle,
-                      isSelected: selectedRole == UserRole.owner,
-                      onTap: () => context
-                          .read<AuthCubit>()
-                          .onRoleSelect(UserRole.owner),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+              const SizedBox(height: 50),
+              BlocBuilder<AuthCubit, AuthState>(
+                buildWhen: (previous, current) => current is AuthRoleSelected,
+                builder: (context, state) {
+                  final selectedRole = (state is AuthRoleSelected)
+                      ? state.selectedRole
+                      : UserRole.none;
+                  return Column(
+                    children: [
+                      buildRoleCard(
+                        title: context.lan.roleUserTitle,
+                        subtitle: context.lan.roleUserSubTitle,
+                        isSelected: selectedRole == UserRole.user,
+                        onTap: () =>
+                            context.read<AuthCubit>().onRoleSelect(UserRole.user),
+                      ),
+                      buildRoleCard(
+                        title: context.lan.roleOwnerTitle,
+                        subtitle: context.lan.roleOwnerSubTitle,
+                        isSelected: selectedRole == UserRole.owner,
+                        onTap: () => context
+                            .read<AuthCubit>()
+                            .onRoleSelect(UserRole.owner),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          return BottomSignButton(
-            function: () => _onContinuePressed(context, state),
-            text: context.lan.continueBt,
-            isdisabledBT: (state is AuthRoleSelected),
-          );
-        },
+        bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            return BottomSignButton(
+              function: () => _onContinuePressed(context, state),
+              text: context.lan.continueBt,
+              isdisabledBT: (state is AuthRoleSelected),
+            );
+          },
+        ),
       ),
     );
   }

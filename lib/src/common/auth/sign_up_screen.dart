@@ -152,33 +152,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: AppColors.white,
-          leading: const BackButton(color: AppColors.main),
-        ),
-        body: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            if (state is AuthLoading) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(color: AppColors.green),
-                    const SizedBox(height: 10),
-                    Text(context.lan.signupInProgress),
-                  ],
-                ),
-              );
-            }
-            return _buildForm();
-          },
-        ),
-        bottomNavigationBar: BottomSignButton(
-          function: _onSignup,
-          text: context.lan.signUp,
-          isdisabledBT: true,
-          isLoading: false,
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: AppColors.white,
+            leading: const BackButton(color: AppColors.main),
+          ),
+          body: BlocBuilder<AuthCubit, AuthState>(
+            builder: (context, state) {
+              if (state is AuthLoading) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(color: AppColors.green),
+                      const SizedBox(height: 10),
+                      Text(context.lan.signupInProgress),
+                    ],
+                  ),
+                );
+              }
+              return _buildForm();
+            },
+          ),
+          bottomNavigationBar: BottomSignButton(
+            function: _onSignup,
+            text: context.lan.signUp,
+            isdisabledBT: true,
+            isLoading: false,
+          ),
         ),
       ),
     );

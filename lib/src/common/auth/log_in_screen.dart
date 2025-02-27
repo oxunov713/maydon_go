@@ -72,94 +72,96 @@ class _LogInScreenState extends State<LogInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        leading: const BackButton(color: AppColors.main),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              signLogAppBar(context, "Qaytib kelganingizdan xursandmiz"),
-              const SizedBox(height: 20),
-              buildTextField(
-                controller: _phoneController,
-                labelText: context.lan.phone,
-                inputFormatters: [
-                  MaskedInputFormatter(" (##) ###-##-##"),
-                ],
-                isNumber: true,
-                keyboardType: TextInputType.phone,
-                validator: (value) {
-                  value = "+998${value!}";
-                  if (value.isEmpty) {
-                    return context.lan.phoneError;
-                  }
-                  if (!RegExp(r'^\+998 \(\d{2}\) \d{3}-\d{2}-\d{2}$')
-                      .hasMatch(value)) {
-                    return context.lan.phoneFormatError;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              BlocBuilder<AuthCubit, AuthState>(
-                builder: (context, state) {
-                  return buildTextField(
-                    controller: _passwordController,
-                    labelText: context.lan.password,
-                    isPassword: true,
-                    obscureText: context.read<AuthCubit>().obscureLoginPassword,
-                    toggleVisibility: () =>
-                        context.read<AuthCubit>().togglePassword(type: 3),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return context.lan.loginPasswordEmpty;
-                      }
-                      if (value.length < 6) {
-                        return context.lan.passwordMinLengthError;
-                      }
-                      return null;
-                    },
-                  );
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(width: 5),
-                  TextButton(
-                    onPressed: () {
-                      context.pushNamed(AppRoutes.sms);
-                    },
-                    child: Text(
-                      context.lan.forgot_password,
-                      style: const TextStyle(
-                          color: AppColors.blue, fontWeight: FontWeight.w600),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          leading: const BackButton(color: AppColors.main),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                signLogAppBar(context, "Qaytib kelganingizdan xursandmiz"),
+                const SizedBox(height: 20),
+                buildTextField(
+                  controller: _phoneController,
+                  labelText: context.lan.phone,
+                  inputFormatters: [
+                    MaskedInputFormatter(" (##) ###-##-##"),
+                  ],
+                  isNumber: true,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    value = "+998${value!}";
+                    if (value.isEmpty) {
+                      return context.lan.phoneError;
+                    }
+                    if (!RegExp(r'^\+998 \(\d{2}\) \d{3}-\d{2}-\d{2}$')
+                        .hasMatch(value)) {
+                      return context.lan.phoneFormatError;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    return buildTextField(
+                      controller: _passwordController,
+                      labelText: context.lan.password,
+                      isPassword: true,
+                      obscureText: context.read<AuthCubit>().obscureLoginPassword,
+                      toggleVisibility: () =>
+                          context.read<AuthCubit>().togglePassword(type: 3),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return context.lan.loginPasswordEmpty;
+                        }
+                        if (value.length < 6) {
+                          return context.lan.passwordMinLengthError;
+                        }
+                        return null;
+                      },
+                    );
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const SizedBox(width: 5),
+                    TextButton(
+                      onPressed: () {
+                        context.pushNamed(AppRoutes.sms);
+                      },
+                      child: Text(
+                        context.lan.forgot_password,
+                        style: const TextStyle(
+                            color: AppColors.blue, fontWeight: FontWeight.w600),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, state) {
-          final isLoading = context
-              .watch<AuthCubit>()
-              .isLoadingLogIn; // ✅ AuthCubit dan yuklanish holatini olish
-          return BottomSignButton(
-            function: isLoading ? () {} : _onLogin,
-            // ✅ Yuklanayotganda bosish bloklanadi
-            text: context.lan.login,
-            isdisabledBT: true,
-            isLoading: isLoading, // ✅ Yuklanish holatini uzatish
-          );
-        },
+        bottomNavigationBar: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            final isLoading = context
+                .watch<AuthCubit>()
+                .isLoadingLogIn; // ✅ AuthCubit dan yuklanish holatini olish
+            return BottomSignButton(
+              function: isLoading ? () {} : _onLogin,
+              // ✅ Yuklanayotganda bosish bloklanadi
+              text: context.lan.login,
+              isdisabledBT: true,
+              isLoading: isLoading, // ✅ Yuklanish holatini uzatish
+            );
+          },
+        ),
       ),
     );
   }

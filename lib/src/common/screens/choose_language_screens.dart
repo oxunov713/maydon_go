@@ -13,36 +13,38 @@ class ChooseLanguageScreens extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: BlocBuilder<LocaleCubit, Locale>(
-          builder: (context, state) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 20,
-                children: [
-                  Text(
-                    "Choose language",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: MediaQuery.sizeOf(context).height / 22,
+    return SafeArea(
+      child: Scaffold(
+        body: Center(
+          child: BlocBuilder<LocaleCubit, Locale>(
+            builder: (context, state) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 20,
+                  children: [
+                    Text(
+                      "Choose language",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: MediaQuery.sizeOf(context).height / 22,
+                      ),
                     ),
-                  ),
-                  _buildLanguageButton(context, "uz", "O'zbek tili", state),
-                  _buildLanguageButton(context, "ru", "Русский", state),
-                  _buildLanguageButton(context, "en", "English", state),
-                ],
-              ),
-            );
-          },
+                    _buildLanguageButton(context, "uz", "O'zbek tili", state),
+                    _buildLanguageButton(context, "ru", "Русский", state),
+                    _buildLanguageButton(context, "en", "English", state),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomSignButton(
-        isdisabledBT: true,
-        function: () => context.pushNamed(AppRoutes.welcome),
-        text: "Continue",
+        bottomNavigationBar: BottomSignButton(
+          isdisabledBT: true,
+          function: () => context.pushNamed(AppRoutes.welcome),
+          text: "Continue",
+        ),
       ),
     );
   }

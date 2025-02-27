@@ -91,17 +91,28 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
 
-  /// 📌 **Tanlangan stadion va sana yangilash**
-  void setSelectedStadium(StadiumDetail stadium) {
-    selectedStadium = stadium.name ?? '';
-    fetchAvailableSlots(stadium); // 📌 Yangi stadion bo‘sh slotlarini yuklash
+  void setSelectedStadium(String stadiumName) {
+    selectedStadium = stadiumName;
+    emit(BookingUpdated(
+      selectedStadium: selectedStadium,
+      selectedDate: selectedDate,
+      groupedSlots: {},
+      position: 0.0,
+      confirmed: false,
+    ));
   }
-
 
   void setSelectedDate(String date) {
     selectedDate = date;
-    _updateState();
+    emit(BookingUpdated(
+      selectedStadium: selectedStadium,
+      selectedDate: selectedDate,
+      groupedSlots: {},
+      position: 0.0,
+      confirmed: false,
+    ));
   }
+
 
   /// 📌 **Slotlarni guruhlash**
   void getGroupedSlots(StadiumDetail stadium) {
