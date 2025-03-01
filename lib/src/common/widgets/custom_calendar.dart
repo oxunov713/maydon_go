@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:maydon_go/src/common/model/substadium_model.dart';
+import 'package:maydon_go/src/common/tools/language_extension.dart';
 
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_state.dart';
@@ -23,11 +25,18 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final bookingCubit = context.read<BookingCubit>();
-    final state = bookingCubit.state;
 
-    if (state is BookingUpdated && state.selectedDate.isEmpty) {
-      bookingCubit.setSelectedDate(_getTodayDate());
+    final bookingState = context.read<BookingCubit>().state;
+
+    if (bookingState is BookingLoaded &&
+        bookingState.selectedStadiumName == null) {
+      if (bookingState.stadium.fields?.isNotEmpty == true) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context
+              .read<BookingCubit>()
+              .setSelectedField(bookingState.stadium.fields!.first.name!);
+        });
+      }
     }
   }
 
@@ -51,37 +60,48 @@ class _CustomCalendarState extends State<CustomCalendar> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
     final bookingState = context.watch<BookingCubit>().state;
 
-    if (bookingState is! BookingUpdated) {
+    if (bookingState is BookingError) {
+      return Center(child: Text(bookingState.message));
+    }
+
+    if (bookingState is! BookingLoaded) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final selectedDate = bookingState.selectedDate;
+    final stadium = bookingState.stadium;
+    final selectedDate = bookingState.selectedDate ?? _getTodayDate();
     final formattedDate = _formatDate(selectedDate);
-    final groupedSlots = bookingState.groupedSlots;
 
-    return BlocListener<BookingCubit, BookingState>(
-      listenWhen: (previous, current) => current is BookingUpdated,
-      listener: (context, state) {},
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: height * 0.02),
-          Text(
-            formattedDate,
-            style: TextStyle(fontSize: height * 0.02),
-          ),
-          SizedBox(height: height * 0.02),
-          _buildDatePicker(height, selectedDate, groupedSlots),
-          const Divider(),
-          _buildTimeSlots(height, selectedDate, groupedSlots),
-        ],
-      ),
+    final selectedStadium = stadium.fields?.firstWhere(
+      (field) => field.name == bookingState.selectedStadiumName,
+      orElse: () => stadium.fields!.isNotEmpty
+          ? stadium.fields!.first
+          : Substadiums(id: 0, name: '', availableSlots: []),
     );
+
+    final groupedSlots = selectedStadium?.availableSlots?.groupByDate() ?? {};
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: height * 0.02),
+        Text(
+          formattedDate,
+          style: TextStyle(fontSize: height * 0.02),
+        ),
+        SizedBox(height: height * 0.02),
+        _buildDatePicker(height, selectedDate, groupedSlots),
+        const Divider(),
+        _buildTimeSlots(height, selectedDate, groupedSlots),
+      ],
+    );
+
   }
 
   String _formatDate(String date) {
@@ -89,8 +109,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return DateFormat("dd MMMM, yyyy", 'uz').format(DateTime.parse(dateOnly));
   }
 
-  Widget _buildDatePicker(
-      double height, String selectedDate, Map<String, List<TimeSlot>> groupedSlots) {
+  Widget _buildDatePicker(double height, String selectedDate,
+      Map<String, List<TimeSlot>> groupedSlots) {
     return Row(
       children: [
         IconButton(
@@ -122,7 +142,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
   Widget _buildDateItem(double height, String selectedDate, String date) {
     final parsedDate = DateTime.parse(date.split('T')[0]);
     final today = _getTodayDate();
-    final isSelected = selectedDate == date || (selectedDate.isEmpty && date == today);
+    final isSelected =
+        selectedDate == date || (selectedDate.isEmpty && date == today);
 
     return GestureDetector(
       onTap: () => context.read<BookingCubit>().setSelectedDate(date),
@@ -149,7 +170,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
               radius: height * 0.018,
               child: Text(
                 DateFormat("dd").format(parsedDate),
-                style: TextStyle(fontSize: height * 0.02, color: AppColors.main),
+                style:
+                    TextStyle(fontSize: height * 0.02, color: AppColors.main),
               ),
             ),
           ],
@@ -158,8 +180,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
     );
   }
 
-  Widget _buildTimeSlots(
-      double height, String selectedDate, Map<String, List<TimeSlot>> groupedSlots) {
+  Widget _buildTimeSlots(double height, String selectedDate,
+      Map<String, List<TimeSlot>> groupedSlots) {
     final slots = groupedSlots[selectedDate] ?? [];
 
     if (slots.isEmpty) {
@@ -219,8 +241,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: () => isBooked
-            ? bookingCubit.removeBookingSlot(slot)
-            : bookingCubit.addBookingSlot(slot),
+            ? bookingCubit.removeSlot(slot)
+            : bookingCubit.addSlot(slot),
         child: Center(
           child: Text(
             "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",

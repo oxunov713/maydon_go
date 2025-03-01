@@ -1,185 +1,217 @@
-import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
-import 'package:intl/intl.dart';
+import 'dart:async';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
 import '../../../common/model/stadium_model.dart';
-import '../../../common/model/substadium_model.dart';
 import '../../../common/model/time_slot_model.dart';
 import '../../../common/service/api_service.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  final apiService = ApiService();
+  List<TimeSlot> bookings = []; // Booking list
+  String? selectedStadiumName;
+  String? selectedDate;
+  double position = 0.0;
+  bool confirmed = false;
 
   BookingCubit() : super(BookingInitial());
 
-  String selectedStadium = '';
-  String selectedDate = '';
-  double position = 0.0;
-  bool confirmed = false;
-  List<TimeSlot> bookedSlots = []; // 📌 Band qilingan slotlarni saqlash
+  void setSelectedDate(String date) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
 
-  /// 📌 **Stadionlar API dan olinadi**
-  Future<void> fetchStadiums() async {
-    emit(BookingLoading());
-    try {
-      final stadiums = await apiService.getAllStadiums();
-      if (stadiums.isNotEmpty) {
-        fetchAvailableSlots(stadiums.first); // 📌 Default birinchi stadion ko‘rsatiladi
-      }
-      emit(BookingStadiumsLoaded(stadiums));
-    } catch (e) {
-      emit(BookingError(e.toString()));
+      emit(BookingLoaded(
+        stadium: currentState.stadium,
+        bookedSlots: currentState.bookedSlots,
+        selectedDate: date,
+        selectedStadiumName:
+            selectedStadiumName, // Stadionni yo‘qotmaslik uchun qo‘shildi
+      ));
     }
   }
 
-
-  /// 📌 30 kunlik bo‘sh slotlarni qaytaradi (faqat band qilinganlar tashlab yuboriladi)
-  /// 📌 30 kunlik bo‘sh slotlarni yaratish (band qilingan vaqtlarni olib tashlash)
-  void fetchAvailableSlots(StadiumDetail stadium) {
+  /// API dan stadiumni ID bo‘yicha olib kelish
+  Future<void> fetchStadiumById(int stadiumId) async {
     emit(BookingLoading());
+    try {
+      final stadium = await ApiService().getStadiumById(stadiumId: stadiumId);
+      _updateSlots(stadium);
+      selectedStadiumName = stadium.fields?.first.name;
+    } catch (e) {
+      emit(BookingError("Failed to fetch stadium: $e"));
+    }
+  }
+
+  void setSelectedField(String fieldName) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      selectedStadiumName = fieldName;
+
+      emit(BookingLoaded(
+        stadium: currentState.stadium,
+        bookedSlots: currentState.bookedSlots,
+        selectedStadiumName: fieldName, // BU YERGA KIRITILDI
+        selectedDate: currentState.selectedDate,
+      ));
+    }
+  }
+
+  bool isSlotBooked(TimeSlot slot) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      return currentState.bookings.any((bookedSlot) =>
+      bookedSlot.startTime == slot.startTime &&
+          bookedSlot.endTime == slot.endTime);
+    }
+    return false;
+  }
+  void updatePosition(double delta, double maxPosition) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      double newPosition = currentState.position + delta;
+      if (newPosition < 0) newPosition = 0;
+      if (newPosition > maxPosition) newPosition = maxPosition;
+
+      emit(currentState.copyWith(position: newPosition));
+    }
+  }
+
+  void confirmPosition(double maxPosition) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      final isConfirmed = currentState.position >= maxPosition;
+
+      emit(currentState.copyWith(
+        position: isConfirmed ? maxPosition : 0.0,
+        confirmed: isConfirmed,
+      ));
+    }
+  }
+
+  /// Substadiumni tanlash (ID yoki nom bilan)
+  void selectField({String? fieldName}) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      selectedStadiumName = fieldName;
+      emit(BookingLoaded(
+        stadium: currentState.stadium,
+        bookedSlots: currentState.bookedSlots,
+        selectedDate: currentState.selectedDate,
+      ));
+    }
+  }
+
+  /// Eski slotlarni o‘chirib, yangilarini qo‘shish
+  void _updateSlots(StadiumDetail stadium) {
+    final log = Logger();
+    log.e("📅 Slotlarni yangilash...");
 
     final now = DateTime.now();
-    final next30Days = List.generate(30, (index) => now.add(Duration(days: index)));
+    final today = now.toIso8601String().split("T")[0]; // Bugungi sana
 
-    List<TimeSlot> allSlots = [];
+    final startDay = DateTime(now.year, now.month, now.day);
+    final next30Days =
+        List.generate(30, (index) => startDay.add(Duration(days: index)));
 
-    for (var day in next30Days) {
+    final updatedFields = stadium.fields?.map((substadium) {
+      final allSlots = _generateSlotsForDateRange(next30Days);
+      final availableSlots =
+          _removeBookedSlots(allSlots, substadium.bookings ?? []);
+      return substadium.copyWith(availableSlots: availableSlots);
+    }).toList();
+
+    emit(BookingLoaded(
+      stadium: stadium.copyWith(fields: updatedFields),
+      selectedDate: selectedDate?.isNotEmpty == true
+          ? selectedDate
+          : today, // Default bugungi sana
+    ));
+    log.e("✅ State o‘zgardi: $state"); // State yangilanganligini tekshirish
+  }
+
+  /// 30 kunlik 1 soatlik slotlarni generatsiya qilish
+  List<TimeSlot> _generateSlotsForDateRange(List<DateTime> dates) {
+    final List<TimeSlot> allSlots = [];
+    final now = DateTime.now();
+
+    for (var day in dates) {
       DateTime slotStart = DateTime(day.year, day.month, day.day, 0, 0);
+
+      // Agar bugungi sana bo'lsa, hozirgi vaqtni keyingi to'liq soatga yaxlitlash
+      if (day.day == now.day &&
+          day.month == now.month &&
+          day.year == now.year) {
+        // Hozirgi vaqtni keyingi to'liq soatga yaxlitlash
+        slotStart = DateTime(now.year, now.month, now.day, now.hour + 1, 0);
+      }
+
       DateTime slotEnd = slotStart.add(Duration(hours: 1));
 
       while (slotEnd.day == day.day) {
-        allSlots.add(TimeSlot(startTime: slotStart, endTime: slotEnd));
+        if (slotStart.isAfter(now)) {
+          // Faqat kelajakdagi slotlarni olish
+          allSlots.add(TimeSlot(startTime: slotStart, endTime: slotEnd));
+        }
         slotStart = slotEnd;
         slotEnd = slotStart.add(Duration(hours: 1));
       }
     }
+    return allSlots;
+  }
 
-    // 📌 Har bir substadiumdagi band qilingan vaqtlarni yig‘amiz
-    final bookedTimes = stadium.fields
-        ?.expand((field) => field.bookings ?? [])
-        .toList() ??
-        [];
-
-    // 📌 Band qilingan vaqtlarni olib tashlaymiz
-    allSlots.removeWhere((slot) {
-      return bookedTimes.any((booking) =>
-      slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
+  /// API dan kelgan book qilingan slotlarni o‘chirib tashlash
+  List<TimeSlot> _removeBookedSlots(
+      List<TimeSlot> allSlots, List<TimeSlot> bookedSlots) {
+    return allSlots.where((slot) {
+      return !bookedSlots.any((booking) =>
+          slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
           (slot.startTime!.isAfter(booking.startTime!) &&
               slot.startTime!.isBefore(booking.endTime!)));
-    });
-
-    // 📌 UI ni yangilash
-    emit(BookingUpdated(
-      selectedStadium: stadium.name ?? '',
-      selectedDate: '',
-      groupedSlots: _groupSlotsByDate(allSlots),
-      position: position,
-      confirmed: confirmed,
-    ));
+    }).toList();
   }
 
-
-  /// 📌 Slotlarni sanalar bo‘yicha guruhlash
-  Map<String, List<TimeSlot>> _groupSlotsByDate(List<TimeSlot> slots) {
-    final Map<String, List<TimeSlot>> groupedSlots = {};
-    for (var slot in slots) {
-      final dateKey = DateFormat("yyyy-MM-dd").format(slot.startTime!);
-      groupedSlots.putIfAbsent(dateKey, () => []);
-      groupedSlots[dateKey]!.add(slot);
-    }
-    return groupedSlots;
-  }
-
-
-  void setSelectedStadium(String stadiumName) {
-    selectedStadium = stadiumName;
-    emit(BookingUpdated(
-      selectedStadium: selectedStadium,
-      selectedDate: selectedDate,
-      groupedSlots: {},
-      position: 0.0,
-      confirmed: false,
-    ));
-  }
-
-  void setSelectedDate(String date) {
-    selectedDate = date;
-    emit(BookingUpdated(
-      selectedStadium: selectedStadium,
-      selectedDate: selectedDate,
-      groupedSlots: {},
-      position: 0.0,
-      confirmed: false,
-    ));
-  }
-
-
-  /// 📌 **Slotlarni guruhlash**
-  void getGroupedSlots(StadiumDetail stadium) {
-    final selectedField = stadium.fields?.firstWhere(
-      (field) => field.name == selectedStadium,
-      orElse: () => Substadiums(id: 0, name: 'Nomaʼlum stadion', bookings: []),
-    );
-
-    final Map<String, List<TimeSlot>> groupedSlots = {};
-    selectedField?.bookings?.forEach((slot) {
-      final date =
-          DateFormat("yyyy-MM-dd").format(slot.startTime ?? DateTime.now());
-      if (!groupedSlots.containsKey(date)) {
-        groupedSlots[date] = [];
-      }
-      groupedSlots[date]?.add(slot);
-    });
-
-    _updateState(groupedSlots: groupedSlots);
-  }
-
-  /// 📌 **Swipe tugmachani surish**
-  void updatePosition(double delta, double maxWidth) {
-    position += delta;
-    if (position < 0) position = 0;
-    if (position > maxWidth) position = maxWidth;
-    _updateState();
-  }
-
-  /// 📌 **Swipe tasdiqlash**
-  void confirmPosition(double confirmThreshold) {
-    if (position >= confirmThreshold) {
-      confirmed = true;
-    } else {
-      position = 0;
-    }
-    _updateState();
-  }
-
-  /// 📌 **Vaqt slotlarini boshqarish**
-  void addBookingSlot(TimeSlot slot) {
-    if (!bookedSlots.contains(slot)) {
-      bookedSlots.add(slot);
-      _updateState();
+  /// Booking Listga slot qo‘shish
+  void addSlot(TimeSlot slot) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      final updatedBookings = List<TimeSlot>.from(currentState.bookings)..add(slot);
+      emit(currentState.copyWith(bookings: updatedBookings));
     }
   }
 
-  void removeBookingSlot(TimeSlot slot) {
-    bookedSlots.remove(slot);
-    _updateState();
+  void removeSlot(TimeSlot slot) {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      final updatedBookings = List<TimeSlot>.from(currentState.bookings)..remove(slot);
+      emit(currentState.copyWith(bookings: updatedBookings));
+    }
   }
 
-  bool isSlotBooked(TimeSlot slot) {
-    return bookedSlots.contains(slot);
+  void clearSlots() {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      emit(currentState.copyWith(bookings: []));
+    }
   }
 
-  /// 📌 **State yangilash**
-  void _updateState({Map<String, List<TimeSlot>>? groupedSlots}) {
-    emit(BookingUpdated(
-      selectedStadium: selectedStadium,
-      selectedDate: selectedDate,
-      groupedSlots: groupedSlots ??
-          (state is BookingUpdated
-              ? (state as BookingUpdated).groupedSlots
-              : {}),
-      position: position,
-      confirmed: confirmed,
-    ));
+  /// Bookingni tasdiqlash va API ga jo‘natish
+  Future<void> confirmBooking() async {
+    if (state is! BookingLoaded || bookings.isEmpty) return;
+
+    final currentState = state as BookingLoaded;
+    try {
+      // await ApiService().bookSlots(bookings);
+      bookings.clear(); // API ga jo‘natilgandan so‘ng tozalash
+      emit(BookingLoaded(
+        stadium: currentState.stadium,
+        bookedSlots: [],
+      ));
+    } catch (e) {
+      emit(BookingError("Failed to confirm booking: $e"));
+    }
+  }
+
+  /// Stadiumni yangilash (pull-to-refresh)
+  Future<void> refreshStadium(int stadiumId) async {
+    await fetchStadiumById(stadiumId);
   }
 }

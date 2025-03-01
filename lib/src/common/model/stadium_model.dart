@@ -56,4 +56,35 @@ class StadiumDetail {
           .toList(),
     );
   }
+
+  /// ✅ `copyWith` metodi qo‘shildi
+  StadiumDetail copyWith({
+    int? id,
+    String? name,
+    String? description,
+    double? price,
+    UserModel? owner,
+    LocationModel? location,
+    Facilities? facilities,
+    double? averageRating,
+    List<String>? images,
+    List<int>? ratings,
+    int? stadiumCount,
+    List<Substadiums>? fields,
+  }) {
+    return StadiumDetail(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      owner: owner ?? this.owner,
+      location: location ?? this.location,
+      facilities: facilities ?? this.facilities,
+      averageRating: averageRating ?? this.averageRating,
+      images: images ?? this.images,
+      ratings: ratings ?? this.ratings,
+      stadiumCount: stadiumCount ?? this.stadiumCount,
+      fields: fields ?? this.fields,
+    );
+  }
 }

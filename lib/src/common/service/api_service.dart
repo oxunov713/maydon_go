@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
 
 import '../constants/config.dart';
@@ -14,8 +17,8 @@ class ApiService {
     dio = Dio(
       BaseOptions(
         baseUrl: Config.baseUrl, // Backend API manzili
-        connectTimeout: const Duration(seconds: 100),
-        receiveTimeout: const Duration(seconds: 100),
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
       ),
     );
 
@@ -23,9 +26,7 @@ class ApiService {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Tokenni har bir so'rovga qo'shish
-          token = await ShPService
-              .getToken(); // Ensure token is fetched from local storage
+          token = await ShPService.getToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
@@ -48,6 +49,7 @@ class ApiService {
     required String password,
     required String role,
   }) async {
+    checkBaseUrl();
     try {
       final response = await dio.post(
         "/auth/sign-up",
@@ -66,11 +68,29 @@ class ApiService {
       logger.d('Signup Token: $newToken');
       return response.data;
     } on DioException catch (e) {
-      logger.e('Error: ${e.response?.data ?? e.message}');
-      return e.response?.data ?? {'error': e.message};
+      logger.e('DioException occurred!');
+      logger.e('Status Code: ${e.response?.statusCode}');
+      logger.e('Response Data: ${e.response?.data}');
+      logger.e('Error Message: ${e.message}');
+      logger.e('Type: ${e.type}');
+
+      return {
+        'error': e.response?.data ?? {'message': e.message ?? 'Unknown error'},
+        'status': e.response?.statusCode ?? 500,
+      };
     } catch (e) {
       logger.e('Unknown error:+++ $e');
       throw Exception('Unexpected error: $e');
+    }
+  }
+
+  void checkBaseUrl() async {
+    try {
+      final response =
+          await Dio().get("https://api.maydongo.uz/api/auth/sign-up");
+      print("✅ API ishladi: ${response.data}");
+    } catch (e) {
+      print("❌ API ishlamadi: $e");
     }
   }
 
@@ -127,13 +147,13 @@ class ApiService {
       final List<StadiumDetail> stadiums = rawList
           .whereType<Map<String, dynamic>>() // Only process valid maps
           .map((item) {
-        try {
-          return StadiumDetail.fromJson(item);
-        } catch (e) {
-          logger.e("Error parsing stadium data: $e, Data: $item");
-          return null; // Skip invalid items
-        }
-      })
+            try {
+              return StadiumDetail.fromJson(item);
+            } catch (e) {
+              logger.e("Error parsing stadium data: $e, Data: $item");
+              return null; // Skip invalid items
+            }
+          })
           .whereType<StadiumDetail>() // Remove null values
           .toList();
 
@@ -144,5 +164,33 @@ class ApiService {
     }
   }
 
+  // Get stadium by ID
+  Future<StadiumDetail> getStadiumById({required int stadiumId}) async {
+    try {
+      final response = await dio.get('/stadium/$stadiumId/info');
 
+      // Log the API response to debug its structure
+      logger.d("API Response for stadium \$stadiumId: \${response.data}");
+
+      // Handle null response
+      if (response.data == null) {
+        throw Exception("API response is null");
+      }
+
+      // Ensure response.data is a valid Map
+      if (response.data is! Map<String, dynamic>) {
+        throw Exception("Expected a Map but got \${response.data.runtimeType}");
+      }
+
+      try {
+        return StadiumDetail.fromJson(response.data);
+      } catch (e) {
+        logger.e("Error parsing stadium data: \$e, Data: \${response.data}");
+        throw Exception("Error parsing stadium data");
+      }
+    } catch (e) {
+      logger.e("Error fetching stadium details: \$e");
+      throw Exception('Error fetching stadium details: \$e');
+    }
+  }
 }

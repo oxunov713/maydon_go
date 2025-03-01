@@ -15,6 +15,7 @@ import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 import '../../bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import '../../bloc/all_stadium_cubit/all_stadium_state.dart';
+import '../../bloc/booking_cubit/booking_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_state.dart';
 
@@ -58,14 +59,55 @@ class AllStadiumsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<StadiumCubit, StadiumState>(
-        builder: (context, state) {
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await context.read<StadiumCubit>().refreshStadiums();
+        },
+        displacement: 40,
+        color: AppColors.green,
+        backgroundColor: AppColors.white,
+        child:
+            BlocBuilder<StadiumCubit, StadiumState>(builder: (context, state) {
           if (state is StadiumLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(
+              color: AppColors.green,
+            ));
           } else if (state is StadiumError) {
-            return Center(child: Text(state.message));
+            final error = state as StadiumError;
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              switch (true) {
+                case _ when error.isNetworkError:
+                  break;
+
+                case _ when error.isTokenExpired:
+                  Center(child: Text("Tizimga qayta kirish kerak."));
+                  break;
+
+                case _ when error.isServerError:
+                  Center(
+                      child: Text("Server xatosi! Keyinroq urinib ko‘ring."));
+                  break;
+
+                default:
+                  Center(child: Text("Noma'lum xatolik yuz berdi."));
+                  break;
+              }
+            });
+
+            return ListView(
+                padding: EdgeInsets.only(top: 250),
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  Center(
+                    child: Text(
+                        "Xatolik yuz berdi, iltimos qayta urinib ko‘ring."),
+                  )
+                ]);
           } else if (state is StadiumLoaded) {
             return ListView.builder(
+              physics: AlwaysScrollableScrollPhysics(),
               itemCount: state.filteredStadiums.length,
               itemBuilder: (context, stadiumIndex) {
                 final stadium = state.filteredStadiums[stadiumIndex];
@@ -344,7 +386,7 @@ class AllStadiumsScreen extends StatelessWidget {
                             GestureDetector(
                               onTap: () => context.pushNamed(
                                 AppRoutes.detailStadium,
-                                extra: stadium,
+                                extra: stadium.id,
                               ),
                               child: Row(
                                 mainAxisAlignment:
@@ -387,7 +429,7 @@ class AllStadiumsScreen extends StatelessWidget {
             );
           }
           return Center(child: Text(lan.noData));
-        },
+        }),
       ),
     );
   }

@@ -5,7 +5,8 @@ import '../model/userinfo_model.dart';
 
 final class Config {
   const Config._();
-  static const baseUrl = "https://maydon.mavlyanova.uz/api";
+
+  static const baseUrl = "https://api.maydongo.uz/api";
 }
 
 List parsedJson = jsonDecode(_jsonData);

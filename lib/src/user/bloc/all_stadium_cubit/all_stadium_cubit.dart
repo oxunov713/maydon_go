@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:carousel_slider/carousel_controller.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maydon_go/src/common/model/stadium_model.dart';
@@ -38,7 +41,26 @@ class StadiumCubit extends Cubit<StadiumState> {
         isSearching: false,
       ));
     } catch (e) {
-      emit(StadiumError('Xatolik: ${e.toString()}'));
+      int? errorCode;
+      bool isNetworkError = false;
+
+      if (e is DioException) {
+        errorCode = e.response?.statusCode;
+
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.connectionError) {
+          isNetworkError = true;
+        }
+      } else if (e is SocketException) {
+        isNetworkError = true;
+      }
+
+      emit(StadiumError(
+        "Xatolik: ${isNetworkError ? "Internet mavjud emas" : e.toString()}",
+        errorCode: errorCode,
+        isNetworkError: isNetworkError,
+      ));
     }
   }
 
@@ -49,7 +71,7 @@ class StadiumCubit extends Cubit<StadiumState> {
       // 🔹 filter qilishdan oldin stadiums ro‘yxatini yangilaymiz
       filteredStadiums = stadiums
           .where((stadium) =>
-          stadium.name!.toLowerCase().contains(query.toLowerCase()))
+              stadium.name!.toLowerCase().contains(query.toLowerCase()))
           .toList();
 
       emit(currentState.copyWith(filteredStadiums: filteredStadiums));
@@ -82,6 +104,10 @@ class StadiumCubit extends Cubit<StadiumState> {
 
   CarouselSliderController getCarouselController(int stadiumIndex) {
     return carouselControllers[stadiumIndex];
+  }
+
+  Future<void> refreshStadiums() async {
+    await fetchStadiums();
   }
 
   @override

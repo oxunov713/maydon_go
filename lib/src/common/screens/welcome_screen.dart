@@ -9,105 +9,107 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              "assets/images/grass.jfif",
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height,
-              fit: BoxFit.cover,
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                "assets/images/grass.jfif",
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          Positioned.fill(
-            child: CustomPaint(
-              painter: HalfMoonPainter(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Column(
-                  children: [
-                    const Spacer(flex: 1), // Bo'sh joy qo'shish
-                    const Column(
-                      children: [
-                        Text(
-                          "Maydon Go",
-                          style: TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 40,
-                          ),
-                        ),
-                        Text(
-                          "Futbol maydonlarini qidirish ilovasi",
-                          style: TextStyle(
-                            color: AppColors.white2,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(flex: 2), // Bo'sh joy qo'shish
-                    Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.white,
-                              foregroundColor: AppColors.green,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 5,
-                            ),
-                            onPressed: () => context.pushNamed(AppRoutes.login),
-                            child: Text(
-                              context.lan.login,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+            Positioned.fill(
+              child: CustomPaint(
+                painter: HalfMoonPainter(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 1), // Bo'sh joy qo'shish
+                      const Column(
+                        children: [
+                          Text(
+                            "Maydon Go",
+                            style: TextStyle(
+                              color: AppColors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 40,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 15),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.green,
-                              foregroundColor: AppColors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              elevation: 5,
+                          Text(
+                            "Futbol maydonlarini qidirish ilovasi",
+                            style: TextStyle(
+                              color: AppColors.white2,
+                              fontSize: 14,
                             ),
-                            onPressed: () =>
-                                context.pushNamed(AppRoutes.role),
-                            child: Text(
-                              context.lan.signUp,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                          ),
+                        ],
+                      ),
+                      const Spacer(flex: 2), // Bo'sh joy qo'shish
+                      Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.white,
+                                foregroundColor: AppColors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 5,
+                              ),
+                              onPressed: () => context.pushNamed(AppRoutes.login),
+                              child: Text(
+                                context.lan.login,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 50), // Pastki bo'sh joy
-                  ],
+                          const SizedBox(height: 15),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.green,
+                                foregroundColor: AppColors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 5,
+                              ),
+                              onPressed: () =>
+                                  context.pushNamed(AppRoutes.role),
+                              child: Text(
+                                context.lan.signUp,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 50), // Pastki bo'sh joy
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
