@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/model/time_slot_model.dart';
 import '../../../common/service/api_service.dart';
+import '../../../common/service/hive_service.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
@@ -12,6 +14,7 @@ class BookingCubit extends Cubit<BookingState> {
   String? selectedDate;
   double position = 0.0;
   bool confirmed = false;
+  final HiveService _hiveService = HiveService();
 
   BookingCubit() : super(BookingInitial());
 
@@ -19,13 +22,16 @@ class BookingCubit extends Cubit<BookingState> {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
 
-      emit(BookingLoaded(
-        stadium: currentState.stadium,
-        bookedSlots: currentState.bookedSlots,
-        selectedDate: date,
-        selectedStadiumName:
-            selectedStadiumName, // Stadionni yo‘qotmaslik uchun qo‘shildi
-      ));
+      emit(
+        BookingLoaded(
+          user: currentState.user,
+          stadium: currentState.stadium,
+          bookedSlots: currentState.bookedSlots,
+          selectedDate: date,
+          selectedStadiumName: selectedStadiumName,
+          bookings: currentState.bookings,
+        ),
+      );
     }
   }
 
@@ -34,8 +40,9 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading());
     try {
       final stadium = await ApiService().getStadiumById(stadiumId: stadiumId);
-      _updateSlots(stadium);
-      selectedStadiumName = stadium.fields?.first.name;
+      final user = await ApiService().getUser();
+
+      _updateSlots(stadium, user);
     } catch (e) {
       emit(BookingError("Failed to fetch stadium: $e"));
     }
@@ -47,9 +54,10 @@ class BookingCubit extends Cubit<BookingState> {
       selectedStadiumName = fieldName;
 
       emit(BookingLoaded(
+        user: currentState.user,
         stadium: currentState.stadium,
         bookedSlots: currentState.bookedSlots,
-        selectedStadiumName: fieldName, // BU YERGA KIRITILDI
+        selectedStadiumName: fieldName,
         selectedDate: currentState.selectedDate,
       ));
     }
@@ -59,11 +67,12 @@ class BookingCubit extends Cubit<BookingState> {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
       return currentState.bookings.any((bookedSlot) =>
-      bookedSlot.startTime == slot.startTime &&
+          bookedSlot.startTime == slot.startTime &&
           bookedSlot.endTime == slot.endTime);
     }
     return false;
   }
+
   void updatePosition(double delta, double maxPosition) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
@@ -87,21 +96,8 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
-  /// Substadiumni tanlash (ID yoki nom bilan)
-  void selectField({String? fieldName}) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      selectedStadiumName = fieldName;
-      emit(BookingLoaded(
-        stadium: currentState.stadium,
-        bookedSlots: currentState.bookedSlots,
-        selectedDate: currentState.selectedDate,
-      ));
-    }
-  }
-
   /// Eski slotlarni o‘chirib, yangilarini qo‘shish
-  void _updateSlots(StadiumDetail stadium) {
+  void _updateSlots(StadiumDetail stadium, UserModel user) {
     final log = Logger();
     log.e("📅 Slotlarni yangilash...");
 
@@ -120,6 +116,7 @@ class BookingCubit extends Cubit<BookingState> {
     }).toList();
 
     emit(BookingLoaded(
+      user: user,
       stadium: stadium.copyWith(fields: updatedFields),
       selectedDate: selectedDate?.isNotEmpty == true
           ? selectedDate
@@ -140,21 +137,21 @@ class BookingCubit extends Cubit<BookingState> {
       if (day.day == now.day &&
           day.month == now.month &&
           day.year == now.year) {
-        // Hozirgi vaqtni keyingi to'liq soatga yaxlitlash
         slotStart = DateTime(now.year, now.month, now.day, now.hour + 1, 0);
       }
 
-      DateTime slotEnd = slotStart.add(Duration(hours: 1));
+      DateTime slotEnd = slotStart.add(const Duration(hours: 1));
 
-      while (slotEnd.day == day.day) {
+      while (slotStart.day == day.day) {
+        // 🔥 Shartni slotStart.day bilan tekshirish
         if (slotStart.isAfter(now)) {
-          // Faqat kelajakdagi slotlarni olish
           allSlots.add(TimeSlot(startTime: slotStart, endTime: slotEnd));
         }
         slotStart = slotEnd;
-        slotEnd = slotStart.add(Duration(hours: 1));
+        slotEnd = slotStart.add(const Duration(hours: 1));
       }
     }
+
     return allSlots;
   }
 
@@ -171,17 +168,25 @@ class BookingCubit extends Cubit<BookingState> {
 
   /// Booking Listga slot qo‘shish
   void addSlot(TimeSlot slot) {
+    final currentState = state as BookingLoaded;
     if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      final updatedBookings = List<TimeSlot>.from(currentState.bookings)..add(slot);
+      final updatedBookings = List<TimeSlot>.from(currentState.bookings)
+        ..add(slot);
       emit(currentState.copyWith(bookings: updatedBookings));
+    } else {
+      emit(BookingLoaded(
+        bookings: [slot],
+        stadium: currentState.stadium,
+        user: currentState.user,
+      ));
     }
   }
 
   void removeSlot(TimeSlot slot) {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
-      final updatedBookings = List<TimeSlot>.from(currentState.bookings)..remove(slot);
+      final updatedBookings = List<TimeSlot>.from(currentState.bookings)
+        ..remove(slot);
       emit(currentState.copyWith(bookings: updatedBookings));
     }
   }
@@ -189,19 +194,22 @@ class BookingCubit extends Cubit<BookingState> {
   void clearSlots() {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(bookings: []));
+      emit(currentState.copyWith(bookings: [], confirmed: false, position: 0));
     }
   }
 
   /// Bookingni tasdiqlash va API ga jo‘natish
-  Future<void> confirmBooking() async {
+  Future<void> confirmBooking(int subStadiumId) async {
     if (state is! BookingLoaded || bookings.isEmpty) return;
 
     final currentState = state as BookingLoaded;
     try {
       // await ApiService().bookSlots(bookings);
+     // _hiveService.saveBookings(
+      //    bookings, currentState.stadium.id!, subStadiumId);
       bookings.clear(); // API ga jo‘natilgandan so‘ng tozalash
       emit(BookingLoaded(
+        user: currentState.user,
         stadium: currentState.stadium,
         bookedSlots: [],
       ));

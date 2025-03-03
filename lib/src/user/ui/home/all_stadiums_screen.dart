@@ -19,8 +19,44 @@ import '../../bloc/booking_cubit/booking_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_state.dart';
 
-class AllStadiumsScreen extends StatelessWidget {
+class AllStadiumsScreen extends StatefulWidget {
   const AllStadiumsScreen({super.key});
+
+  @override
+  State<AllStadiumsScreen> createState() => _AllStadiumsScreenState();
+}
+
+class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_loadMore);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_loadMore);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _loadMore() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      double currentScroll = _scrollController.position.pixels; // Joriy skroll joyi
+      context.read<StadiumCubit>().fetchStadiums().then((_) {
+        _scrollController.animateTo(
+          currentScroll,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +133,7 @@ class AllStadiumsScreen extends StatelessWidget {
             });
 
             return ListView(
+                controller: _scrollController,
                 padding: EdgeInsets.only(top: 250),
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
@@ -106,7 +143,7 @@ class AllStadiumsScreen extends StatelessWidget {
                   )
                 ]);
           } else if (state is StadiumLoaded) {
-            return ListView.builder(
+            return ListView.builder(controller: _scrollController,
               physics: AlwaysScrollableScrollPhysics(),
               itemCount: state.filteredStadiums.length,
               itemBuilder: (context, stadiumIndex) {

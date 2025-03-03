@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 
 import '../../../common/constants/config.dart';
-import '../../../common/model/userinfo_model.dart';
 import '../../../common/style/app_colors.dart';
 
 class ClubDetailScreen extends StatelessWidget {
@@ -133,7 +133,7 @@ class ClubDetailScreen extends StatelessWidget {
 
 class PlayerCircleAvatar extends StatelessWidget {
   final double deviceHeight;
-  final UserInfo? user;
+  final UserModel? user;
   final String position;
 
   const PlayerCircleAvatar({

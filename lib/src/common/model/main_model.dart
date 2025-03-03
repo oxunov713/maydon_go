@@ -1,20 +1,23 @@
-import 'stadium_model.dart';
-import 'userinfo_model.dart';
-
 class UserModel {
   final int? id;
   final String? phoneNumber;
   final String? role;
-  final UserInfo? userInfo;
   final SubscriptionModel? subscriptionModel;
   final int? point;
   final bool? active;
+  final String? firstName;
+  final String? lastName;
+  final String? imageUrl;
+  final String? contactNumber;
 
   UserModel({
+    this.firstName,
+    this.lastName,
+    this.imageUrl,
+    this.contactNumber,
     this.id,
     this.phoneNumber,
     this.role,
-    this.userInfo,
     this.subscriptionModel,
     this.point,
     this.active,
@@ -25,15 +28,15 @@ class UserModel {
       id: json['id'] as int?,
       phoneNumber: json['phoneNumber'] as String?,
       role: json['role'] as String?,
-      userInfo: json['userInfo'] != null
-          ? UserInfo.fromJson(json['userInfo'] as Map<String, dynamic>)
-          : null,
-      subscriptionModel: json['subscriptionModel'] != null
-          ? SubscriptionModel.fromJson(
-          json['subscriptionModel'] as Map<String, dynamic>)
+      subscriptionModel: json['subscription'] != null
+          ? SubscriptionModel.fromJson(json['subscription'])
           : null,
       point: json['point'] as int?,
       active: json['active'] as bool?,
+      firstName: json['firstName'] as String?,
+      lastName: json['lastName'] as String?,
+      imageUrl: json['imageUrl'] as String?,
+      contactNumber: json['contactNumber'] as String?,
     );
   }
 }

@@ -1,37 +1,36 @@
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/screens/owner_subscription.dart';
-import 'package:maydon_go/src/common/model/userinfo_model.dart';
-import 'package:maydon_go/src/common/screens/splash_screen.dart';
-import 'package:maydon_go/src/owner/screens/home/location_picker_screen.dart';
-import 'package:maydon_go/src/owner/screens/home/owner_dashboard.dart';
-import 'package:maydon_go/src/owner/screens/home/owner_detail_screen.dart';
-import 'package:maydon_go/src/owner/screens/home/owner_stadium_detail.dart';
-import 'package:maydon_go/src/user/ui/home/about_app.dart';
-import 'package:maydon_go/src/user/ui/home/chat_screen.dart';
-import 'package:maydon_go/src/user/ui/home/club_detail_screen.dart';
-import 'package:maydon_go/src/user/ui/home/club_teammates.dart';
-import 'package:maydon_go/src/user/ui/home/history_screen.dart';
-import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
-import 'package:maydon_go/src/user/ui/home/notification_screen.dart';
-import 'package:maydon_go/src/user/ui/home/profile_screen.dart';
-import 'package:maydon_go/src/user/ui/home/profile_view_screen.dart';
-import 'package:maydon_go/src/user/ui/home/quizzes_screen.dart';
-import 'package:maydon_go/src/user/ui/home/settings_screen.dart';
-import 'package:maydon_go/src/user/ui/home/subscription_screen.dart';
-import 'package:maydon_go/src/user/ui/home/user_coins_ranking.dart';
 
 import '../../owner/screens/home/add_stadium_screen.dart';
+import '../../owner/screens/home/location_picker_screen.dart';
+import '../../owner/screens/home/owner_dashboard.dart';
+import '../../owner/screens/home/owner_detail_screen.dart';
+import '../../user/ui/home/about_app.dart';
 import '../../user/ui/home/all_stadiums_screen.dart';
+import '../../user/ui/home/chat_screen.dart';
+import '../../user/ui/home/club_detail_screen.dart';
+import '../../user/ui/home/club_teammates.dart';
+import '../../user/ui/home/history_screen.dart';
 import '../../user/ui/home/home_screen.dart';
 import '../../user/ui/home/locations_screen.dart';
 
+import '../../user/ui/home/my_club_screen.dart';
+import '../../user/ui/home/notification_screen.dart';
+import '../../user/ui/home/profile_screen.dart';
+import '../../user/ui/home/profile_view_screen.dart';
+import '../../user/ui/home/quizzes_screen.dart';
 import '../../user/ui/home/saved_stadiums.dart';
+import '../../user/ui/home/settings_screen.dart';
 import '../../user/ui/home/stadium_detail.dart';
+import '../../user/ui/home/subscription_screen.dart';
+import '../../user/ui/home/user_coins_ranking.dart';
 import '../auth/log_in_screen.dart';
 import '../auth/sign_up_screen.dart';
+import '../model/main_model.dart';
 import '../model/stadium_model.dart';
 import '../screens/choose_language_screens.dart';
+import '../screens/owner_subscription.dart';
 import '../screens/role_screen.dart';
+import '../screens/splash_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../../user/ui/home/sms_verification.dart';
 import 'app_routes.dart';
@@ -102,7 +101,7 @@ final GoRouter _router = GoRouter(
                           path: "chat",
                           name: AppRoutes.chat,
                           builder: (context, state) {
-                            final user = state.extra as UserInfo;
+                            final user = state.extra as UserModel;
                             return ChatScreen(user: user);
                           },
                         ),

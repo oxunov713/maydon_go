@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/model/userinfo_model.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
@@ -9,7 +9,7 @@ import 'package:maydon_go/src/common/style/app_icons.dart';
 class OtherUserProfile extends StatelessWidget {
   const OtherUserProfile({super.key, required this.user});
 
-  final UserInfo user;
+  final UserModel user;
 
   @override
   Widget build(BuildContext context) {

@@ -125,7 +125,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                                             fontSize: 18),
                                       ),
                                       subtitle: Text(
-                                          "Stadionlari soni  ${stadium.stadiumCount} ta"),
+                                          "Stadionlari soni  ${stadium.fields?.length} ta"),
                                       onTap: () {
                                         context.read<HomeCubit>().moveCamera(
                                               LatLng(

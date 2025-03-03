@@ -33,7 +33,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 "Bepul band qilish",
                 "Oyiga 5 ta stadionni band qilish",
                 "Kuniga 2 ta slotni band qilish",
-                "Oyiga  3 kunni band qilish imkoniyati",
+                "Oyiga umumiy 3 kunni band qilish imkoniyati",
                 "10 tagacha do‘stlar to'plash",
                 "Har bir brondan +10 coins",
                 "1 ta jamoa tuzishga ruxsat"
@@ -49,13 +49,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 "Bepul band qilish",
                 "Oyiga cheksiz stadion band qilish",
                 "Kuniga 5 tagacha slotni band qilish",
-                "Oyiga 15 kunni band qilish imkoniyati",
+                "Oyiga umumiy 15 kunni band qilish imkoniyati",
                 "100 tagacha do‘stlar to'plash",
                 "Har bir brondan +15 coins",
                 "5 tagacha jamoa tuzishga ruxsat",
                 "Turnirlarda qatnashish imkoniyati",
                 "Ko‘proq quiz yechish imkoniyati",
-                "Stadon lokatsiyasini telegram orqali jo'natish"
               ],
             ),
           ],

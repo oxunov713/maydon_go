@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:maydon_go/src/common/model/main_model.dart';
+
 import '../model/stadium_model.dart';
-import '../model/userinfo_model.dart';
 
 final class Config {
   const Config._();
@@ -92,8 +93,8 @@ List<Map<String, Object?>> _fakeUserData = [
 ];
 
 // JSONni UserInfo modeliga aylantirish
-List<UserInfo> $users =
-    _fakeUserData.map((json) => UserInfo.fromJson(json)).toList();
+List<UserModel> $users =
+    _fakeUserData.map((json) => UserModel.fromJson(json)).toList();
 
 const String _jsonData = """[
   {

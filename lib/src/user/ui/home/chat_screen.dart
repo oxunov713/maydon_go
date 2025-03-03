@@ -3,15 +3,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/constants/config.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import '../../../common/model/userinfo_model.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.user});
 
-  final UserInfo user;
+  final UserModel user;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();

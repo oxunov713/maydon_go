@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:maydon_go/src/common/constants/config.dart';
-import '../../../common/model/userinfo_model.dart';
+import 'package:maydon_go/src/common/service/api_service.dart';
+
+import '../../../common/constants/config.dart';
+import '../../../common/model/main_model.dart';
 
 part 'my_club_state.dart';
 
@@ -10,35 +12,54 @@ class MyClubCubit extends Cubit<MyClubState> {
     _loadUsers();
   }
 
-  final List<UserInfo> _allUsers = [];
-  final List<UserInfo> _connections = [];
+  List<UserModel> _allUsers = [];
+  List<UserModel> _connections = [];
 
-  void _loadUsers() {
-    _allUsers.addAll($users);
-    emit(MyClubLoaded(connections: _connections, searchResults: _allUsers));
-  }
+  Future _loadUsers() async {
+    try {
+      final results = await Future.wait([
+        ApiService().getAllUsers(),
+        ApiService().getFriends(),
+      ]);
 
-  void addConnection(UserInfo user) {
-    if (!_connections.contains(user)) {
-      _connections.add(user);
+      _allUsers = results[0]; // getAllUsers natijasi
+      _connections = results[1]; // getFriends natijasi
+
       emit(MyClubLoaded(
-          connections: List.from(_connections),
-          searchResults: List.from(_allUsers)));
+        connections: List.from(_connections),
+        searchResults: List.from(_allUsers),
+      ));
+    } catch (e) {
+      emit(MyClubError("❌ Xatolik: ${e.toString()}"));
     }
   }
 
-  void removeConnection(UserInfo user) {
+  void addConnection(UserModel user) async {
+    if (!_connections.contains(user)) {
+      await ApiService().addToFriends(userId: user.id!);
+      _connections.add(user);
+      emit(MyClubLoaded(
+        connections: List.from(_connections),
+        searchResults: List.from(_allUsers),
+      ));
+    }
+  }
+
+  void removeConnection(UserModel user) async {
+    //await ApiService().removeFromFriends(userId: user.id!);
     _connections.remove(user);
     emit(MyClubLoaded(
-        connections: List.from(_connections),
-        searchResults: List.from(_allUsers)));
+      connections: List.from(_connections),
+      searchResults: List.from(_allUsers),
+    ));
   }
 
   void searchUsers(String query) {
     if (query.isEmpty) {
       emit(MyClubLoaded(
-          connections: List.from(_connections),
-          searchResults: List.from(_allUsers)));
+        connections: List.from(_connections),
+        searchResults: List.from(_allUsers),
+      ));
       return;
     }
 
@@ -47,7 +68,8 @@ class MyClubCubit extends Cubit<MyClubState> {
     }).toList();
 
     emit(MyClubLoaded(
-        connections: List.from(_connections),
-        searchResults: List.from(results)));
+      connections: List.from(_connections),
+      searchResults: List.from(results),
+    ));
   }
 }

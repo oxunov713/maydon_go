@@ -72,7 +72,7 @@ class HomeCubit extends Cubit<HomeState> {
       case 2:
         return const LocationsScreen();
       case 3:
-        return  MyClubScreen();
+        return MyClubScreen();
       case 4:
         return const ProfileScreen();
       default:
@@ -192,7 +192,7 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void moveCamera(LatLng target, BuildContext context) {
-    FocusScope.of(context).unfocus(); // 📌 Klaviaturani yopish
+    FocusScope.of(context).unfocus();
     if (mapController != null) {
       logger.d('Moving camera to: $target');
       mapController!.animateCamera(
@@ -214,7 +214,8 @@ class HomeCubit extends Cubit<HomeState> {
 
   // 📌 **QIDIRISH FUNKSIYASI**
   void searchStadiums(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel(); // ⏳ Oldingi qidiruvni bekor qilish
+    if (_debounce?.isActive ?? false)
+      _debounce!.cancel(); // ⏳ Oldingi qidiruvni bekor qilish
 
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (query.isEmpty) {
@@ -222,7 +223,7 @@ class HomeCubit extends Cubit<HomeState> {
       } else {
         _searchResults = _stadiums
             .where((stadium) =>
-            stadium.name!.toLowerCase().contains(query.toLowerCase()))
+                stadium.name!.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
 

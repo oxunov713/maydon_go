@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maydon_go/src/common/model/stadium_model.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_state.dart';
 
 import '../../../common/service/api_service.dart';
 import 'all_stadium_state.dart';
@@ -15,6 +16,7 @@ class StadiumCubit extends Cubit<StadiumState> {
   final TextEditingController searchController = TextEditingController();
   List<StadiumDetail> stadiums = [];
   List<StadiumDetail> filteredStadiums = [];
+  int _size = 2;
 
   StadiumCubit() : super(StadiumInitial()) {
     currentDate = DateTime.now();
@@ -22,21 +24,39 @@ class StadiumCubit extends Cubit<StadiumState> {
   }
 
   Future<void> fetchStadiums() async {
-    emit(StadiumLoading());
+    final currentState = state; // 📌 Joriy state-ni olamiz
+
+    // 🔹 Yangi state-ni faqat ma'lumot bo'lmasa yuklaymiz
+    if (currentState is! StadiumLoaded) {
+      emit(StadiumLoading());
+    }
 
     try {
       final List<StadiumDetail> fetchedStadiums =
-          await ApiService().getAllStadiums();
+      await ApiService().getAllStadiums(size: _size);
 
-      stadiums = fetchedStadiums;
+      if (currentState is StadiumLoaded) {
+        stadiums = List.from(currentState.stadiums)..addAll(fetchedStadiums);
+      } else {
+        stadiums = fetchedStadiums;
+      }
+
       filteredStadiums = List.from(stadiums);
 
-      carouselControllers =
-          List.generate(stadiums.length, (_) => CarouselSliderController());
+      // 🔥 carouselControllers faqat yangi elementlar uchun qo'shiladi
+      if (currentState is StadiumLoaded) {
+        carouselControllers.addAll(
+            List.generate(fetchedStadiums.length, (_) => CarouselSliderController()));
+      } else {
+        carouselControllers =
+            List.generate(stadiums.length, (_) => CarouselSliderController());
+      }
+
+      _size += 2;
 
       emit(StadiumLoaded(
-        stadiums: stadiums,
-        filteredStadiums: filteredStadiums,
+        stadiums: List.from(stadiums), // 🔥 Yangi list orqali referensiyani o'zgartiramiz
+        filteredStadiums: List.from(filteredStadiums),
         currentIndexList: List.filled(stadiums.length, 0),
         isSearching: false,
       ));
@@ -63,6 +83,8 @@ class StadiumCubit extends Cubit<StadiumState> {
       ));
     }
   }
+
+
 
   void filterStadiums(String query) {
     if (state is StadiumLoaded) {

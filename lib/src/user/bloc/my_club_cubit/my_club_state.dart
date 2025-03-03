@@ -10,11 +10,19 @@ abstract class MyClubState extends Equatable {
 class MyClubLoading extends MyClubState {}
 
 class MyClubLoaded extends MyClubState {
-  final List<UserInfo> connections;
-  final List<UserInfo> searchResults;
+  final List<UserModel> connections;
+  final List<UserModel> searchResults;
 
   const MyClubLoaded({required this.connections, required this.searchResults});
 
   @override
   List<Object?> get props => [connections, searchResults];
+}
+class MyClubError extends MyClubState {
+  final String message;
+
+  const MyClubError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

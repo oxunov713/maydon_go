@@ -37,7 +37,7 @@ class MarkerService {
             title: stadium.name ?? "Noma'lum stadion", // ✅ Name nullable
             onTap: () => context.pushNamed(
               AppRoutes.detailStadium,
-              extra: stadium,
+              extra: stadium.id,
             ),
             snippet: "Sizdan ${distance.toStringAsFixed(2)} km uzoqlikda",
           ),

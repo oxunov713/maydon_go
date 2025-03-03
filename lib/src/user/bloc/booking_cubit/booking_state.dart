@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../common/model/main_model.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/model/time_slot_model.dart';
 
@@ -14,6 +15,7 @@ class BookingInitial extends BookingState {}
 class BookingLoading extends BookingState {}
 
 class BookingLoaded extends BookingState {
+  final UserModel user; // Yangi maydon
   final StadiumDetail stadium;
   final List<TimeSlot>? bookedSlots;
   final String? selectedDate;
@@ -23,6 +25,7 @@ class BookingLoaded extends BookingState {
   final bool confirmed;
 
   const BookingLoaded({
+    required this.user, // Yangi maydon
     required this.stadium,
     this.bookedSlots,
     this.selectedDate,
@@ -32,8 +35,8 @@ class BookingLoaded extends BookingState {
     this.confirmed = false,
   });
 
-  // copyWith metodi
   BookingLoaded copyWith({
+    UserModel? user, // Yangi maydon
     StadiumDetail? stadium,
     List<TimeSlot>? bookedSlots,
     String? selectedDate,
@@ -43,6 +46,7 @@ class BookingLoaded extends BookingState {
     bool? confirmed,
   }) {
     return BookingLoaded(
+      user: user ?? this.user, // Yangi maydon
       stadium: stadium ?? this.stadium,
       bookedSlots: bookedSlots ?? this.bookedSlots,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -54,7 +58,7 @@ class BookingLoaded extends BookingState {
   }
 
   @override
-  List<Object?> get props => [stadium, bookedSlots, selectedDate, bookings, position, confirmed];
+  List<Object?> get props => [user, stadium, bookedSlots, selectedDate, bookings, position, confirmed];
 }
 
 class BookingError extends BookingState {

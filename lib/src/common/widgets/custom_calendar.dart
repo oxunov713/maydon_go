@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
+import 'package:maydon_go/src/common/service/hive_service.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
 
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
@@ -60,48 +62,49 @@ class _CustomCalendarState extends State<CustomCalendar> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
-    final bookingState = context.watch<BookingCubit>().state;
+    return BlocBuilder<BookingCubit, BookingState>(
+      builder: (context, bookingState) {
+        if (bookingState is BookingError) {
+          return Center(child: Text(bookingState.message));
+        }
 
-    if (bookingState is BookingError) {
-      return Center(child: Text(bookingState.message));
-    }
+        if (bookingState is! BookingLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (bookingState is! BookingLoaded) {
-      return const Center(child: CircularProgressIndicator());
-    }
+        final stadium = bookingState.stadium;
+        final selectedDate = bookingState.selectedDate ?? _getTodayDate();
+        final formattedDate = _formatDate(selectedDate);
 
-    final stadium = bookingState.stadium;
-    final selectedDate = bookingState.selectedDate ?? _getTodayDate();
-    final formattedDate = _formatDate(selectedDate);
+        final selectedStadium = stadium.fields?.firstWhere(
+          (field) => field.name == bookingState.selectedStadiumName,
+          orElse: () => stadium.fields!.isNotEmpty
+              ? stadium.fields!.first
+              : Substadiums(id: 0, name: '', availableSlots: []),
+        );
 
-    final selectedStadium = stadium.fields?.firstWhere(
-      (field) => field.name == bookingState.selectedStadiumName,
-      orElse: () => stadium.fields!.isNotEmpty
-          ? stadium.fields!.first
-          : Substadiums(id: 0, name: '', availableSlots: []),
+        final groupedSlots =
+            selectedStadium?.availableSlots?.groupByDate() ?? {};
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: height * 0.02),
+            Text(
+              formattedDate,
+              style: TextStyle(fontSize: height * 0.02),
+            ),
+            SizedBox(height: height * 0.02),
+            _buildDatePicker(height, selectedDate, groupedSlots),
+            const Divider(),
+            _buildTimeSlots(height, selectedDate, groupedSlots),
+          ],
+        );
+      },
     );
-
-    final groupedSlots = selectedStadium?.availableSlots?.groupByDate() ?? {};
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: height * 0.02),
-        Text(
-          formattedDate,
-          style: TextStyle(fontSize: height * 0.02),
-        ),
-        SizedBox(height: height * 0.02),
-        _buildDatePicker(height, selectedDate, groupedSlots),
-        const Divider(),
-        _buildTimeSlots(height, selectedDate, groupedSlots),
-      ],
-    );
-
   }
 
   String _formatDate(String date) {
@@ -238,22 +241,63 @@ class _CustomCalendarState extends State<CustomCalendar> {
           width: 2,
         ),
       ),
-      child: InkWell(
-        customBorder: const StadiumBorder(),
-        onTap: () => isBooked
-            ? bookingCubit.removeSlot(slot)
-            : bookingCubit.addSlot(slot),
-        child: Center(
-          child: Text(
-            "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",
-            style: TextStyle(
-              fontSize: 14,
-              color: isBooked ? AppColors.green : AppColors.main,
-              fontWeight: isBooked ? FontWeight.w700 : FontWeight.w600,
+      child: BlocBuilder<BookingCubit, BookingState>(builder: (context, state) {
+        return InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: () {
+            if (state is BookingLoaded) {
+              final currentState = state as BookingLoaded;
+              final subscription = currentState
+                  .user.subscriptionModel?.name; // Subscription maydoni
+              final currentBookings = currentState.bookings.length;
+              String errorMessage = "";
+
+              if (isBooked) {
+                bookingCubit.removeSlot(slot);
+                return;
+              }
+
+              if (subscription == null) {
+                errorMessage = "Sizning obunangiz mavjud emas!";
+              } else if (subscription == "Go") {
+                if (currentBookings >= 2) {
+                  errorMessage =
+                      '"Go" obuna foydalanuvchilari kuniga faqat 2 ta slot band qila oladi!';
+                }
+              } else if (subscription == "Go+") {
+                if (currentBookings >= 5) {
+                  errorMessage =
+                      '"Go+" obuna foydalanuvchilari kuniga faqat 5 ta slot band qila oladi!';
+                }
+              }
+
+              if (errorMessage.isNotEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(errorMessage),
+                    backgroundColor: Colors.red,
+                    showCloseIcon: true,
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+                return;
+              }
+
+              bookingCubit.addSlot(slot);
+            }
+          },
+          child: Center(
+            child: Text(
+              "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",
+              style: TextStyle(
+                fontSize: 14,
+                color: isBooked ? AppColors.green : AppColors.main,
+                fontWeight: isBooked ? FontWeight.w700 : FontWeight.w600,
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }

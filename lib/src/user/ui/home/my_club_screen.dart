@@ -12,22 +12,15 @@ import '../../bloc/my_club_cubit/my_club_cubit.dart';
 class MyClubScreen extends StatelessWidget {
   MyClubScreen({super.key});
 
-  final List<Map<String, dynamic>> users = [
-    {'name': 'Alisher', 'coins': 1200},
-    {'name': 'Durbek', 'coins': 980},
-    {'name': 'Muhamadali', 'coins': 860},
-    {'name': 'Rahimjon', 'coins': 750},
-    {'name': 'Azizbek', 'coins': 900},
-    {'name': 'Murod', 'coins': 620},
-    {'name': 'Nodir', 'coins': 590},
-  ];
-
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
     return Scaffold(
       backgroundColor: AppColors.white2,
-      appBar: AppBar(title: const Text("MaydonGo"),automaticallyImplyLeading: false,),
+      appBar: AppBar(
+        title: const Text("MaydonGo"),
+        automaticallyImplyLeading: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
         child: BlocBuilder<MyClubCubit, MyClubState>(
@@ -268,22 +261,36 @@ class MyClubScreen extends StatelessWidget {
                   SliverToBoxAdapter(
                     child: SizedBox(
                       height: height * 0.62,
-                      child: ListView.builder(
-                        physics: NeverScrollableScrollPhysics(),
-                        itemCount: users.length,
-                        itemBuilder: (context, index) {
-                          final maxCoins = users
-                              .map((user) => user['coins'])
-                              .reduce((a, b) => a > b ? a : b);
-                          return UserCoinsDiagram(
-                            userName: users[index]["name"],
-                            maxCoins: maxCoins,
-                            index: index,
-                            userAvatarUrl: $users[index].imageUrl!,
-                            coins: users[index]['coins'],
+                      child: BlocBuilder<MyClubCubit, MyClubState>(
+                          builder: (context, state) {
+                        if (state is MyClubLoading) {
+                          return Center(
+                            child: CircularProgressIndicator(),
                           );
-                        },
-                      ),
+                        } else if (state is MyClubLoaded) {
+                          return ListView.builder(
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: state.searchResults.length,
+                            itemBuilder: (context, index) {
+                              final maxCoins = state.searchResults
+                                  .map((user) => user.point)
+                                  .reduce((a, b) => a! > b! ? a : b);
+                              return UserCoinsDiagram(
+                                userName:
+                                    state.searchResults[index].firstName ??
+                                        "No name",
+                                maxCoins: maxCoins ?? 15,
+                                index: index,
+                                userAvatarUrl: $users[index].imageUrl!,
+                                coins: state.searchResults[index].point ?? 1,
+                              );
+                            },
+                          );
+                        }
+                        return Center(
+                          child: Text("No data"),
+                        );
+                      }),
                     ),
                   ),
                 ],
