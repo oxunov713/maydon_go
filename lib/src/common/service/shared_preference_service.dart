@@ -13,4 +13,14 @@ class ShPService {
     return prefs.getString('authToken');
   }
 
+  static Future<void> removeToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('authToken');
+  }
+
+  static Future<void> clearAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Barcha ma’lumotlarni tozalaydi
+    print("✅ Barcha local saqlangan ma’lumotlar o‘chirildi!");
+  }
 }

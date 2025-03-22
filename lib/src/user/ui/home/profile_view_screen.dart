@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:maydon_go/main.dart';
 import 'dart:io';
 
 import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
+import 'package:maydon_go/src/common/screens/splash_screen.dart';
+import 'package:maydon_go/src/common/service/shared_preference_service.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/tools/phone_formatter_extension.dart';
+import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
+import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
+import 'package:maydon_go/src/user/bloc/home_cubit/home_cubit.dart';
+import 'package:maydon_go/src/user/bloc/locale_cubit/locale_cubit.dart';
+import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
+import 'package:maydon_go/src/user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
+
+import '../../../common/screens/app.dart';
 
 class ProfileViewScreen extends StatefulWidget {
   const ProfileViewScreen({super.key});
@@ -16,7 +30,7 @@ class ProfileViewScreen extends StatefulWidget {
 }
 
 class _ProfileViewScreenState extends State<ProfileViewScreen> {
-  String? _imageUrl = $users[1].imageUrl; // Default image
+  final String? _imageUrl = $users[1].imageUrl; // Default image
   File? _pickedImage; // Tanlangan rasm uchun
 
   Future<void> _pickImage() async {
@@ -37,13 +51,14 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         content: Text("Are you sure you want to logout?"),
         actions: [
           TextButton(
-            onPressed: () => context.pop(context),
+            onPressed: () => context.pop(),
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
+              ShPService.removeToken();
+              context.goNamed(AppRoutes.splash);
               context.pop();
-              context.goNamed(AppRoutes.welcome);
             },
             child: Text("Logout", style: TextStyle(color: Colors.red)),
           ),
@@ -103,11 +118,11 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                 height: 20,
               ),
               Text(
-                "${$users[0].firstName} ${$users[0].lastName}",
+                "${$users[0].fullName}",
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 25),
               ),
               Text(
-                $users[0].contactNumber.toString(),
+                $users[0].phoneNumber.toString(),
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,

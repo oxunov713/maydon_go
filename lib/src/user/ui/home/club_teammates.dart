@@ -23,8 +23,8 @@ class ClubTeammates extends StatelessWidget {
                         "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/AUT_vs._WAL_2016-10-06_%28155%29.jpg/1200px-AUT_vs._WAL_2016-10-06_%28155%29.jpg"),
                   ),
                   title: Text(
-                      "${$users[index].firstName} ${$users[index].lastName}"),
-                  subtitle: Text($users[index].contactNumber!),
+                      "${$users[index].fullName}"),
+                  subtitle: Text($users[index].phoneNumber!),
                   trailing: IconButton(
                       onPressed: () {
                         //todo remove qilishi kerak teamdan

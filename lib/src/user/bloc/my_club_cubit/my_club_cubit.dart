@@ -14,6 +14,11 @@ class MyClubCubit extends Cubit<MyClubState> {
 
   List<UserModel> _allUsers = [];
   List<UserModel> _connections = [];
+  late UserModel user;
+
+  Future refreshUsers() {
+    return _loadUsers();
+  }
 
   Future _loadUsers() async {
     try {
@@ -21,11 +26,12 @@ class MyClubCubit extends Cubit<MyClubState> {
         ApiService().getAllUsers(),
         ApiService().getFriends(),
       ]);
-
-      _allUsers = results[0]; // getAllUsers natijasi
+      user = await ApiService().getUser();
+      _allUsers = results[0];
       _connections = results[1]; // getFriends natijasi
 
       emit(MyClubLoaded(
+        user: user,
         connections: List.from(_connections),
         searchResults: List.from(_allUsers),
       ));
@@ -39,6 +45,7 @@ class MyClubCubit extends Cubit<MyClubState> {
       await ApiService().addToFriends(userId: user.id!);
       _connections.add(user);
       emit(MyClubLoaded(
+        user: user,
         connections: List.from(_connections),
         searchResults: List.from(_allUsers),
       ));
@@ -46,30 +53,44 @@ class MyClubCubit extends Cubit<MyClubState> {
   }
 
   void removeConnection(UserModel user) async {
-    //await ApiService().removeFromFriends(userId: user.id!);
+    // await ApiService().removeFromFriends(userId: user.id!);
     _connections.remove(user);
     emit(MyClubLoaded(
+      user: user,
       connections: List.from(_connections),
       searchResults: List.from(_allUsers),
     ));
   }
 
-  void searchUsers(String query) {
+  Future<void> searchUsers(String query) async {
     if (query.isEmpty) {
       emit(MyClubLoaded(
+        user: user,
         connections: List.from(_connections),
         searchResults: List.from(_allUsers),
       ));
       return;
     }
 
-    final results = _allUsers.where((user) {
-      return user.contactNumber != null && user.contactNumber!.contains(query);
-    }).toList();
+    try {
+      final result =
+          await ApiService().findUserByNumber(number: int.tryParse(query) ?? 0);
 
-    emit(MyClubLoaded(
-      connections: List.from(_connections),
-      searchResults: List.from(results),
-    ));
+      if (result != null) {
+        emit(MyClubLoaded(
+          user: user,
+          connections: List.from(_connections),
+          searchResults: [UserModel.fromJson(result)], // Faqat bitta natija
+        ));
+      } else {
+        emit(MyClubLoaded(
+          user: user,
+          connections: List.from(_connections),
+          searchResults: [],
+        ));
+      }
+    } catch (e) {
+      emit(MyClubError("🔍 Qidiruvda xatolik: ${e.toString()}"));
+    }
   }
 }

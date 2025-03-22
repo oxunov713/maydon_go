@@ -7,7 +7,7 @@ class LocationService {
   final Location _location = Location();
   LocationData? _currentLocation;
 
-   LocationService();
+  LocationService();
 
   /// Foydalanuvchining joriy lokatsiyasini olish
   Future<LocationData?> getCurrentLocation() async {
@@ -50,6 +50,6 @@ class LocationService {
           end.latitude,
           end.longitude,
         ) /
-        1000; // Kilometrga o‘tkazish
+        1000;
   }
 }

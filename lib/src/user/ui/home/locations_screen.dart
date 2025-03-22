@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/tools/price_formatter_extension.dart';
 
+import '../../../common/service/location_service.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 import '../../bloc/home_cubit/home_cubit.dart';
@@ -15,33 +18,56 @@ class LocationsScreen extends StatefulWidget {
   State<LocationsScreen> createState() => _LocationsScreenState();
 }
 
-class _LocationsScreenState extends State<LocationsScreen> {
+class _LocationsScreenState extends State<LocationsScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
+  final Logger logger = Logger(); // Добавляем логгер
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    logger.d("LocationsScreen initState");
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    logger.d("LocationsScreen dispose");
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    logger.d("LocationsScreen build");
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
     double floatingButtonIconSize = screenWidth * 0.1;
-
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: BlocBuilder<HomeCubit, HomeState>(
+        buildWhen: (previous, current) {
+          if (previous is! HomeLoadedState || current is! HomeLoadedState) {
+            return true; // Agar holatlardan biri HomeLoadedState bo'lmasa, qayta chizamiz
+          }
+          final shouldRebuild = previous.markers != current.markers ||
+              previous.stadiums != current.stadiums ||
+              previous.currentLocation != current.currentLocation;
+          logger.d("LocationsScreen BlocBuilder rebuild: $shouldRebuild");
+          return shouldRebuild;
+        },
         builder: (context, state) {
+          logger.d("LocationsScreen BlocBuilder builder");
           if (state is HomeInitialState) {
             return const Center(child: CircularProgressIndicator());
           }
 
           if (state is HomeLoadedState) {
-            var currentLocation = state.currentLocation;
-            var markers = state.markers;
+            final currentLocation = state.currentLocation;
 
             return Stack(
               children: [
@@ -49,17 +75,37 @@ class _LocationsScreenState extends State<LocationsScreen> {
                   child: currentLocation == null
                       ? const Center(child: CircularProgressIndicator())
                       : GoogleMap(
+                          key: const PageStorageKey("googleMapKey"),
                           onMapCreated: (controller) {
-                            context.read<HomeCubit>().onMapCreated(controller);
+                            logger.d("GoogleMap onMapCreated");
+                            final cubit = context.read<HomeCubit>();
+                            cubit.onMapCreated(controller);
                           },
+                          compassEnabled: true,
+                          trafficEnabled: false,
                           initialCameraPosition: CameraPosition(
                             target: LatLng(currentLocation.latitude!,
                                 currentLocation.longitude!),
                             zoom: 13,
                           ),
                           myLocationEnabled: true,
-                          myLocationButtonEnabled: false,
-                          markers: markers, // Markers from the cubit state
+                          markers: state.markers.map((marker) {
+                            final stadium = state.stadiums.firstWhere((s) =>
+                                s.id.toString() == marker.markerId.value);
+                            return marker.copyWith(
+                                infoWindowParam: InfoWindow(
+                              title: stadium.name ?? "Noma'lum stadion",
+                              snippet:
+                                  "Soati: ${stadium.price?.formatWithSpace()} so'm",
+                              onTap: () {
+                                final stadiumId =
+                                    int.parse(marker.markerId.value);
+                                context
+                                    .read<HomeCubit>()
+                                    .onMarkerTap(stadiumId, context);
+                              },
+                            ));
+                          }).toSet(),
                         ),
                 ),
                 Positioned(
@@ -133,7 +179,6 @@ class _LocationsScreenState extends State<LocationsScreen> {
                                                 stadium.location!.longitude ??
                                                     0,
                                               ),
-                                              context,
                                             );
                                         _searchController.clear();
                                         context

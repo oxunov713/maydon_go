@@ -14,6 +14,10 @@ class BookingInitial extends BookingState {}
 
 class BookingLoading extends BookingState {}
 
+class RatingLoading extends BookingState {}
+
+class RatingSuccess extends BookingState {}
+
 class BookingLoaded extends BookingState {
   final UserModel user; // Yangi maydon
   final StadiumDetail stadium;
@@ -23,6 +27,7 @@ class BookingLoaded extends BookingState {
   final List<TimeSlot> bookings;
   final double position;
   final bool confirmed;
+  final int rating;
 
   const BookingLoaded({
     required this.user, // Yangi maydon
@@ -33,6 +38,7 @@ class BookingLoaded extends BookingState {
     this.bookings = const [],
     this.position = 0.0,
     this.confirmed = false,
+    this.rating = 0,
   });
 
   BookingLoaded copyWith({
@@ -44,9 +50,10 @@ class BookingLoaded extends BookingState {
     List<TimeSlot>? bookings,
     double? position,
     bool? confirmed,
+    int? rating,
   }) {
     return BookingLoaded(
-      user: user ?? this.user, // Yangi maydon
+      user: user ?? this.user,
       stadium: stadium ?? this.stadium,
       bookedSlots: bookedSlots ?? this.bookedSlots,
       selectedDate: selectedDate ?? this.selectedDate,
@@ -54,11 +61,21 @@ class BookingLoaded extends BookingState {
       bookings: bookings ?? this.bookings,
       position: position ?? this.position,
       confirmed: confirmed ?? this.confirmed,
+      rating: rating ?? this.rating,
     );
   }
 
   @override
-  List<Object?> get props => [user, stadium, bookedSlots, selectedDate, bookings, position, confirmed];
+  List<Object?> get props => [
+        user,
+        stadium,
+        bookedSlots,
+        selectedDate,
+        bookings,
+        position,
+        confirmed,
+        rating
+      ];
 }
 
 class BookingError extends BookingState {

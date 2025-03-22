@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'src/common/model/time_slot_model.dart';
@@ -10,7 +9,6 @@ import 'src/common/screens/app.dart';
 import 'src/common/service/hive_service.dart';
 import 'src/common/service/location_service.dart';
 import 'src/common/service/marker_service.dart';
-import 'src/common/service/stadiums_service.dart';
 import 'src/owner/bloc/add_stadium/add_stadium_cubit.dart';
 import 'src/owner/bloc/home/owner_home_cubit.dart';
 import 'src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
@@ -27,17 +25,12 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   await initNotifications();
   await Hive.initFlutter();
   Hive.registerAdapter(TimeSlotAdapter());
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
   ]).then((_) {
-    final locationService = LocationService();
-    final stadiumService = StadiumService();
-    final markerService = MarkerService();
-
     runApp(
       MultiBlocProvider(
         providers: [
@@ -45,9 +38,9 @@ void main() async {
           BlocProvider(create: (_) => AuthCubit()),
           BlocProvider(create: (_) => BookingCubit()),
           BlocProvider(
-            create: (_) =>
-                HomeCubit(locationService, stadiumService, markerService),
-          ),
+              create: (_) => HomeCubit(
+                  locationService: LocationService(),
+                  markerService: MarkerService())),
           BlocProvider(create: (_) => SavedStadiumsCubit()),
           BlocProvider(create: (_) => StadiumCubit()),
           BlocProvider(create: (_) => MyClubCubit()),

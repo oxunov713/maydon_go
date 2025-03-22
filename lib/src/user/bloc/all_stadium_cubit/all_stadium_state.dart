@@ -41,7 +41,10 @@ class StadiumError extends StadiumState {
   StadiumError(this.message, {this.errorCode, this.isNetworkError = false});
 
   bool get isTokenExpired => errorCode == 401;
+
   bool get isServerError => errorCode != null && errorCode! >= 500;
+
   bool get isNotFound => errorCode == 404;
+
   bool get isForbidden => errorCode == 403;
 }

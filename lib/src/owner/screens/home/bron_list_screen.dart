@@ -70,7 +70,7 @@ class _BronListScreenState extends State<BronListScreen> {
               borderRadius: BorderRadius.all(Radius.circular(15)),
             ),
             title: Text(
-              "${$users[index].firstName} ${$users[index].lastName}",
+              "${$users[index].fullName} ",
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
@@ -174,12 +174,12 @@ void _showBottomSheet(BuildContext context, int index) {
 
             /// Ism va kontakt ma'lumotlari
             Text(
-              "${$users[index].firstName} ${$users[index].lastName}",
+              "${$users[index].fullName} ",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
             Text(
-              "${$users[index].contactNumber}",
+              "${$users[index].phoneNumber}",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
 
@@ -192,7 +192,7 @@ void _showBottomSheet(BuildContext context, int index) {
               children: [
                 ElevatedButton.icon(
                   onPressed: () => UrlLauncherService.callPhoneNumber(
-                      $users[index].contactNumber!),
+                      $users[index].phoneNumber!),
                   icon: Icon(Icons.phone, color: Colors.white),
                   label: Text("Qo‘ng‘iroq qilish"),
                   style: ElevatedButton.styleFrom(

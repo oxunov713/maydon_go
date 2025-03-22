@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
@@ -15,7 +16,6 @@ import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 import '../../bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import '../../bloc/all_stadium_cubit/all_stadium_state.dart';
-import '../../bloc/booking_cubit/booking_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_state.dart';
 
@@ -42,59 +42,29 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     super.dispose();
   }
 
-  void _loadMore() {
+  void _loadMore() async {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      double currentScroll = _scrollController.position.pixels; // Joriy skroll joyi
-      context.read<StadiumCubit>().fetchStadiums().then((_) {
-        _scrollController.animateTo(
-          currentScroll,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-
-      });
+      double currentScroll = _scrollController.position.pixels;
+      await context.read<StadiumCubit>().fetchStadiums();
+      _scrollController.animateTo(
+        currentScroll,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
     final deviceWidth = MediaQuery.of(context).size.width;
     final deviceHeight = MediaQuery.of(context).size.height;
     final lan = context.lan;
+
     return Scaffold(
       backgroundColor: AppColors.white2,
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: context.watch<StadiumCubit>().state is StadiumLoaded &&
-                (context.watch<StadiumCubit>().state as StadiumLoaded)
-                    .isSearching
-            ? _buildSearchField(context)
-            : Text(lan.all_stadiums),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: context.watch<StadiumCubit>().state is StadiumLoaded &&
-                    (context.watch<StadiumCubit>().state as StadiumLoaded)
-                        .isSearching
-                ? IconButton(
-                    onPressed: () =>
-                        context.read<StadiumCubit>().toggleSearchMode(),
-                    icon: const Icon(Icons.close),
-                  )
-                : InkWell(
-                    child: SvgPicture.asset(
-                      AppIcons.searchIcon,
-                      height: 23,
-                    ),
-                    onTap: () =>
-                        context.read<StadiumCubit>().toggleSearchMode(),
-                  ),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context, lan),
       body: RefreshIndicator(
         onRefresh: () async {
           await context.read<StadiumCubit>().refreshStadiums();
@@ -102,406 +72,43 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
         displacement: 40,
         color: AppColors.green,
         backgroundColor: AppColors.white,
-        child:
-            BlocBuilder<StadiumCubit, StadiumState>(builder: (context, state) {
-          if (state is StadiumLoading) {
-            return const Center(
-                child: CircularProgressIndicator(
-              color: AppColors.green,
-            ));
-          } else if (state is StadiumError) {
-            final error = state as StadiumError;
-
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              switch (true) {
-                case _ when error.isNetworkError:
-                  break;
-
-                case _ when error.isTokenExpired:
-                  Center(child: Text("Tizimga qayta kirish kerak."));
-                  break;
-
-                case _ when error.isServerError:
-                  Center(
-                      child: Text("Server xatosi! Keyinroq urinib ko‘ring."));
-                  break;
-
-                default:
-                  Center(child: Text("Noma'lum xatolik yuz berdi."));
-                  break;
-              }
-            });
-
-            return ListView(
-                controller: _scrollController,
-                padding: EdgeInsets.only(top: 250),
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  Center(
-                    child: Text(
-                        "Xatolik yuz berdi, iltimos qayta urinib ko‘ring."),
-                  )
-                ]);
-          } else if (state is StadiumLoaded) {
-            return ListView.builder(controller: _scrollController,
-              physics: AlwaysScrollableScrollPhysics(),
-              itemCount: state.filteredStadiums.length,
-              itemBuilder: (context, stadiumIndex) {
-                final stadium = state.filteredStadiums[stadiumIndex];
-                final today = DateTime.now();
-                final todaySlots = _getAvailableTodaySlots(
-                    state.filteredStadiums[stadiumIndex].fields!, today);
-
-                return Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                    color: AppColors.white,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 15, horizontal: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    stadium.name.toString(),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: deviceHeight * 0.025,
-                                    ),
-                                  ),
-                                ),
-                                Card(
-                                  color: AppColors.green2,
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: deviceHeight * 0.005,
-                                      horizontal: deviceWidth * 0.02,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.only(
-                                              right: deviceWidth * 0.01),
-                                          child: Text(
-                                            stadium.averageRating.toString(),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.white,
-                                              fontSize: deviceHeight * 0.015,
-                                            ),
-                                          ),
-                                        ),
-                                        Image.asset(
-                                          AppIcons.stars,
-                                          height: deviceHeight * 0.02,
-                                          width: deviceWidth * 0.04,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: CarouselSlider(
-                                      items: stadium.images?.map((imageUrl) {
-                                        return Container(
-                                          width: double.infinity,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: CachedNetworkImage(
-                                            imageUrl: imageUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) =>
-                                                const Center(
-                                                    child:
-                                                        CircularProgressIndicator()),
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    const Center(
-                                              child: Icon(Icons.error,
-                                                  size: 50, color: Colors.red),
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      options: CarouselOptions(
-                                        aspectRatio: 16 / 9,
-                                        viewportFraction: 1.0,
-                                        autoPlay: true,
-                                        autoPlayInterval:
-                                            const Duration(seconds: 7),
-                                        enlargeCenterPage: true,
-                                        onPageChanged: (index, reason) =>
-                                            context
-                                                .read<StadiumCubit>()
-                                                .updateCurrentIndex(
-                                                    index, stadiumIndex),
-                                      ),
-                                      carouselController: context
-                                          .read<StadiumCubit>()
-                                          .getCarouselController(stadiumIndex),
-                                    ),
-                                  ),
-                                  // Dotted Indicator
-                                  Positioned(
-                                    bottom: 10,
-                                    left: 0,
-                                    right: 0,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: List.generate(
-                                        stadium.images!.length,
-                                        (index) => AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          margin: const EdgeInsets.symmetric(
-                                              horizontal: 5),
-                                          width: state.currentIndexList[
-                                                      stadiumIndex] ==
-                                                  index
-                                              ? 12
-                                              : 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: state.currentIndexList[
-                                                        stadiumIndex] ==
-                                                    index
-                                                ? AppColors.green2
-                                                : AppColors.grey4,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "${stadium.price?.formatWithSpace()} so'm",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: deviceHeight * 0.025,
-                                  ),
-                                ),
-                                BlocBuilder<SavedStadiumsCubit,
-                                    SavedStadiumsState>(
-                                  builder: (context, savedState) {
-                                    final cubit =
-                                        context.read<SavedStadiumsCubit>();
-
-                                    bool isSaved = false;
-                                    if (savedState is SavedStadiumsLoaded) {
-                                      isSaved = cubit.isStadiumSaved(stadium);
-                                    }
-
-                                    return IconButton(
-                                      icon: Icon(
-                                        isSaved
-                                            ? Icons.bookmark
-                                            : Icons.bookmark_border,
-                                        color: AppColors.green,
-                                      ),
-                                      onPressed: () {
-                                        if (isSaved) {
-                                          cubit.removeStadiumFromSaved(stadium);
-                                        } else {
-                                          cubit.addStadiumToSaved(stadium);
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: deviceWidth,
-                              child: Text(
-                                lan.empty_slots,
-                                style: TextStyle(
-                                  fontSize: deviceHeight * 0.017,
-                                  color: AppColors.grey4,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            SizedBox(
-                              height: deviceHeight * 0.04,
-                              child: todaySlots.isNotEmpty
-                                  ? ListView.separated(
-                                      itemCount: todaySlots.length,
-                                      scrollDirection: Axis.horizontal,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(width: 10),
-                                      itemBuilder: (context, index) {
-                                        final slot = todaySlots[index];
-                                        final startHour = slot.startTime?.hour
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final startMinute = slot
-                                            .startTime?.minute
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final endHour = slot.endTime?.hour
-                                            .toString()
-                                            .padLeft(2, '0');
-                                        final endMinute = slot.endTime?.minute
-                                            .toString()
-                                            .padLeft(2, '0');
-
-                                        return Container(
-                                          width: 120,
-                                          decoration: const BoxDecoration(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(20)),
-                                            color: AppColors.green40,
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              "$startHour:$startMinute - $endHour:$endMinute",
-                                              style: TextStyle(
-                                                color: AppColors.green,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: deviceHeight * 0.015,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : Container(
-                                      width: deviceWidth * 0.9,
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(20)),
-                                        color: AppColors.red,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          lan.all_slots_booked,
-                                          style: TextStyle(
-                                            color: AppColors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: deviceHeight * 0.018,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                            ),
-                            const Divider(height: 30),
-                            GestureDetector(
-                              onTap: () => context.pushNamed(
-                                AppRoutes.detailStadium,
-                                extra: stadium.id,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on),
-                                      SizedBox(width: deviceWidth * 0.02),
-                                      SizedBox(
-                                        width: deviceWidth - 150,
-                                        child: Text(
-                                          "${stadium.location?.city}, ${stadium.location?.street}",
-                                          maxLines: 2,
-                                          style: TextStyle(
-                                              fontSize: deviceHeight * 0.015,
-                                              color: AppColors.main,
-                                              overflow: TextOverflow.visible),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 15),
-                                    child: Icon(
-                                      Icons.arrow_forward_outlined,
-                                      color: AppColors.green,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          }
-          return Center(child: Text(lan.noData));
-        }),
+        child: BlocBuilder<StadiumCubit, StadiumState>(
+          builder: (context, state) {
+            if (state is StadiumLoading) {
+              return const Center(
+                  child: CircularProgressIndicator(color: AppColors.green));
+            } else if (state is StadiumError) {
+              return _buildErrorWidget(context, state);
+            } else if (state is StadiumLoaded) {
+              return _buildStadiumList(
+                  context, state, deviceWidth, deviceHeight, lan);
+            } else {
+              return Center(child: Text(lan.noData));
+            }
+          },
+        ),
       ),
     );
   }
 
-  List<TimeSlot> _getAvailableTodaySlots(
-      List<Substadiums> fields, DateTime today) {
-    final List<TimeSlot> allSlots = [];
-    final Set<TimeSlot> bookedSlots = {};
+  AppBar _buildAppBar(BuildContext context, lan) {
+    final stadiumCubit = context.watch<StadiumCubit>();
+    final state = stadiumCubit.state;
+    final isSearching = state is StadiumLoaded && state.isSearching;
 
-    // 1️⃣ 24 soatlik barcha slotlarni yaratamiz
-    for (int i = 0; i < 24; i++) {
-      DateTime startTime = DateTime(today.year, today.month, today.day, i, 0);
-      DateTime endTime = startTime.add(Duration(hours: 1));
-
-      allSlots.add(TimeSlot(startTime: startTime, endTime: endTime));
-    }
-
-    // 2️⃣ Band qilingan vaqtlarni yig'amiz
-    for (var field in fields) {
-      if (field.bookings != null) {
-        for (var booking in field.bookings!) {
-          if (booking.startTime?.year == today.year &&
-              booking.startTime?.month == today.month &&
-              booking.startTime?.day == today.day) {
-            bookedSlots.add(TimeSlot(
-              startTime: booking.startTime,
-              endTime: booking.endTime,
-            ));
-          }
-        }
-      }
-    }
-
-    // 3️⃣ Bo'sh slotlarni qaytarish (faqat booking bo'lmaganlari)
-    return allSlots.where((slot) => !bookedSlots.contains(slot)).toList();
+    return AppBar(
+      automaticallyImplyLeading: false,
+      title: isSearching ? _buildSearchField(context) : Text(lan.all_stadiums),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: IconButton(
+            onPressed: () => stadiumCubit.toggleSearchMode(),
+            icon: Icon(isSearching ? Icons.close : Icons.search),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSearchField(BuildContext context) {
@@ -532,5 +139,410 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, StadiumError state) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      String message = "Noma'lum xatolik yuz berdi.";
+      if (state.isNetworkError) {
+        message = "Internet mavjud emas.";
+      } else if (state.isTokenExpired) {
+        message = "Tizimga qayta kirish kerak.";
+      } else if (state.isServerError) {
+        message = "Server xatosi! Keyinroq urinib ko‘ring.";
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    });
+
+    return ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.only(top: 250),
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: const [
+        Center(child: Text("Xatolik yuz berdi, iltimos qayta urinib ko‘ring."))
+      ],
+    );
+  }
+
+  Widget _buildStadiumList(BuildContext context, StadiumLoaded state,
+      double deviceWidth, double deviceHeight, lan) {
+    return ListView.builder(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: state.filteredStadiums.length,
+      itemBuilder: (context, stadiumIndex) {
+        final stadium = state.filteredStadiums[stadiumIndex];
+        final today = DateTime.now();
+        final todaySlots = _getAvailableTodaySlots(stadium.fields!, today);
+        return _buildStadiumCard(context, stadium, todaySlots, deviceWidth,
+            deviceHeight, lan, stadiumIndex, state);
+      },
+    );
+  }
+
+  Widget _buildStadiumCard(
+      BuildContext context,
+      StadiumDetail stadium,
+      List<TimeSlot> todaySlots,
+      double deviceWidth,
+      double deviceHeight,
+      lan,
+      int stadiumIndex,
+      StadiumLoaded state) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: AppColors.white,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildStadiumHeader(context, stadium, deviceHeight, deviceWidth),
+            const SizedBox(height: 10),
+            _buildStadiumImages(
+                context, stadium, deviceHeight, stadiumIndex, state),
+            const SizedBox(height: 12),
+            _buildStadiumPriceAndSave(context, stadium, deviceHeight),
+            const SizedBox(height: 10),
+            _buildAvailableSlots(
+                context, todaySlots, deviceWidth, deviceHeight, lan),
+            const Divider(height: 30),
+            _buildStadiumLocation(context, stadium, deviceWidth, deviceHeight),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStadiumHeader(BuildContext context, StadiumDetail stadium,
+      double deviceHeight, double deviceWidth) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            stadium.name.toString(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: deviceHeight * 0.025,
+            ),
+          ),
+        ),
+        _buildRatingCard(stadium, deviceHeight, deviceWidth),
+      ],
+    );
+  }
+
+  Widget _buildRatingCard(
+      StadiumDetail stadium, double deviceHeight, double deviceWidth) {
+    return Card(
+      color: AppColors.green2,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: deviceHeight * 0.005,
+          horizontal: deviceWidth * 0.02,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(right: deviceWidth * 0.01),
+              child: Text(
+                stadium.averageRating.toString(),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                  fontSize: deviceHeight * 0.015,
+                ),
+              ),
+            ),
+            Image.asset(
+              AppIcons.stars,
+              height: deviceHeight * 0.02,
+              width: deviceWidth * 0.04,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStadiumImages(BuildContext context, StadiumDetail stadium,
+      double deviceHeight, int stadiumIndex, StadiumLoaded state) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CarouselSlider(
+              items: stadium.images?.map((imageUrl) {
+                return Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => const Center(
+                        child: Icon(Icons.error, size: 50, color: Colors.red)),
+                  ),
+                );
+              }).toList(),
+              options: CarouselOptions(
+                aspectRatio: 16 / 9,
+                viewportFraction: 1.0,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 7),
+                enlargeCenterPage: true,
+                onPageChanged: (index, reason) => context
+                    .read<StadiumCubit>()
+                    .updateCurrentIndex(index, stadiumIndex),
+              ),
+              carouselController: context
+                  .read<StadiumCubit>()
+                  .getCarouselController(stadiumIndex),
+            ),
+          ),
+          _buildImageIndicator(stadium, deviceHeight, stadiumIndex, state),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageIndicator(StadiumDetail stadium, double deviceHeight,
+      int stadiumIndex, StadiumLoaded state) {
+    return Positioned(
+      bottom: 10,
+      left: 0,
+      right: 0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          stadium.images!.length,
+          (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.symmetric(horizontal: 5),
+            width: state.currentIndexList[stadiumIndex] == index ? 12 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: state.currentIndexList[stadiumIndex] == index
+                  ? AppColors.green2
+                  : AppColors.grey4,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStadiumPriceAndSave(
+      BuildContext context, StadiumDetail stadium, double deviceHeight) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          "${stadium.price?.formatWithSpace()} so'm",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: deviceHeight * 0.025,
+          ),
+        ),
+        _buildSaveButton(context, stadium),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(BuildContext context, StadiumDetail stadium) {
+    return BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
+      builder: (context, savedState) {
+        final cubit = context.read<SavedStadiumsCubit>();
+        bool isSaved =
+            savedState is SavedStadiumsLoaded && cubit.isStadiumSaved(stadium);
+        return IconButton(
+          icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border,
+              color: AppColors.green),
+          onPressed: () => isSaved
+              ? cubit.removeStadiumFromSaved(stadium)
+              : cubit.addStadiumToSaved(stadium),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvailableSlots(BuildContext context, List<TimeSlot> todaySlots,
+      double deviceWidth, double deviceHeight, lan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: deviceWidth,
+          child: Text(
+            lan.empty_slots,
+            style: TextStyle(
+              fontSize: deviceHeight * 0.017,
+              color: AppColors.grey4,
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        SizedBox(
+          height: deviceHeight * 0.04,
+          child: todaySlots.isNotEmpty
+              ? _buildSlotListView(todaySlots, deviceHeight)
+              : _buildNoSlotsMessage(deviceWidth, lan),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlotListView(List<TimeSlot> todaySlots, double deviceHeight) {
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: todaySlots.length,
+      reverse: false,
+      scrollDirection: Axis.horizontal,
+      separatorBuilder: (context, index) => const SizedBox(width: 10),
+      itemBuilder: (context, index) {
+        final slot = todaySlots[index];
+        final timeFormat = DateFormat('HH:mm');
+        final startTimeString = timeFormat.format(slot.startTime!);
+        final endTimeString = timeFormat.format(slot.endTime!);
+
+        return Container(
+          width: 120,
+          decoration: const BoxDecoration(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
+            color: AppColors.green40,
+          ),
+          child: Center(
+            child: Text(
+              "$startTimeString - $endTimeString",
+              style: TextStyle(
+                color: AppColors.green,
+                fontWeight: FontWeight.w700,
+                fontSize: deviceHeight * 0.015,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoSlotsMessage(double deviceWidth, lan) {
+    return Container(
+      width: deviceWidth * 0.9,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(20)),
+        color: AppColors.red,
+      ),
+      child: Center(
+        child: Text(
+          lan.all_slots_booked,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStadiumLocation(BuildContext context, StadiumDetail stadium,
+      double deviceWidth, double deviceHeight) {
+    return GestureDetector(
+      onTap: () =>
+          context.pushNamed(AppRoutes.detailStadium, extra: stadium.id),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on),
+              SizedBox(width: deviceWidth * 0.02),
+              SizedBox(
+                width: deviceWidth - 150,
+                child: Text(
+                  "${stadium.location?.city}, ${stadium.location?.street}",
+                  maxLines: 2,
+                  style: TextStyle(
+                    fontSize: deviceHeight * 0.015,
+                    color: AppColors.main,
+                    overflow: TextOverflow.visible,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.only(right: 15),
+            child: Icon(
+              Icons.arrow_forward_outlined,
+              color: AppColors.green,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<TimeSlot> _getAvailableTodaySlots(
+      List<Substadiums> fields, DateTime today) {
+    final Set<TimeSlot> availableSlotsSet = {};
+    final now = DateTime.now();
+
+    for (var field in fields) {
+      final List<TimeSlot> fieldSlots = [];
+      final List<TimeSlot> bookedSlots = [];
+
+      for (int i = 0; i < 24; i++) {
+        DateTime startTime = DateTime(today.year, today.month, today.day, i, 0);
+        DateTime endTime = startTime.add(const Duration(hours: 1));
+        fieldSlots.add(TimeSlot(startTime: startTime, endTime: endTime));
+      }
+
+      if (field.bookings != null) {
+        for (var booking in field.bookings!) {
+          if (booking.startTime?.year == today.year &&
+              booking.startTime?.month == today.month &&
+              booking.startTime?.day == today.day) {
+            bookedSlots.add(TimeSlot(
+                startTime: booking.startTime, endTime: booking.endTime));
+          }
+        }
+      }
+
+      final availableFieldSlots = fieldSlots.where((slot) {
+        final isBooked = bookedSlots.any((bookedSlot) =>
+            slot.startTime!.isBefore(bookedSlot.endTime!) &&
+            slot.endTime!.isAfter(bookedSlot.startTime!));
+
+        final isPassed = slot.endTime!.isBefore(now);
+
+        final isCurrentHour = slot.startTime!.hour == now.hour &&
+            slot.startTime!.minute <= now.minute;
+
+        return !isBooked && !isPassed && !isCurrentHour;
+      }).toList();
+
+      availableSlotsSet.addAll(availableFieldSlots);
+    }
+
+    final availableSlotsList = availableSlotsSet.toList();
+    availableSlotsList.sort((a, b) => a.startTime!.compareTo(b.startTime!));
+    return availableSlotsList;
   }
 }

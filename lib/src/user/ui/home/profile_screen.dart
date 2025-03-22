@@ -26,7 +26,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final width = MediaQuery.sizeOf(context).width;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Profile"),automaticallyImplyLeading: false,
+        title: Text("Profile"),
+        automaticallyImplyLeading: false,
       ),
       backgroundColor: Color(0xffF2F3F5),
       body: SingleChildScrollView(
@@ -59,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "${$users[5].firstName!} ${$users[5].lastName!}",
+                            "",//"${$users[5].fullName!}",
                             style: TextStyle(fontSize: height * 0.03),
                           ),
                           Row(

@@ -28,15 +28,15 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _user = types.User(
       id: '1',
-      firstName: widget.user.firstName,
-      lastName: widget.user.firstName,
+      firstName: widget.user.fullName,
+      lastName: "",
       imageUrl: widget.user.imageUrl,
       lastSeen: DateTime.now().millisecondsSinceEpoch,
     ); // Joriy foydalanuvchi
     _otherUser = types.User(
       id: '2',
-      firstName: widget.user.firstName,
-      lastName: widget.user.lastName,
+      firstName: widget.user.fullName,
+      lastName: "",
       imageUrl: widget.user.imageUrl,
       lastSeen: 12,
     );

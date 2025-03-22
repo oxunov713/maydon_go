@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,6 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _toggleNotifications(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notifications', value);
+    FlutterLocalNotificationsPlugin().cancelAll();
+    
     setState(() {
       _isNotificationOn = value;
     });

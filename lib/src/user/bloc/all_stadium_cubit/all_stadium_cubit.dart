@@ -16,7 +16,7 @@ class StadiumCubit extends Cubit<StadiumState> {
   final TextEditingController searchController = TextEditingController();
   List<StadiumDetail> stadiums = [];
   List<StadiumDetail> filteredStadiums = [];
-  int _size = 2;
+  int _size = 0; // _size boshlang'ich qiymati 0 ga o'zgartirildi
 
   StadiumCubit() : super(StadiumInitial()) {
     currentDate = DateTime.now();
@@ -24,38 +24,33 @@ class StadiumCubit extends Cubit<StadiumState> {
   }
 
   Future<void> fetchStadiums() async {
-    final currentState = state; // 📌 Joriy state-ni olamiz
+    final currentState = state;
 
-    // 🔹 Yangi state-ni faqat ma'lumot bo'lmasa yuklaymiz
     if (currentState is! StadiumLoaded) {
       emit(StadiumLoading());
     }
 
     try {
+      _size += 2;
       final List<StadiumDetail> fetchedStadiums =
-      await ApiService().getAllStadiums(size: _size);
+          await ApiService().getAllStadiumsWithSize(size: _size);
 
-      if (currentState is StadiumLoaded) {
-        stadiums = List.from(currentState.stadiums)..addAll(fetchedStadiums);
-      } else {
-        stadiums = fetchedStadiums;
-      }
+      stadiums.clear();
+      stadiums.addAll(fetchedStadiums);
 
       filteredStadiums = List.from(stadiums);
 
-      // 🔥 carouselControllers faqat yangi elementlar uchun qo'shiladi
       if (currentState is StadiumLoaded) {
-        carouselControllers.addAll(
-            List.generate(fetchedStadiums.length, (_) => CarouselSliderController()));
+        carouselControllers.clear();
+        carouselControllers.addAll(List.generate(
+            fetchedStadiums.length, (_) => CarouselSliderController()));
       } else {
         carouselControllers =
             List.generate(stadiums.length, (_) => CarouselSliderController());
       }
 
-      _size += 2;
-
       emit(StadiumLoaded(
-        stadiums: List.from(stadiums), // 🔥 Yangi list orqali referensiyani o'zgartiramiz
+        stadiums: List.from(stadiums),
         filteredStadiums: List.from(filteredStadiums),
         currentIndexList: List.filled(stadiums.length, 0),
         isSearching: false,
@@ -84,14 +79,12 @@ class StadiumCubit extends Cubit<StadiumState> {
     }
   }
 
-
-
-  void filterStadiums(String query) {
+  void filterStadiums(String query) async {
     if (state is StadiumLoaded) {
       final currentState = state as StadiumLoaded;
+      final allStadiums = await ApiService().getAllStadiums();
 
-      // 🔹 filter qilishdan oldin stadiums ro‘yxatini yangilaymiz
-      filteredStadiums = stadiums
+      filteredStadiums = allStadiums
           .where((stadium) =>
               stadium.name!.toLowerCase().contains(query.toLowerCase()))
           .toList();
@@ -104,11 +97,12 @@ class StadiumCubit extends Cubit<StadiumState> {
     if (state is StadiumLoaded) {
       final currentState = state as StadiumLoaded;
       if (currentState.isSearching) {
-        // 🔹 Search yopilganda filteredStadiums ni asl stadiums listiga qaytaramiz
-        emit(currentState.copyWith(
-          isSearching: false,
-          filteredStadiums: stadiums,
-        ));
+        emit(
+          currentState.copyWith(
+            isSearching: false,
+            filteredStadiums: stadiums,
+          ),
+        );
       } else {
         emit(currentState.copyWith(isSearching: true));
       }
@@ -129,6 +123,8 @@ class StadiumCubit extends Cubit<StadiumState> {
   }
 
   Future<void> refreshStadiums() async {
+    stadiums.clear();
+    _size = 0; // _size 0 ga qaytarildi
     await fetchStadiums();
   }
 

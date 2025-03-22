@@ -5,16 +5,13 @@ class UserModel {
   final SubscriptionModel? subscriptionModel;
   final int? point;
   final bool? active;
-  final String? firstName;
-  final String? lastName;
+  final String? fullName;
+
   final String? imageUrl;
-  final String? contactNumber;
 
   UserModel({
-    this.firstName,
-    this.lastName,
+    this.fullName,
     this.imageUrl,
-    this.contactNumber,
     this.id,
     this.phoneNumber,
     this.role,
@@ -33,10 +30,8 @@ class UserModel {
           : null,
       point: json['point'] as int?,
       active: json['active'] as bool?,
-      firstName: json['firstName'] as String?,
-      lastName: json['lastName'] as String?,
+      fullName: json['fullName'] as String?,
       imageUrl: json['imageUrl'] as String?,
-      contactNumber: json['contactNumber'] as String?,
     );
   }
 }

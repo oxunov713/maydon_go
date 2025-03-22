@@ -40,6 +40,7 @@ dependencies:
   fl_chart: ^0.70.2
   flutter_local_notifications: ^18.0.1
   url_launcher: ^6.3.1
+  maps_launcher: ^3.0.0+1
   in_app_review: ^2.0.10
   image_picker: ^1.1.2
   geocoding: ^3.0.0

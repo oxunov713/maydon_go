@@ -16,15 +16,18 @@ class App extends StatelessWidget {
       create: (context) => LocaleCubit(),
       child: BlocBuilder<LocaleCubit, Locale>(
         builder: (context, locale) {
+          final router = AppRouter.goRouter;
           return MaterialApp.router(
-            routerConfig: AppRouter.goRouter,
+            routerConfig: router,
+
             debugShowCheckedModeBanner: false,
             supportedLocales: const [
               Locale('en'),
               Locale('uz'),
               Locale('ru'),
             ],
-            locale: locale, // Bloc orqali boshqariladigan til
+            locale: locale,
+
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
@@ -43,21 +46,21 @@ class App extends StatelessWidget {
                   fontFamily: "Gilroy",
                 ),
               ),
-
               bottomNavigationBarTheme: const BottomNavigationBarThemeData(
                 backgroundColor: AppColors.green,
                 unselectedItemColor: AppColors.white,
                 selectedItemColor: AppColors.white,
                 selectedIconTheme: IconThemeData(color: AppColors.white),
                 selectedLabelStyle:
-                TextStyle(color: AppColors.green40, fontSize: 12),
+                    TextStyle(color: AppColors.green40, fontSize: 12),
                 unselectedLabelStyle:
-                TextStyle(color: AppColors.grey4, fontSize: 12),
+                    TextStyle(color: AppColors.grey4, fontSize: 12),
               ),
               textSelectionTheme: const TextSelectionThemeData(
                 cursorColor: AppColors.green, // Kursor rangi
                 selectionColor: AppColors.green40, // Tanlangan matn rangi
-                selectionHandleColor: AppColors.green, // Tanlangan matn uchun tutqich rangi
+                selectionHandleColor:
+                    AppColors.green, // Tanlangan matn uchun tutqich rangi
               ),
             ),
           );

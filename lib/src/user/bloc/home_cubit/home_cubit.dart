@@ -1,36 +1,46 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/stadium_model.dart';
+import 'package:maydon_go/src/common/service/api_service.dart';
+import 'package:maydon_go/src/common/service/location_service.dart';
 import 'package:maydon_go/src/common/service/marker_service.dart';
-import 'package:maydon_go/src/user/ui/home/my_club_screen.dart';
 
-import '../../../common/model/stadium_model.dart';
-import '../../../common/service/location_service.dart';
-import '../../../common/service/stadiums_service.dart';
-import '../../ui/home/all_stadiums_screen.dart';
-import '../../ui/home/locations_screen.dart';
-import '../../ui/home/profile_screen.dart';
-import '../../ui/home/saved_stadiums.dart';
+import '../../../common/router/app_routes.dart';
 import 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
   final LocationService _locationService;
-  final StadiumService _stadiumService;
-  final MarkerService _markerService;
 
-  int selectedIndex = 2;
-  LocationData? currentLocation;
-  Set<Marker> markers = {};
-  GoogleMapController? mapController;
+  final MarkerService _markerService;
+  final Logger _logger = Logger();
+
+  int _selectedIndex = 2;
+  LocationData? _currentLocation;
+  Set<Marker> _markers = {};
+  GoogleMapController? _mapController;
   List<StadiumDetail> _stadiums = [];
   List<StadiumDetail> _searchResults = [];
-  final logger = Logger();
   Timer? _debounce;
+  Timer? _dailyUpdateTimer;
 
-  // 📌 **STREAMLAR**
+  HomeCubit({
+    required LocationService locationService,
+    required MarkerService markerService,
+  })  : _locationService = locationService,
+        _markerService = markerService,
+        super(HomeInitialState()) {
+    _startDailyUpdateTimer();
+  }
+
+  int get selectedIndex => _selectedIndex;
+
+  List<StadiumDetail> get stadiums => _stadiums;
+
   final StreamController<List<StadiumDetail>> _stadiumStreamController =
       StreamController.broadcast();
   final StreamController<Set<Marker>> _markerStreamController =
@@ -50,101 +60,78 @@ class HomeCubit extends Cubit<HomeState> {
   Stream<List<StadiumDetail>> get searchStream =>
       _searchStreamController.stream;
 
-  HomeCubit(this._locationService, this._stadiumService, this._markerService)
-      : super(HomeInitialState());
+  void _startDailyUpdateTimer() {
+    final now = DateTime.now();
+    final sixAM = DateTime(now.year, now.month, now.day, 6, 0, 0);
+    final initialDelay = now.isAfter(sixAM)
+        ? sixAM.add(const Duration(days: 1)).difference(now)
+        : sixAM.difference(now);
 
-  Future<void> initializeApp(BuildContext context) async {
+    _dailyUpdateTimer = Timer(initialDelay, () {
+      _fetchDailyUpdates();
+      _dailyUpdateTimer = Timer.periodic(const Duration(days: 1), (_) {
+        _fetchDailyUpdates();
+      });
+    });
+  }
+
+  Future<void> _fetchDailyUpdates() async {
+    _logger.d('Fetching daily updates at 6:00 AM');
+    await _fetchStadiums();
+    await _fetchLocation();
+  }
+
+  Future<void> initializeApp() async {
     try {
-      logger.d('Initializing app...');
-      await initializeLocation(context);
-      await fetchStadiums(context);
+      _logger.d('Initializing app...');
+      await _fetchLocation();
+      await _fetchStadiums();
     } catch (e) {
-      logger.e('Error initializing app: $e');
+      _logger.e('Error initializing app: $e');
     }
   }
 
-  Widget currentPage() {
-    switch (selectedIndex) {
-      case 0:
-        return const AllStadiumsScreen();
-      case 1:
-        return const SavedStadiums();
-      case 2:
-        return const LocationsScreen();
-      case 3:
-        return MyClubScreen();
-      case 4:
-        return const ProfileScreen();
-      default:
-        return const LocationsScreen();
-    }
-  }
-
-  Future<void> fetchStadiums(BuildContext context) async {
+  Future<void> _fetchStadiums() async {
     try {
-      logger.d('Fetching stadiums...');
-      _stadiums = await _stadiumService.fetchStadiums();
+      _logger.d('Fetching stadiums...');
+      _stadiums = await ApiService().getAllStadiums();
       _stadiumStreamController.add(_stadiums);
-      _searchStreamController
-          .add(_stadiums); // ✅ Qidiruv uchun ham boshlang‘ich holat
-      await setMarkers(context);
+      _searchStreamController.add(_stadiums);
+      await _setMarkers();
       emit(HomeLoadedState(
         stadiums: _stadiums,
-        markers: markers,
-        currentLocation: currentLocation,
+        markers: _markers,
+        currentLocation: _currentLocation,
         searchResults: _searchResults,
       ));
     } catch (e) {
-      logger.e('Error fetching stadiums: $e');
+      _logger.e('Error fetching stadiums: $e');
     }
   }
 
-  Future<void> initializeLocation(BuildContext context) async {
+  Future<void> _fetchLocation() async {
     try {
-      logger.d('Initializing location...');
-      currentLocation = await _locationService.getCurrentLocation();
-      if (currentLocation != null) {
-        _locationStreamController.add(currentLocation);
-        await setCurrentLocationMarker();
-        await setMarkers(context);
+      _logger.d('Initializing location...');
+      _currentLocation = await _locationService.getCurrentLocation();
+      if (_currentLocation != null) {
+        _locationStreamController.add(_currentLocation);
+        await _setMarkers();
       }
     } catch (e) {
-      logger.e('Error initializing location: $e');
+      _logger.e('Error initializing location: $e');
     }
-  }
-
-  Future<void> setCurrentLocationMarker() async {
-    if (currentLocation == null) return;
-
-    final LatLng position = LatLng(
-      currentLocation!.latitude!,
-      currentLocation!.longitude!,
-    );
-
-    final Marker locationMarker =
-        await _markerService.createCurrentLocationMarker(position);
-
-    markers
-        .removeWhere((marker) => marker.markerId.value == 'current_location');
-    markers.add(locationMarker);
-    _markerStreamController.add(markers);
-
-    emit(HomeLoadedState(
-      stadiums: _stadiums,
-      markers: markers,
-      currentLocation: currentLocation,
-      searchResults: _searchResults,
-    ));
   }
 
   void goToCurrentLocation() {
-    if (currentLocation != null && mapController != null) {
-      logger.d('Going to current location...');
-      mapController!.animateCamera(
+    if (_currentLocation != null && _mapController != null) {
+      _logger.d('Going to current location...');
+      _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target:
-                LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
+            target: LatLng(
+              _currentLocation!.latitude!,
+              _currentLocation!.longitude!,
+            ),
             zoom: 15,
           ),
         ),
@@ -152,112 +139,106 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
-  void onMapCreated(GoogleMapController controller) {
-    logger.d('Map created...');
-    mapController = controller;
+  void onMapCreated(GoogleMapController? controller) {
+    _mapController = controller;
+    emit(HomeLoadedState(
+      stadiums: _stadiums,
+      markers: _markers,
+      currentLocation: _currentLocation,
+      searchResults: _searchResults,
+    ));
   }
 
-  Future<void> setMarkers(BuildContext context) async {
-    if (_stadiums.isEmpty || currentLocation == null) return;
-    try {
-      logger.d('Setting markers...');
-      Set<Marker> newMarkers = await _markerService.setMarkers(
-          LatLng(currentLocation!.latitude!, currentLocation!.longitude!),
-          _stadiums,
-          context);
-      markers = {...markers, ...newMarkers};
-      _markerStreamController.add(markers);
+  void onMarkerTap(int stadiumId, BuildContext context) {
+    context.pushNamed(AppRoutes.detailStadium, extra: stadiumId);
+  }
 
+  Future<void> _setMarkers() async {
+    if (_stadiums.isEmpty || _currentLocation == null) return;
+    try {
+      _logger.d('Setting markers...');
+      _markers = await _markerService.setMarkers(
+        LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
+        _stadiums,
+      ); // contextni olib tashladik
+      _markerStreamController.add(_markers);
       emit(HomeLoadedState(
         stadiums: _stadiums,
-        markers: markers,
-        currentLocation: currentLocation,
+        markers: _markers,
+        currentLocation: _currentLocation,
         searchResults: _searchResults,
       ));
     } catch (e) {
-      logger.e('Error setting markers: $e');
+      _logger.e('Error setting markers: $e');
     }
   }
 
   void updateIndex(int index) {
-    if (selectedIndex != index) {
-      selectedIndex = index;
+    if (_selectedIndex != index) {
+      _selectedIndex = index;
       emit(HomeLoadedState(
         stadiums: _stadiums,
-        markers: markers,
-        currentLocation: currentLocation,
+        markers: _markers,
+        currentLocation: _currentLocation,
         searchResults: _searchResults,
       ));
     }
   }
 
-  void moveCamera(LatLng target, BuildContext context) {
-    FocusScope.of(context).unfocus();
-    if (mapController != null) {
-      logger.d('Moving camera to: $target');
-      mapController!.animateCamera(
+  void moveCamera(LatLng target) {
+    if (_mapController != null) {
+      _logger.d('Moving camera to: $target');
+      _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
-          CameraPosition(target: target, zoom: 15),
-        ),
+            CameraPosition(target: target, zoom: 15)),
       );
     }
-
     _searchStreamController.add(_searchResults);
-
     emit(HomeLoadedState(
       stadiums: _stadiums,
-      markers: markers,
-      currentLocation: currentLocation,
-      searchResults: [], // 📌 Search natijalari bo‘sh bo‘ladi
+      markers: _markers,
+      currentLocation: _currentLocation,
+      searchResults: [],
     ));
   }
 
-  // 📌 **QIDIRISH FUNKSIYASI**
   void searchStadiums(String query) {
-    if (_debounce?.isActive ?? false)
-      _debounce!.cancel(); // ⏳ Oldingi qidiruvni bekor qilish
-
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (query.isEmpty) {
-        _searchResults = _stadiums; // ✅ Bo‘sh bo‘lsa, hamma stadionlar
-      } else {
-        _searchResults = _stadiums
-            .where((stadium) =>
-                stadium.name!.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-
-      // Sort by name
-      _searchResults.sort((a, b) => a.name!.compareTo(b.name!));
-
+      _searchResults = query.isEmpty
+          ? _stadiums
+          : _stadiums
+              .where((stadium) =>
+                  stadium.name!.toLowerCase().contains(query.toLowerCase()))
+              .toList()
+        ..sort((a, b) => a.name!.compareTo(b.name!));
       _searchStreamController.add(_searchResults);
-
       emit(HomeLoadedState(
         stadiums: _stadiums,
-        markers: markers,
-        currentLocation: currentLocation,
+        markers: _markers,
+        currentLocation: _currentLocation,
         searchResults: _searchResults,
       ));
     });
   }
 
   void clearSearchResults() {
-    _searchResults.clear(); // 🔥 Qidiruv natijalari tozalanadi
+    _searchResults.clear();
     _searchStreamController.add(_searchResults);
-
     emit(HomeLoadedState(
       stadiums: _stadiums,
-      markers: markers,
-      currentLocation: currentLocation,
-      searchResults: _searchResults, // ✅ Bo‘sh holatda qaytadi
+      markers: _markers,
+      currentLocation: _currentLocation,
+      searchResults: _searchResults,
     ));
   }
 
   @override
   Future<void> close() {
-    logger.w('Closing HomeCubit...');
-    mapController?.dispose();
+    _logger.w('Closing HomeCubit...');
+    _mapController?.dispose();
     _debounce?.cancel();
+    _dailyUpdateTimer?.cancel();
     _stadiumStreamController.close();
     _markerStreamController.close();
     _locationStreamController.close();

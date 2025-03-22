@@ -57,7 +57,7 @@ class OwnerProfileScreen extends StatelessWidget {
                             width: 250,
                             child: Text(
                               textAlign: TextAlign.right,
-                              "${$users[1].firstName!} ${$users[1].lastName!}",
+                              "${$users[1].fullName!} ",
                               style: TextStyle(fontSize: height * 0.03),
                             ),
                           ),

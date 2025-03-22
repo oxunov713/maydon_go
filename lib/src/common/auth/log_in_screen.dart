@@ -40,15 +40,7 @@ class _LogInScreenState extends State<LogInScreen> {
       );
 
       if (authCubit.state is AuthLoginSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Tizimga muvaffaqiyatli kirdingiz!',
-              style: TextStyle(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.green,
-          ),
-        );
+
 
         // Barcha oldingi sahifalarni tozalab, faqat `home` yoki `ownerDashboard` sahifasiga o'tish
         if (authCubit.selectedRole == UserRole.user) {

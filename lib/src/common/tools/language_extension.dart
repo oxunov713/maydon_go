@@ -8,14 +8,14 @@ extension LocalizationExtension on BuildContext {
 
 extension GroupByDateExtension on List<TimeSlot> {
   Map<String, List<TimeSlot>> groupByDate() {
-    Map<String, List<TimeSlot>> grouped = {};
-    for (var slot in this) {
-      String dateKey = slot.startTime!.toIso8601String().split('T')[0]; // YYYY-MM-DD
-      if (!grouped.containsKey(dateKey)) {
-        grouped[dateKey] = [];
+    final Map<String, List<TimeSlot>> groupedSlots = {};
+    for (final slot in this) {
+      final date = slot.startTime!.toIso8601String().split('T')[0];
+      if (groupedSlots[date] == null) {
+        groupedSlots[date] = [];
       }
-      grouped[dateKey]!.add(slot);
+      groupedSlots[date]!.add(slot);
     }
-    return grouped;
+    return groupedSlots;
   }
 }

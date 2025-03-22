@@ -9,14 +9,33 @@ import '../../../common/service/hive_service.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
-  List<TimeSlot> bookings = []; // Booking list
   String? selectedStadiumName;
   String? selectedDate;
   double position = 0.0;
   bool confirmed = false;
-  final HiveService _hiveService = HiveService();
 
   BookingCubit() : super(BookingInitial());
+
+  void rateStadium(int stadiumId, int rating) async {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+      emit(currentState.copyWith(rating: rating));
+    }
+  }
+
+  void sendRating() async {
+    if (state is BookingLoaded) {
+      final currentState = state as BookingLoaded;
+
+      try {
+        await ApiService()
+            .rateTheStadium(currentState.stadium.id!, currentState.rating);
+        emit(currentState.copyWith(rating: 0));
+      } catch (e) {
+        emit(BookingError('Xatolik yuz berdi: $e')); // Xato bo'lsa error
+      }
+    }
+  }
 
   void setSelectedDate(String date) {
     if (state is BookingLoaded) {
@@ -28,7 +47,7 @@ class BookingCubit extends Cubit<BookingState> {
           stadium: currentState.stadium,
           bookedSlots: currentState.bookedSlots,
           selectedDate: date,
-          selectedStadiumName: selectedStadiumName,
+          selectedStadiumName: currentState.selectedStadiumName,
           bookings: currentState.bookings,
         ),
       );
@@ -42,6 +61,9 @@ class BookingCubit extends Cubit<BookingState> {
       final stadium = await ApiService().getStadiumById(stadiumId: stadiumId);
       final user = await ApiService().getUser();
 
+      // Set the initial selected stadium name
+      selectedStadiumName = stadium.fields?.first.name ?? "No subStadium";
+
       _updateSlots(stadium, user);
     } catch (e) {
       emit(BookingError("Failed to fetch stadium: $e"));
@@ -52,10 +74,23 @@ class BookingCubit extends Cubit<BookingState> {
     if (state is BookingLoaded) {
       final currentState = state as BookingLoaded;
       selectedStadiumName = fieldName;
+      Logger().i("Selected Stadium Name: $selectedStadiumName");
+
+      final updatedFields = currentState.stadium.fields?.map((substadium) {
+        if (substadium.name == fieldName) {
+          final allSlots = _generateSlotsForDateRange(List.generate(
+              30, (index) => DateTime.now().add(Duration(days: index))));
+          final availableSlots =
+              _removeBookedSlots(allSlots, substadium.bookings ?? []);
+          return substadium.copyWith(availableSlots: availableSlots);
+        } else {
+          return substadium;
+        }
+      }).toList();
 
       emit(BookingLoaded(
         user: currentState.user,
-        stadium: currentState.stadium,
+        stadium: currentState.stadium.copyWith(fields: updatedFields),
         bookedSlots: currentState.bookedSlots,
         selectedStadiumName: fieldName,
         selectedDate: currentState.selectedDate,
@@ -102,7 +137,7 @@ class BookingCubit extends Cubit<BookingState> {
     log.e("📅 Slotlarni yangilash...");
 
     final now = DateTime.now();
-    final today = now.toIso8601String().split("T")[0]; // Bugungi sana
+    final today = now.toIso8601String().split("T")[0];
 
     final startDay = DateTime(now.year, now.month, now.day);
     final next30Days =
@@ -112,17 +147,18 @@ class BookingCubit extends Cubit<BookingState> {
       final allSlots = _generateSlotsForDateRange(next30Days);
       final availableSlots =
           _removeBookedSlots(allSlots, substadium.bookings ?? []);
+      log.e(
+          "🔄 ${substadium.name} uchun yangi slotlar: ${availableSlots.length}");
       return substadium.copyWith(availableSlots: availableSlots);
     }).toList();
 
     emit(BookingLoaded(
       user: user,
       stadium: stadium.copyWith(fields: updatedFields),
-      selectedDate: selectedDate?.isNotEmpty == true
-          ? selectedDate
-          : today, // Default bugungi sana
+      selectedDate: selectedDate?.isNotEmpty == true ? selectedDate : today,
+      selectedStadiumName: selectedStadiumName,
     ));
-    log.e("✅ State o‘zgardi: $state"); // State yangilanganligini tekshirish
+    log.e("✅ State o‘zgardi: $state");
   }
 
   /// 30 kunlik 1 soatlik slotlarni generatsiya qilish
@@ -133,7 +169,7 @@ class BookingCubit extends Cubit<BookingState> {
     for (var day in dates) {
       DateTime slotStart = DateTime(day.year, day.month, day.day, 0, 0);
 
-      // Agar bugungi sana bo'lsa, hozirgi vaqtni keyingi to'liq soatga yaxlitlash
+      // If today, start from the next full hour
       if (day.day == now.day &&
           day.month == now.month &&
           day.year == now.year) {
@@ -143,7 +179,6 @@ class BookingCubit extends Cubit<BookingState> {
       DateTime slotEnd = slotStart.add(const Duration(hours: 1));
 
       while (slotStart.day == day.day) {
-        // 🔥 Shartni slotStart.day bilan tekshirish
         if (slotStart.isAfter(now)) {
           allSlots.add(TimeSlot(startTime: slotStart, endTime: slotEnd));
         }
@@ -200,20 +235,21 @@ class BookingCubit extends Cubit<BookingState> {
 
   /// Bookingni tasdiqlash va API ga jo‘natish
   Future<void> confirmBooking(int subStadiumId) async {
-    if (state is! BookingLoaded || bookings.isEmpty) return;
+    if (state is! BookingLoaded) {
+      return;
+    }
 
     final currentState = state as BookingLoaded;
+
     try {
-      // await ApiService().bookSlots(bookings);
-     // _hiveService.saveBookings(
-      //    bookings, currentState.stadium.id!, subStadiumId);
-      bookings.clear(); // API ga jo‘natilgandan so‘ng tozalash
-      emit(BookingLoaded(
-        user: currentState.user,
-        stadium: currentState.stadium,
-        bookedSlots: [],
-      ));
+      Logger().e(currentState.bookings);
+      await ApiService().bookStadium(
+          bookings: currentState.bookings, subStadiumId: subStadiumId);
+
+      // To'g'ridan-to'g'ri refresh chaqiramiz
+      await refreshStadium(currentState.stadium.id!);
     } catch (e) {
+      print("❌ Bookingda xatolik: $e");
       emit(BookingError("Failed to confirm booking: $e"));
     }
   }

@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
+import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/hive_service.dart';
+import 'package:maydon_go/src/common/service/maps_launch_service.dart';
+import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import '../../../common/tools/average_rating_extension.dart';
 import '../../../common/tools/price_formatter_extension.dart';
 import '../../../common/model/stadium_model.dart';
@@ -18,6 +22,7 @@ import '../../../common/widgets/sign_button.dart';
 import '../../../owner/screens/home/owner_stadium_detail.dart';
 import '../../bloc/booking_cubit/booking_cubit.dart';
 import '../../bloc/booking_cubit/booking_state.dart';
+import '../../bloc/home_cubit/home_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import '../../bloc/saved_stadium_cubit/saved_stadium_state.dart';
 
@@ -80,7 +85,8 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
     final todayIndex = keys.indexOf(today);
     if (todayIndex != -1) {
       _scrollController.animateTo(
-        todayIndex * 60.0,
+        0.0,
+        // Bugungi kun ro'yxatning boshida bo'lgani uchun 0.0 ga animatsiya qilamiz
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
@@ -272,104 +278,108 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                             BlocBuilder<BookingCubit,
                                                 BookingState>(
                                               builder: (context, state) {
-                                                final bookingCubit = context
-                                                    .read<BookingCubit>();
-                                                final selectedStadiumName = bookingCubit
-                                                        .selectedStadiumName ??
-                                                    (state is BookingLoaded &&
-                                                            state.stadium.fields
-                                                                    ?.isNotEmpty ==
-                                                                true
-                                                        ? state.stadium.fields!
-                                                            .first.name
-                                                        : 'Nomaʼlum stadion');
+                                                if (state is BookingLoaded) {
+                                                  final bookingCubit = context
+                                                      .read<BookingCubit>();
+                                                  final currentState = state;
 
-                                                return DropdownMenu<String>(
-                                                  initialSelection:
-                                                      selectedStadiumName,
-                                                  onSelected: (String? value) {
-                                                    if (value != null) {
-                                                      bookingCubit
-                                                          .setSelectedField(
-                                                              value);
-                                                      bookingCubit
-                                                          .setSelectedDate(
-                                                              _getTodayDate());
-
-                                                      _scrollToToday();
-                                                    }
-                                                  },
-                                                  dropdownMenuEntries: stadium
-                                                      .fields!
-                                                      .map((field) {
-                                                    return DropdownMenuEntry<
-                                                        String>(
-                                                      value: field.name ??
-                                                          'Nomaʼlum stadion',
-                                                      label: field.name ??
-                                                          'Nomaʼlum stadion',
-                                                    );
-                                                  }).toList(),
-                                                  menuStyle: MenuStyle(
-                                                    backgroundColor:
-                                                        const WidgetStatePropertyAll(
-                                                            AppColors.white),
-                                                    shape: WidgetStatePropertyAll<
-                                                        RoundedRectangleBorder>(
-                                                      RoundedRectangleBorder(
+                                                  return DropdownMenu<String>(
+                                                    initialSelection:
+                                                        currentState
+                                                            .selectedStadiumName,
+                                                    onSelected:
+                                                        (String? value) {
+                                                      if (value != null) {
+                                                        bookingCubit
+                                                            .setSelectedField(
+                                                                value);
+                                                        bookingCubit
+                                                            .setSelectedDate(
+                                                                _getTodayDate());
+                                                        _scrollToToday();
+                                                      }
+                                                    },
+                                                    dropdownMenuEntries:
+                                                        currentState
+                                                            .stadium.fields!
+                                                            .map((field) {
+                                                      return DropdownMenuEntry<
+                                                          String>(
+                                                        value: field.name ??
+                                                            'Nomaʼlum stadion',
+                                                        label: field.name ??
+                                                            'Nomaʼlum stadion',
+                                                      );
+                                                    }).toList(),
+                                                    menuStyle: MenuStyle(
+                                                      backgroundColor:
+                                                          const WidgetStatePropertyAll(
+                                                              AppColors.white),
+                                                      shape: WidgetStatePropertyAll<
+                                                          RoundedRectangleBorder>(
+                                                        RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
+                                                          side:
+                                                              const BorderSide(
+                                                            color:
+                                                                AppColors.green,
+                                                            width: 1,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    textStyle: TextStyle(
+                                                      fontSize:
+                                                          deviceHeight * 0.02,
+                                                      color: AppColors.green,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                    inputDecorationTheme:
+                                                        InputDecorationTheme(
+                                                      border:
+                                                          OutlineInputBorder(
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(10),
-                                                        side: const BorderSide(
+                                                                .circular(15),
+                                                        borderSide:
+                                                            const BorderSide(
                                                           color:
                                                               AppColors.green,
                                                           width: 1,
                                                         ),
                                                       ),
-                                                    ),
-                                                  ),
-                                                  textStyle: TextStyle(
-                                                    fontSize:
-                                                        deviceHeight * 0.02,
-                                                    color: AppColors.green,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                  inputDecorationTheme:
-                                                      InputDecorationTheme(
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              15),
-                                                      borderSide:
-                                                          const BorderSide(
-                                                        color: AppColors.green,
-                                                        width: 1,
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        borderSide:
+                                                            const BorderSide(
+                                                          color:
+                                                              AppColors.green,
+                                                          width: 1,
+                                                        ),
+                                                      ),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        borderSide:
+                                                            const BorderSide(
+                                                          color:
+                                                              AppColors.green,
+                                                          width: 2,
+                                                        ),
                                                       ),
                                                     ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              15),
-                                                      borderSide:
-                                                          const BorderSide(
-                                                        color: AppColors.green,
-                                                        width: 1,
-                                                      ),
-                                                    ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              15),
-                                                      borderSide:
-                                                          const BorderSide(
-                                                        color: AppColors.green,
-                                                        width: 2,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
+                                                  );
+                                                } else {
+                                                  return const CircularProgressIndicator(); // or some other placeholder
+                                                }
                                               },
                                             ),
                                             Column(
@@ -501,19 +511,17 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                       ),
                                                     ],
                                                   ),
-                                                  Text(
-                                                    stadium.facilities!
-                                                                .hasUniforms ??
-                                                            true
-                                                        ? "Bor"
-                                                        : "Yo'q",
-                                                    style: TextStyle(
-                                                        fontSize:
-                                                            addressFontSize,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: AppColors.grey4),
-                                                  ),
+                                                  stadium.facilities!
+                                                          .hasUniforms!
+                                                      ? Icon(
+                                                          Icons.done,
+                                                          color:
+                                                              AppColors.green,
+                                                        )
+                                                      : Icon(
+                                                          Icons.close,
+                                                          color: AppColors.red,
+                                                        ),
                                                 ],
                                               ),
                                               Row(
@@ -542,19 +550,16 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                       ),
                                                     ],
                                                   ),
-                                                  Text(
-                                                    stadium.facilities
-                                                                ?.isIndoor ??
-                                                            false
-                                                        ? "Ha"
-                                                        : "Yo'q",
-                                                    style: TextStyle(
-                                                        fontSize:
-                                                            addressFontSize,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: AppColors.grey4),
-                                                  ),
+                                                  stadium.facilities!.isIndoor!
+                                                      ? Icon(
+                                                          Icons.done,
+                                                          color:
+                                                              AppColors.green,
+                                                        )
+                                                      : Icon(
+                                                          Icons.close,
+                                                          color: AppColors.red,
+                                                        ),
                                                 ],
                                               ),
                                               Row(
@@ -583,19 +588,17 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                       ),
                                                     ],
                                                   ),
-                                                  Text(
-                                                    stadium.facilities!
-                                                                .hasBathroom ??
-                                                            false
-                                                        ? "Bor"
-                                                        : "Yo'q",
-                                                    style: TextStyle(
-                                                        fontSize:
-                                                            addressFontSize,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: AppColors.grey4),
-                                                  ),
+                                                  stadium.facilities!
+                                                          .hasBathroom!
+                                                      ? Icon(
+                                                          Icons.done,
+                                                          color:
+                                                              AppColors.green,
+                                                        )
+                                                      : Icon(
+                                                          Icons.close,
+                                                          color: AppColors.red,
+                                                        ),
                                                 ],
                                               ),
                                               SizedBox(height: 20),
@@ -605,7 +608,15 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                         .spaceAround,
                                                 children: [
                                                   IconButton(
-                                                    onPressed: () {},
+                                                    onPressed: () =>
+                                                        MapsLauncherService
+                                                            .launchCoordinates(
+                                                                stadium
+                                                                    .location!
+                                                                    .latitude!,
+                                                                stadium
+                                                                    .location!
+                                                                    .longitude!),
                                                     icon: Column(
                                                       spacing: 5,
                                                       children: [
@@ -619,12 +630,26 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                     ),
                                                   ),
                                                   IconButton(
-                                                    onPressed: () {},
+                                                    onPressed: () =>
+                                                        showTelegramBottomSheet(
+                                                      context,
+                                                      onConfirm: () =>
+                                                          UrlLauncherService
+                                                              .shareLocationViaTelegram(
+                                                                  stadium
+                                                                      .location!
+                                                                      .latitude!,
+                                                                  stadium
+                                                                      .location!
+                                                                      .longitude!,
+                                                                  stadium
+                                                                      .name!),
+                                                    ),
                                                     icon: Column(
                                                       spacing: 5,
                                                       children: [
                                                         Icon(
-                                                          Icons.share,
+                                                          Icons.telegram,
                                                           color:
                                                               AppColors.green,
                                                         ),
@@ -633,16 +658,19 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                     ),
                                                   ),
                                                   IconButton(
-                                                    onPressed: () {},
+                                                    onPressed: () =>
+                                                        showRatingDialog(
+                                                            context),
                                                     icon: Column(
                                                       spacing: 5,
                                                       children: [
                                                         Icon(
-                                                          Icons.open_in_new,
+                                                          Icons
+                                                              .thumb_up_alt_outlined,
                                                           color:
                                                               AppColors.green,
                                                         ),
-                                                        Text("Open with..."),
+                                                        Text("Baholash"),
                                                       ],
                                                     ),
                                                   ),
@@ -831,29 +859,56 @@ void _showConfirmationDialog(BuildContext context) {
             actions: [
               TextButton(
                 onPressed: () async {
-                  // Tanlangan substadionni topish
-                  final selectedSubStadium = state.stadium.fields?.firstWhere(
-                    (field) => field.name == cubit.selectedStadiumName,
-                    orElse: () => Substadiums(
-                        id: -1,
-                        name: '',
-                        availableSlots: []), // Agar topilmasa, default qiymat
+                  final cubit = context.read<BookingCubit>();
+
+                  if (state is! BookingLoaded) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text("Xatolik: Booking ma'lumotlari yuklanmadi!"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final stadiumState = state as BookingLoaded;
+
+                  // `fields` null bo‘lmasa, ichidan `selectedStadiumName` bo‘yicha qidiramiz
+                  final selectedSubStadium =
+                      stadiumState.stadium.fields?.firstWhere(
+                    (field) => field.name == stadiumState.selectedStadiumName,
+                    orElse: () =>
+                        Substadiums(id: -1, name: '', availableSlots: []),
                   );
 
-                  // Agar substadion topilsa va id si -1 ga teng bo'lmasa
-                  if (selectedSubStadium?.id != -1) {
-                    // await context
-                    //      .read<BookingCubit>()
-                    //      .confirmBooking(selectedSubStadium!.id!);
-                    context.pop();
-                    cubit.clearSlots();
-                    Logger().e(HiveService().getBookings());
-                  } else {
-                    // Agar substadion topilmasa, xato xabarini ko'rsatish
+                  if (selectedSubStadium == null ||
+                      selectedSubStadium.id == -1) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                            "Substadium topilmadi yoki noto'g'ri tanlangan"),
+                            "Substadium topilmadi yoki noto'g'ri tanlangan!"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    // 🟢 `confirmBooking` chaqirish
+                    await cubit.confirmBooking(selectedSubStadium.id!);
+
+                    // 🟢 Sahifani yopishdan oldin `cubit.clearSlots()` chaqirish
+                    cubit.clearSlots();
+
+                    // 🟢 Sahifani yopish
+                    if (context.mounted) {
+                      context.pop();
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Bron qilishda xatolik: $e"),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -862,9 +917,10 @@ void _showConfirmationDialog(BuildContext context) {
                 child: const Text(
                   "Bron qilish",
                   style: TextStyle(
-                      color: AppColors.green,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17),
+                    color: AppColors.green,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 17,
+                  ),
                 ),
               ),
               TextButton(
@@ -884,7 +940,7 @@ void _showConfirmationDialog(BuildContext context) {
           );
         }
 
-        return Placeholder();
+        return SizedBox();
       });
     },
   );
@@ -894,4 +950,116 @@ String formatTimeRange(DateTime startTime, DateTime endTime) {
   final DateFormat timeFormat =
       DateFormat('HH:mm'); // Vaqtni "22:00" formatida ko'rsatish
   return '${timeFormat.format(startTime)}-${timeFormat.format(endTime)}';
+}
+
+void showTelegramBottomSheet(
+  BuildContext context, {
+  required VoidCallback onConfirm,
+}) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColors.white,
+    builder: (BuildContext context) {
+      return Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            const Text(
+              'Lokatsiya ni Telegram orqali jo\'natmoqchimisiz?',
+              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 25),
+            TextButton(
+              style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(AppColors.green)),
+              onPressed: () {
+                context.pop(); // Bottom sheetni yopish
+                onConfirm(); // Tasdiqlash funksiyasini chaqirish
+              },
+              child: const Text('Ha, jo\'natish',
+                  style: TextStyle(color: AppColors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                context.pop(); // Bottom sheetni yopish
+              },
+              child: const Text(
+                'Bekor qilish',
+                style: TextStyle(color: AppColors.main),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+void showRatingDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return BlocBuilder<BookingCubit, BookingState>(builder: (context, state) {
+        final cubit = context.read<BookingCubit>();
+
+        if (state is BookingLoaded) {
+          return AlertDialog(
+            title: Center(
+              child: Text(
+                "Stadionni baholash",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const Text('Nechta yulduz bergan bo\'lardingiz?'),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < state.rating ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                        ),
+                        onPressed: () =>
+                            cubit.rateStadium(state.stadium.id!, index + 1),
+                      );
+                    }),
+                  ),
+                ],
+              ),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              state.rating == 0
+                  ? SizedBox()
+                  : SizedBox(
+                      width: MediaQuery.sizeOf(context).width * 0.7,
+                      child: TextButton(
+                        style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStatePropertyAll(AppColors.green)),
+                        onPressed: () {
+                          cubit.sendRating();
+                          context.pop();
+                        },
+                        child: const Text(
+                          "Jo'natish",
+                          style: TextStyle(color: AppColors.white),
+                        ),
+                      ),
+                    ),
+            ],
+          );
+        }
+
+        return SizedBox();
+      });
+    },
+  );
 }

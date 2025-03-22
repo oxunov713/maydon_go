@@ -24,6 +24,8 @@ class CustomCalendar extends StatefulWidget {
 }
 
 class _CustomCalendarState extends State<CustomCalendar> {
+  final Logger log = Logger();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -79,6 +81,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
         final selectedDate = bookingState.selectedDate ?? _getTodayDate();
         final formattedDate = _formatDate(selectedDate);
 
+        // Find the selected stadium based on selectedStadiumName
         final selectedStadium = stadium.fields?.firstWhere(
           (field) => field.name == bookingState.selectedStadiumName,
           orElse: () => stadium.fields!.isNotEmpty
@@ -88,6 +91,12 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
         final groupedSlots =
             selectedStadium?.availableSlots?.groupByDate() ?? {};
+
+        // Debugging logs
+        log.e("📅 Selected Stadium: ${selectedStadium?.name}");
+        log.e("📅 Selected Date: $selectedDate");
+        log.e("📅 Grouped Slots Keys: ${groupedSlots.keys}");
+        log.e("📅 Available Slots: ${selectedStadium?.availableSlots}");
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,46 +194,62 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
   Widget _buildTimeSlots(double height, String selectedDate,
       Map<String, List<TimeSlot>> groupedSlots) {
-    final slots = groupedSlots[selectedDate] ?? [];
+    return BlocBuilder<BookingCubit, BookingState>(
+      builder: (context, state) {
+        final selectedStadium = state is BookingLoaded
+            ? state.stadium.fields?.firstWhere(
+                (field) => field.name == state.selectedStadiumName,
+                orElse: () => Substadiums(id: 0, name: '', availableSlots: []),
+              )
+            : Substadiums(id: 0, name: '', availableSlots: []);
 
-    if (slots.isEmpty) {
-      return Container(
-        margin: EdgeInsets.symmetric(vertical: height * 0.01),
-        width: double.infinity,
-        height: height * 0.05,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-          color: AppColors.red,
-        ),
-        child: Center(
-          child: Text(
-            "Barcha soatlar band",
-            style: TextStyle(
-              color: AppColors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: height * 0.018,
+        final slots = groupedSlots[selectedDate] ?? [];
+        final availableSlots = selectedStadium?.availableSlots?.where((slot) =>
+            slots.any((availableSlot) =>
+                availableSlot.startTime == slot.startTime &&
+                availableSlot.endTime == slot.endTime));
+        final filteredSlots = availableSlots?.toList() ?? [];
+
+        if (filteredSlots.isEmpty) {
+          return Container(
+            margin: EdgeInsets.symmetric(vertical: height * 0.01),
+            width: double.infinity,
+            height: height * 0.05,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+              color: AppColors.red,
             ),
-          ),
-        ),
-      );
-    }
+            child: Center(
+              child: Text(
+                "Bugungi barcha soatlar band",
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: height * 0.018,
+                ),
+              ),
+            ),
+          );
+        }
 
-    return Expanded(
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 2.5,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        itemCount: slots.length,
-        itemBuilder: (context, index) {
-          final slot = slots[index];
-          return _buildTimeSlotItem(slot);
-        },
-      ),
+        return Expanded(
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 2.5,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            itemCount: slots.length,
+            itemBuilder: (context, index) {
+              final slot = slots[index];
+              return _buildTimeSlotItem(slot);
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -241,63 +266,64 @@ class _CustomCalendarState extends State<CustomCalendar> {
           width: 2,
         ),
       ),
-      child: BlocBuilder<BookingCubit, BookingState>(builder: (context, state) {
-        return InkWell(
-          customBorder: const StadiumBorder(),
-          onTap: () {
-            if (state is BookingLoaded) {
-              final currentState = state as BookingLoaded;
-              final subscription = currentState
-                  .user.subscriptionModel?.name; // Subscription maydoni
-              final currentBookings = currentState.bookings.length;
-              String errorMessage = "";
+      child: BlocBuilder<BookingCubit, BookingState>(
+        builder: (context, state) {
+          return InkWell(
+            customBorder: const StadiumBorder(),
+            onTap: () {
+              if (state is BookingLoaded) {
+                final currentState = state;
+                final subscription = currentState.user.subscriptionModel?.name;
+                final currentBookings = currentState.bookings.length;
+                String errorMessage = "";
 
-              if (isBooked) {
-                bookingCubit.removeSlot(slot);
-                return;
-              }
-
-              if (subscription == null) {
-                errorMessage = "Sizning obunangiz mavjud emas!";
-              } else if (subscription == "Go") {
-                if (currentBookings >= 2) {
-                  errorMessage =
-                      '"Go" obuna foydalanuvchilari kuniga faqat 2 ta slot band qila oladi!';
+                if (isBooked) {
+                  bookingCubit.removeSlot(slot);
+                  return;
                 }
-              } else if (subscription == "Go+") {
-                if (currentBookings >= 5) {
-                  errorMessage =
-                      '"Go+" obuna foydalanuvchilari kuniga faqat 5 ta slot band qila oladi!';
+
+                if (subscription == null) {
+                  errorMessage = "Sizning obunangiz mavjud emas!";
+                } else if (subscription == "Go") {
+                  if (currentBookings >= 2) {
+                    errorMessage =
+                        '"Go" obuna foydalanuvchilari kuniga faqat 2 ta slot band qila oladi!';
+                  }
+                } else if (subscription == "Go+") {
+                  if (currentBookings >= 5) {
+                    errorMessage =
+                        '"Go+" obuna foydalanuvchilari kuniga faqat 5 ta slot band qila oladi!';
+                  }
                 }
-              }
 
-              if (errorMessage.isNotEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(errorMessage),
-                    backgroundColor: Colors.red,
-                    showCloseIcon: true,
-                    duration: Duration(seconds: 5),
-                  ),
-                );
-                return;
-              }
+                if (errorMessage.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage),
+                      backgroundColor: Colors.red,
+                      showCloseIcon: true,
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
+                  return;
+                }
 
-              bookingCubit.addSlot(slot);
-            }
-          },
-          child: Center(
-            child: Text(
-              "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",
-              style: TextStyle(
-                fontSize: 14,
-                color: isBooked ? AppColors.green : AppColors.main,
-                fontWeight: isBooked ? FontWeight.w700 : FontWeight.w600,
+                bookingCubit.addSlot(slot);
+              }
+            },
+            child: Center(
+              child: Text(
+                "${DateFormat('HH:mm').format(slot.startTime!)} - ${DateFormat('HH:mm').format(slot.endTime!)}",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isBooked ? AppColors.green : AppColors.main,
+                  fontWeight: isBooked ? FontWeight.w700 : FontWeight.w600,
+                ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }
