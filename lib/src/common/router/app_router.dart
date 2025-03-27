@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
+import 'package:maydon_go/src/user/ui/home/donation_page.dart';
+import 'package:maydon_go/src/user/ui/home/team_chat_screen.dart';
+import 'package:maydon_go/src/user/ui/home/tournament_page.dart';
 
 import '../../owner/bloc/add_stadium/add_stadium_cubit.dart';
 import '../../owner/bloc/home/owner_home_cubit.dart';
@@ -31,7 +34,6 @@ import '../../user/ui/home/profile_screen.dart';
 import '../../user/ui/home/profile_view_screen.dart';
 import '../../user/ui/home/quizzes_screen.dart';
 import '../../user/ui/home/saved_stadiums.dart';
-import '../../user/ui/home/settings_screen.dart';
 import '../../user/ui/home/stadium_detail.dart';
 import '../../user/ui/home/subscription_screen.dart';
 import '../../user/ui/home/user_coins_ranking.dart';
@@ -45,6 +47,7 @@ import '../screens/role_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../../user/ui/home/sms_verification.dart';
+import '../style/app_icons.dart';
 import 'app_routes.dart';
 
 class AppRouter {
@@ -124,6 +127,16 @@ final GoRouter _router = GoRouter(
                               },
                             ),
                             GoRoute(
+                              path: "teamChat",
+                              name: AppRoutes.teamChat,
+                              builder: (context, state) {
+                                return TeamChatScreen(
+                                  teamLogo: "",
+                                  teamName: "Real Madrid",
+                                );
+                              },
+                            ),
+                            GoRoute(
                               path: "clubDetail",
                               name: AppRoutes.clubDetail,
                               builder: (context, state) =>
@@ -160,16 +173,21 @@ final GoRouter _router = GoRouter(
                                         SubscriptionScreen(),
                                   ),
                                   GoRoute(
+                                    path: "tournament",
+                                    name: AppRoutes.tournament,
+                                    builder: (context, state) =>
+                                        TournamentPage(),
+                                  ),
+                                  GoRoute(
+                                    path: "donation",
+                                    name: AppRoutes.donation,
+                                    builder: (context, state) => DonationPage(),
+                                  ),
+                                  GoRoute(
                                     path: "quizzes_cubit",
                                     name: AppRoutes.quizzes,
                                     builder: (context, state) =>
-                                        QuizzesScreen(),
-                                  ),
-                                  GoRoute(
-                                    path: "settings",
-                                    name: AppRoutes.settings,
-                                    builder: (context, state) =>
-                                        const SettingsScreen(),
+                                        QuizzesPage(),
                                   ),
                                   GoRoute(
                                     path: "history",

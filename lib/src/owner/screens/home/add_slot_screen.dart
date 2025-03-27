@@ -22,7 +22,7 @@ class _AddSlotScreenState extends State<AddSlotScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.white2,
-      appBar: AppBar(
+      appBar: AppBar(automaticallyImplyLeading: false,
         title: const Text("Stadiums"),
         actions: [
          //TODO add substadium

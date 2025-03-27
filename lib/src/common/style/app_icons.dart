@@ -14,7 +14,7 @@ class AppIcons {
   static const splashScreen = "assets/images/splash.png";
   static const stadionIcon = "assets/icons/stadion_icon.png";
   static const currentLocation = "assets/icons/current_location.png";
-  static const avatarImage = "assets/images/avatar.png";
+  static const avatarImage = "assets/images/ronaldu_avatar.jpg";
 
   static const stadionsIcon = "assets/icons/stadions_icon.svg";
   static const topRatingsIcon = "assets/icons/stars_icon.svg";

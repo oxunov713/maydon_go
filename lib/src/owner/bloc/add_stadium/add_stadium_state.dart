@@ -1,84 +1,79 @@
-import '../../../common/model/facilities_model.dart';
-import '../../../common/model/location_model.dart';
-import '../../../common/model/stadium_model.dart';
-import '../../../common/model/time_slot_model.dart';
 
-class AddStadiumState {
-  final int id;
+
+import 'dart:io';
+
+import 'package:equatable/equatable.dart';
+
+enum AddStadiumStatus { initial, loading, success, error }
+
+class AddStadiumState extends Equatable {
   final String name;
   final String description;
-  final double price;
-  final LocationModel location;
-  final Facilities facilities;
-  final double averageRating;
-  final List<String> images;
-  final List<int> ratings;
-  final int stadiumCount;
-  final List<Map<String, Map<DateTime, List<TimeSlot>>>> stadiumsSlots;
+  final String price;
+  final String count;
+  final List<File> selectedImages;
+  final bool hasBathroom;
+  final bool isIndoor;
+  final bool hasUniforms;
+  final AddStadiumStatus status;
+  final String? errorMessage;
 
-  AddStadiumState({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.location,
-    required this.facilities,
-    required this.averageRating,
-    required this.images,
-    required this.ratings,
-    required this.stadiumCount,
-    required this.stadiumsSlots,
+  const AddStadiumState({
+    this.name = '',
+    this.description = '',
+    this.price = '',
+    this.count = '',
+    this.selectedImages = const [],
+    this.hasBathroom = false,
+    this.isIndoor = false,
+    this.hasUniforms = false,
+    this.status = AddStadiumStatus.initial,
+    this.errorMessage,
   });
 
+  @override
+  List<Object?> get props => [
+    name,
+    description,
+    price,
+    count,
+    selectedImages,
+    hasBathroom,
+    isIndoor,
+    hasUniforms,
+    status,
+    errorMessage,
+  ];
+
   AddStadiumState copyWith({
-    int? id,
     String? name,
     String? description,
-    double? price,
-    LocationModel? location,
-    Facilities? facilities,
-    double? averageRating,
-    List<String>? images,
-    List<int>? ratings,
-    int? stadiumCount,
-    List<Map<String, Map<DateTime, List<TimeSlot>>>>? stadiumsSlots,
+    String? price,
+    String? count,
+    List<File>? selectedImages,
+    bool? hasBathroom,
+    bool? isIndoor,
+    bool? hasUniforms,
+    AddStadiumStatus? status,
+    String? errorMessage,
   }) {
     return AddStadiumState(
-      id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
-      location: location ?? this.location,
-      facilities: facilities ?? this.facilities,
-      averageRating: averageRating ?? this.averageRating,
-      images: images ?? this.images,
-      ratings: ratings ?? this.ratings,
-      stadiumCount: stadiumCount ?? this.stadiumCount,
-      stadiumsSlots: stadiumsSlots ?? this.stadiumsSlots,
+      count: count ?? this.count,
+      selectedImages: selectedImages ?? this.selectedImages,
+      hasBathroom: hasBathroom ?? this.hasBathroom,
+      isIndoor: isIndoor ?? this.isIndoor,
+      hasUniforms: hasUniforms ?? this.hasUniforms,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
-}
 
-class AddStadiumInitial extends AddStadiumState {
-  AddStadiumInitial()
-      : super(
-          id: 0,
-          name: '',
-          description: '',
-          price: 0.0,
-          location: LocationModel(
-              latitude: 0.0,
-              longitude: 0.0,
-
-              city: '',
-              country: '',
-              street: ''),
-          facilities: Facilities(
-              hasBathroom: false, isIndoor: false, hasUniforms: false),
-          averageRating: 0.0,
-          images: [],
-          ratings: [],
-          stadiumCount: 0,
-          stadiumsSlots: [],
-        );
+  bool get isValid =>
+      name.isNotEmpty &&
+          description.isNotEmpty &&
+          price.isNotEmpty &&
+          count.isNotEmpty;
 }

@@ -6,10 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../main.dart';
 import '../../../common/constants/config.dart';
 import '../../../common/router/app_routes.dart';
-import '../../../common/service/url_launcher_service.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
-import '../../../user/ui/home/profile_view_screen.dart';
 
 class OwnerProfileScreen extends StatelessWidget {
   @override
@@ -29,7 +27,7 @@ class OwnerProfileScreen extends StatelessWidget {
             spacing: 10,
             children: [
               GestureDetector(
-                onTap: () => context.pushNamed(AppRoutes.ownerProfileDetail),
+                onTap: () => context.pushNamed(AppRoutes.profileView),
                 child: Container(
                   height: height * 0.2,
                   width: double.infinity,
@@ -57,7 +55,7 @@ class OwnerProfileScreen extends StatelessWidget {
                             width: 250,
                             child: Text(
                               textAlign: TextAlign.right,
-                              "${$users[1].fullName!} ",
+                              "sdcscds ",
                               style: TextStyle(fontSize: height * 0.03),
                             ),
                           ),
@@ -88,12 +86,7 @@ class OwnerProfileScreen extends StatelessWidget {
                 isActive: false,
                 onTap: () => context.pushNamed(AppRoutes.ownerSubs),
               ),
-              _listTile(
-                icon: AppIcons.settingsIcon,
-                title: "Settings",
-                isActive: false,
-                onTap: () => context.pushNamed(AppRoutes.settings),
-              ),
+
               _listTile(
                 icon: AppIcons.faqIcon,
                 title: "Ilova haqida",

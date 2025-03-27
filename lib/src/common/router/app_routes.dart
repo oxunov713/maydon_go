@@ -16,13 +16,15 @@ class AppRoutes {
   static const String clubDetail = 'clubDetail';
   static const String clubTeammates = 'clubTeammates';
   static const String chat = 'chat';
+  static const String teamChat = 'teamChat';
   static const String coinsRanking = 'coinsRanking';
+  static const String tournament = 'tournament';
+  static const String donation = 'donation';
   static const String profile = 'profile';
   static const String profileView = 'profileView';
   static const String notification = 'notification';
   static const String subscription = 'subscription';
   static const String quizzes = 'quizzes_cubit';
-  static const String settings = 'settings';
   static const String history = 'history';
   static const String about = 'about';
 

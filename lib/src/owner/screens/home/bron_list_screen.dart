@@ -36,7 +36,7 @@ class _BronListScreenState extends State<BronListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+
 
     final width = MediaQuery.sizeOf(context).width;
     return Scaffold(

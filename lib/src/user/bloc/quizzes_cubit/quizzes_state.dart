@@ -1,32 +1,17 @@
 import '../../../common/model/quiz_model.dart';
 
-abstract class QuizzesState {}
+class QuizState {
+  final bool isLoading;
+  final List<Quiz> quizzes;
+  final String? error;
 
-class QuizzesInitial extends QuizzesState {}
+  QuizState({this.isLoading = false, this.quizzes = const [], this.error});
 
-class QuizzesLoading extends QuizzesState {}
-
-class QuizzesLoaded extends QuizzesState {
-  final List<QuizQuestion> quizzes;
-  final int currentIndex;
-  final int score;
-  final double timeLeft;
-  final String? selectedAnswer;
-  final bool isAnswerSelected;
-
-  QuizzesLoaded({
-    required this.quizzes,
-    required this.currentIndex,
-    required this.score,
-    required this.timeLeft,
-    this.selectedAnswer,
-    required this.isAnswerSelected,
-  });
-}
-
-class QuizzesFinished extends QuizzesState {
-  final int score;
-  final int total;
-
-  QuizzesFinished({required this.score, required this.total});
+  QuizState copyWith({bool? isLoading, List<Quiz>? quizzes, String? error}) {
+    return QuizState(
+      isLoading: isLoading ?? this.isLoading,
+      quizzes: quizzes ?? this.quizzes,
+      error: error,
+    );
+  }
 }

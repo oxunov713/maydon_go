@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
-import 'package:maydon_go/src/common/service/hive_service.dart';
+import 'package:maydon_go/src/common/service/booking_service.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
 
 import '../../user/bloc/booking_cubit/booking_cubit.dart';

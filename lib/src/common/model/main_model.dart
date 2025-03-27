@@ -6,7 +6,6 @@ class UserModel {
   final int? point;
   final bool? active;
   final String? fullName;
-
   final String? imageUrl;
 
   UserModel({
@@ -19,6 +18,28 @@ class UserModel {
     this.point,
     this.active,
   });
+
+  UserModel copyWith({
+    int? id,
+    String? phoneNumber,
+    String? role,
+    SubscriptionModel? subscriptionModel,
+    int? point,
+    bool? active,
+    String? fullName,
+    String? imageUrl,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      role: role ?? this.role,
+      subscriptionModel: subscriptionModel ?? this.subscriptionModel,
+      point: point ?? this.point,
+      active: active ?? this.active,
+      fullName: fullName ?? this.fullName,
+      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -53,5 +74,13 @@ class SubscriptionModel {
       description: json['description'] as String?,
       price: (json['price'] as num?)?.toDouble(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'description': description,
+      'price': price,
+    };
   }
 }

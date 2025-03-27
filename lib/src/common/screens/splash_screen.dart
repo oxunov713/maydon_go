@@ -77,7 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       Future.delayed(
         const Duration(seconds: 3),
-        () {
+            () {
           if (token != null && token.isNotEmpty) {
             context.goNamed(AppRoutes.home);
           } else {

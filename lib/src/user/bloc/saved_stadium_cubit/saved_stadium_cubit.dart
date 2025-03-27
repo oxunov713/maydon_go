@@ -1,41 +1,79 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../common/model/stadium_model.dart';
+import '../../../common/service/api_service.dart';
 import 'saved_stadium_state.dart';
 
 class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
-  List<StadiumDetail> _savedStadiums = [];
 
-  SavedStadiumsCubit() : super(SavedStadiumsInitial());
+  final Map<int, StadiumDetail> _savedStadiums = {};
+  final Map<int, bool> _loadingStates = {};
 
-  // Get the list of saved stadiums
-  List<StadiumDetail> get savedStadiums => _savedStadiums;
+  SavedStadiumsCubit() : super(SavedStadiumsInitial()) {
+    loadSavedStadiums();
+  }
 
-  // Add a stadium to the saved list
-  void addStadiumToSaved(StadiumDetail stadium) {
-    if (!_savedStadiums.any((e) => e.id == stadium.id)) {
-      _savedStadiums.add(stadium);
-      emit(SavedStadiumsLoaded(savedStadiums: _savedStadiums));
+  /// Saqlangan stadionlarni yuklash
+  Future<void> loadSavedStadiums() async {
+    emit(SavedStadiumsLoading());
+    try {
+      final List<StadiumDetail> savedList = await ApiService().getFavourites();
+      _savedStadiums.clear();
+
+      for (var stadium in savedList ?? []) {
+        if (stadium.id != null) {
+          _savedStadiums[stadium.id!] = stadium;
+        }
+      }
+      emit(SavedStadiumsLoaded(savedStadiums: _savedStadiums.values.toList()));
+    } catch (e) {
+      emit(SavedStadiumsError('Failed to fetch saved stadiums: $e'));
     }
   }
 
-  // Remove a stadium from the saved list
-  void removeStadiumFromSaved(StadiumDetail stadium) {
-    _savedStadiums.removeWhere(
-      (element) => element.id == stadium.id,
-    );
-    emit(SavedStadiumsLoaded(savedStadiums: _savedStadiums));
+  /// Stadionni saqlanganlarga qo‘shish
+  Future<void> addStadiumToSaved(StadiumDetail stadium) async {
+    if (stadium.id == null || _savedStadiums.containsKey(stadium.id)) return;
+
+    _loadingStates[stadium.id!] = true;
+    _notifyCurrentState();
+
+    try {
+      await ApiService().addToFav(stadiumId: stadium.id!);
+      _savedStadiums[stadium.id!] = stadium;
+      _loadingStates[stadium.id!] = false;
+      _notifyCurrentState();
+    } catch (e) {
+      _loadingStates[stadium.id!] = false;
+      emit(SavedStadiumsError('Failed to add stadium: $e'));
+    }
   }
 
-  // Set the saved stadiums to a new list
-  void setSavedStadiums(List<StadiumDetail> stadiums) {
-    _savedStadiums = stadiums;
-    emit(SavedStadiumsLoaded(savedStadiums: _savedStadiums));
+  /// Stadionni saqlanganlardan o‘chirish
+  Future<void> removeStadiumFromSaved(StadiumDetail stadium) async {
+    if (stadium.id == null || !_savedStadiums.containsKey(stadium.id)) return;
+
+    _loadingStates[stadium.id!] = true;
+    _notifyCurrentState();
+
+    try {
+      await ApiService().removeFromFav(stadiumId: stadium.id!);
+      _savedStadiums.remove(stadium.id!);
+      _loadingStates[stadium.id!] = false;
+      _notifyCurrentState();
+    } catch (e) {
+      _loadingStates[stadium.id!] = false;
+      emit(SavedStadiumsError('Failed to remove stadium: $e'));
+    }
   }
 
-  // Check if a stadium is saved
-  bool isStadiumSaved(StadiumDetail stadium) {
-    return _savedStadiums.any(
-      (element) => element.id == stadium.id,
-    );
+  /// Joriy holatni yangilash uchun yordamchi metod
+  void _notifyCurrentState() {
+    emit(SavedStadiumsLoaded(savedStadiums: _savedStadiums.values.toList()));
   }
+
+  /// Stadion saqlanganmi yoki yo‘qligini tekshirish
+  bool isStadiumSaved(int stadiumId) => _savedStadiums.containsKey(stadiumId);
+
+  /// Stadion uchun loading holatini olish
+  bool isLoading(int stadiumId) => _loadingStates[stadiumId] ?? false;
 }

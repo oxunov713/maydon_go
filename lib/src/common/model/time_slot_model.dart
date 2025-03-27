@@ -1,13 +1,9 @@
-import 'package:hive/hive.dart';
 
-part 'time_slot_model.g.dart'; // Hive generatsiya qilgan fayl
 
-@HiveType(typeId: 0)
 class TimeSlot {
-  @HiveField(0)
+
   final DateTime? startTime;
 
-  @HiveField(1)
   final DateTime? endTime;
 
   TimeSlot({this.startTime, this.endTime});

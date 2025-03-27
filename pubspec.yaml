@@ -44,8 +44,7 @@ dependencies:
   in_app_review: ^2.0.10
   image_picker: ^1.1.2
   geocoding: ^3.0.0
-  hive: ^2.2.3           # Hive asosiy paketi
-  hive_flutter: ^1.1.0   # Flutter uchun Hive integratsiyasi
+
 
 
 
@@ -53,8 +52,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  build_runner: ^2.3.3    # Kod generatsiyasi uchun
-  hive_generator: ^1.1.3  # Hive model generatsiyasi uchun
+
   flutter_lints: ^5.0.0
 flutter:
 

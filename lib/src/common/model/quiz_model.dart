@@ -1,41 +1,41 @@
-class QuizQuestion {
-  final String question;
-  final List<String> options;
-  final String correctAnswer;
+class Answer {
+  final int id;
+  final String answerText;
+  final bool correct;
 
-  QuizQuestion({
-    required this.question,
-    required this.options,
-    required this.correctAnswer,
+  Answer({
+    required this.id,
+    required this.answerText,
+    required this.correct,
   });
 
-  bool isCorrect(String answer) => answer == correctAnswer;
+  factory Answer.fromJson(Map<String, dynamic> json) {
+    return Answer(
+      id: json['id'],
+      answerText: json['answerText'],
+      correct: json['correct'],
+    );
+  }
 }
 
-List<QuizQuestion> $footballQuizzes = [
-  QuizQuestion(
-    question: "Qaysi jamoa eng ko‘p FIFA Jahon chempionatida g‘alaba qozongan?",
-    options: ["Argentina", "Braziliya", "Germaniya", "Fransiya"],
-    correctAnswer: "Braziliya",
-  ),
-  QuizQuestion(
-    question: "FIFA Jahon chempionati qaysi yildan beri o‘tkaziladi?",
-    options: ["1928", "1930", "1942", "1950"],
-    correctAnswer: "1930",
-  ),
-  QuizQuestion(
-    question: "Messi qaysi klub bilan 2021-yilda shartnoma imzoladi?",
-    options: ["Barcelona", "PSG", "Man City", "Juventus"],
-    correctAnswer: "PSG",
-  ),
-  QuizQuestion(
-    question: "Qaysi futbolchi eng ko‘p Ballon d'Or mukofotini yutgan?",
-    options: ["Cristiano Ronaldo", "Lionel Messi", "Pelé", "Maradona"],
-    correctAnswer: "Lionel Messi",
-  ),
-  QuizQuestion(
-    question: "Futbol maydoni uzunligi qancha bo‘lishi kerak?",
-    options: ["90-120 m", "100-130 m", "110-140 m", "80-110 m"],
-    correctAnswer: "90-120 m",
-  ),
-];
+class Quiz {
+  final int id;
+  final String questionText;
+  final List<Answer> answers;
+
+  Quiz({
+    required this.id,
+    required this.questionText,
+    required this.answers,
+  });
+
+  factory Quiz.fromJson(Map<String, dynamic> json) {
+    return Quiz(
+      id: json['id'],
+      questionText: json['questionText'],
+      answers: (json['answers'] as List)
+          .map((answer) => Answer.fromJson(answer))
+          .toList(),
+    );
+  }
+}

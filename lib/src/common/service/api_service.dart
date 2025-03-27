@@ -1,18 +1,18 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/friend_model.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/model/time_slot_model.dart';
+import 'package:maydon_go/src/common/model/tournament_model.dart';
 
 import '../constants/config.dart';
+import '../model/points_model.dart';
 import '../model/stadium_model.dart';
 import 'shared_preference_service.dart';
 
 class ApiService {
-  final logger = Logger();
   final Dio dio;
 
   ApiService()
@@ -35,7 +35,6 @@ class ApiService {
         },
         onError: (error, handler) {
           if (error.response?.statusCode == 401) {
-            // Token yaroqsiz bo'lsa, foydalanuvchini logout qilish
             ShPService.clearAllData();
           }
           return handler.next(error);
@@ -65,18 +64,14 @@ class ApiService {
       final String newToken = response.data['token'];
 
       await ShPService.saveToken(newToken);
-      logger.e(role);
-      logger.d('Signup Token: $newToken');
+
       return response.data;
     } on DioException catch (e) {
-      logger.e('Error Message: ${e.message}');
-
       return {
         'error': e.response?.data ?? {'message': e.message ?? 'Unknown error'},
         'status': e.response?.statusCode ?? 500,
       };
     } catch (e) {
-      logger.e('Unknown error:+++ $e');
       throw Exception('Unexpected error: $e');
     }
   }
@@ -99,14 +94,11 @@ class ApiService {
 
       await ShPService.saveToken(newToken); // Local saqlash
 
-      logger.i("Login Response: ${response.data}");
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        logger.w("Login Error Response: ${e.response?.data}");
         return e.response?.data;
       }
-      logger.e("Login Error: $e");
       throw Exception('Login davomida xatolik yuz berdi.');
     }
   }
@@ -121,14 +113,11 @@ class ApiService {
 
       return response;
     } on DioException catch (e) {
-      logger.e('Error Message: ${e.message}');
-
       return {
         'error': e.response?.data ?? {'message': e.message ?? 'Unknown error'},
         'status': e.response?.statusCode ?? 500,
       };
     } catch (e) {
-      logger.e('Unknown error:+++ $e');
       throw Exception('Unexpected error: $e');
     }
   }
@@ -141,15 +130,10 @@ class ApiService {
         'size': size,
       });
 
-      // Log the API response to debug its structure
-      logger.d("API Response: ${response.data}");
-
-      // Handle null response
       if (response.data == null) {
         throw Exception("API response is null");
       }
 
-      // Ensure response.data is a list
       if (response.data is! List) {
         throw Exception("Expected a list but got ${response.data.runtimeType}");
       }
@@ -162,7 +146,6 @@ class ApiService {
             try {
               return StadiumDetail.fromJson(item);
             } catch (e) {
-              logger.e("Error parsing stadium data: $e, Data: $item");
               return null; // Skip invalid items
             }
           })
@@ -171,7 +154,6 @@ class ApiService {
 
       return stadiums;
     } catch (e) {
-      logger.e("Error fetching stadiums: $e");
       throw Exception('Error fetching stadiums: $e');
     }
   }
@@ -181,15 +163,10 @@ class ApiService {
     try {
       final response = await dio.get('/stadium/all/info');
 
-      // Log the API response to debug its structure
-      logger.d("API Response: ${response.data}");
-
-      // Handle null response
       if (response.data == null) {
         throw Exception("API response is null");
       }
 
-      // Ensure response.data is a list
       if (response.data is! List) {
         throw Exception("Expected a list but got ${response.data.runtimeType}");
       }
@@ -202,7 +179,6 @@ class ApiService {
             try {
               return StadiumDetail.fromJson(item);
             } catch (e) {
-              logger.e("Error parsing stadium data: $e, Data: $item");
               return null; // Skip invalid items
             }
           })
@@ -211,7 +187,6 @@ class ApiService {
 
       return stadiums;
     } catch (e) {
-      logger.e("Error fetching stadiums: $e");
       throw Exception('Error fetching stadiums: $e');
     }
   }
@@ -221,15 +196,10 @@ class ApiService {
     try {
       final response = await dio.get('/stadium/$stadiumId/info');
 
-      // Log the API response to debug its structure
-      logger.d("API Response for stadium \$stadiumId: \${response.data}");
-
-      // Handle null response
       if (response.data == null) {
         throw Exception("API response is null");
       }
 
-      // Ensure response.data is a valid Map
       if (response.data is! Map<String, dynamic>) {
         throw Exception("Expected a Map but got \${response.data.runtimeType}");
       }
@@ -237,11 +207,9 @@ class ApiService {
       try {
         return StadiumDetail.fromJson(response.data);
       } catch (e) {
-        logger.e("Error parsing stadium data: \$e, Data: \${response.data}");
         throw Exception("Error parsing stadium data");
       }
     } catch (e) {
-      logger.e("Error fetching stadium details: \$e");
       throw Exception('Error fetching stadium details: \$e');
     }
   }
@@ -250,12 +218,70 @@ class ApiService {
   Future<UserModel> getUser() async {
     try {
       final response = await dio.get('/user/info');
-      logger.e(response.data);
-      logger.w("Userrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr");
+
       return UserModel.fromJson(response.data);
     } on DioException catch (e) {
-      logger.e("❌ Xatolik yuz berdi: ${e.response?.data ?? e.message}");
       throw Exception("Foydalanuvchi ma'lumotlarini olishda xatolik!");
+    }
+  }
+
+  Future<List<Tournament>> getTournaments() async {
+    try {
+      final response = await dio.get('/tournament/all');
+
+
+      List<dynamic> data = response.data;
+      return data.map((json) => Tournament.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw Exception("Turnir ma'lumotlarini olishda xatolik!");
+    }
+  }
+
+  Future<Tournament> voteForTournaments(int tournamentId) async {
+    try {
+      final response = await dio.post('/tournament/$tournamentId/add');
+
+      // Agar API bitta tournament obyektini qaytarsa, to'g'ri ishlaydi
+      return Tournament.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception("Ovoz berishda xatolik!");
+    }
+  }
+
+
+  //Get userinfo
+  Future<UserModel> updateUserInfo({required String name}) async {
+    try {
+      final response = await dio.post('/user/update', data: {
+        "fullName": name,
+      });
+
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception("Foydalanuvchi ma'lumotlarini olishda xatolik!");
+    }
+  } //Get userinfo
+
+  Future<String> uploadProfileImage(File imageFile) async {
+    try {
+      String fileName = imageFile.path.split('/').last;
+      FormData formData = FormData.fromMap({
+        "file":
+            await MultipartFile.fromFile(imageFile.path, filename: fileName),
+      });
+
+      Response response = await dio.post(
+        "/user/img/update",
+        data: formData,
+        options: Options(headers: {"Content-Type": "multipart/form-data"}),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception("Image upload failed");
+      }
+    } catch (e) {
+      throw Exception("Error: $e");
     }
   }
 
@@ -263,53 +289,74 @@ class ApiService {
   Future<List<UserModel>> getAllUsers() async {
     try {
       final response = await dio.get('/user/all/info');
-      logger.w(response.data);
 
       List<dynamic> jsonList = response.data; // JSON list
       return jsonList
           .map((json) => UserModel.fromJson(json))
           .toList(); // List<UserModel> ga o‘giramiz
     } on DioException catch (e) {
-      logger.e("❌ Xatolik yuz berdi: ${e.response?.data ?? e.message}");
       throw Exception("Foydalanuvchilar ma'lumotlarini olishda xatolik!");
     }
   }
 
   //getFriends
-  Future<List<UserModel>> getFriends() async {
+  Future<List<Friendship>> getFriends() async {
     try {
       final response = await dio.get('/friendship/get');
-      logger.w(response.data);
 
-      List jsonList = response.data; // JSON list
+      List jsonList = response.data as List;
       return jsonList
-          .map((json) => UserModel.fromJson(json))
-          .toList(); // List<UserModel> ga o‘giramiz
+          .map((json) => Friendship.fromJson(json as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
-      logger.e("❌ Xatolik yuz berdi: ${e.response?.data ?? e.message}");
+      throw Exception("Foydalanuvchilar ma'lumotlarini olishda xatolik!");
+    }
+  }
+
+  Future<List<UserPoints>> getLiderBoard({required int limit}) async {
+    try {
+      final response = await dio.get(
+        '/user/top/by/points',
+        queryParameters: {
+          "limit": limit,
+        },
+      );
+
+      List jsonList = response.data as List;
+      return jsonList
+          .map((json) => UserPoints.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
       throw Exception("Foydalanuvchilar ma'lumotlarini olishda xatolik!");
     }
   }
 
   //Add to friends
   Future addToFriends({required int userId}) async {
-    List<int> user = [userId];
-
     try {
-      final response = await dio.post(
-        "/friend/add",
-        data: jsonEncode(user), // JSON formatga o'tkazish
-      );
+      final response = await dio
+          .post("/friendship/add", queryParameters: {"friendId": userId});
 
-      logger.i("✅ Add to Friends Response: ${response.data}");
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        logger.e("⛔ Add fav Error Status: ${e.response?.statusCode}");
-        logger.e("⛔ Add fav Error Response: ${e.response?.data}");
         return e.response?.data;
       } else {
-        logger.e("⛔ DioException: ${e.toString()}");
+        throw Exception('Fav davomida xatolik yuz berdi: ${e.toString()}');
+      }
+    }
+  }
+
+  //Remove friends
+  Future removeFromFriends({required int userId}) async {
+    try {
+      final response = await dio.delete("/friendship/$userId/remove");
+
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      } else {
         throw Exception('Fav davomida xatolik yuz berdi: ${e.toString()}');
       }
     }
@@ -318,47 +365,128 @@ class ApiService {
   //find user
   Future findUserByNumber({required int number}) async {
     try {
-      final response = await dio.post(
-        "/user/find/$number",
-      );
-
-      return response.data;
+      final response = await dio.get("/user/find", queryParameters: {
+        "number": number.toString(),
+      });
+      // Agar API array qaytarsa
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => UserModel.fromJson(e))
+            .toList();
+      }
+      // Agar API bitta object qaytarsa
+      else if (response.data is Map) {
+        return [UserModel.fromJson(response.data as Map<String, dynamic>)];
+      }
+      // Agar javob bo'sh bo'lsa
+      return [];
     } on DioException catch (e) {
       if (e.response != null) {
-        logger.w("Add fav Error Response: ${e.response?.data}");
         return e.response?.data;
       }
-      logger.e("Add fav Error: $e");
+
       throw Exception('fav davomida xatolik yuz berdi.');
     }
   }
 
   //Add to favourites
-  Future addToFav({required int stadiumId}) async {
+  Future<void> addToFav({required int stadiumId}) async {
     try {
-      final response = await dio.post(
-        "/user/favourites",
-        data: [stadiumId],
-      );
-
-      logger.i("Add to Response: ${response.data}");
-      return response.data;
+      await dio
+          .post("/user/favourites", queryParameters: {'stadiumId': stadiumId});
     } on DioException catch (e) {
       if (e.response != null) {
-        logger.w("Add fav Error Response: ${e.response?.data}");
         return e.response?.data;
       }
-      logger.e("Add fav Error: $e");
+
       throw Exception('fav davomida xatolik yuz berdi.');
     }
   }
+
+  //createClub
+  Future<void> createClub({required String name, required int memberId}) async {
+    try {
+      await dio.post("/club/create", data: {
+        "name": name,
+        "membersId": [memberId]
+      });
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+
+      throw Exception('fav davomida xatolik yuz berdi.');
+    }
+  }
+
+  //getClubInfo
+  Future<void> getClubInfo(
+      {required String name, required int memberId}) async {
+    try {
+      await dio.post("/club/2/info", data: {
+        "name": name,
+        "membersId": [memberId]
+      });
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+
+      throw Exception('fav davomida xatolik yuz berdi.');
+    }
+  }
+
+  Future<void> removeFromFav({required int stadiumId}) async {
+    try {
+      final response = await dio.delete("/user/favourites/$stadiumId/remove");
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+      throw Exception('fav davomida xatolik yuz berdi.');
+    }
+  }
+
+  //Get favourites
+  Future<List<StadiumDetail>> getFavourites() async {
+    try {
+      final response = await dio.get('/user/favourites');
+
+      // Agar `data` null bo‘lsa, bo‘sh list qaytaramiz
+      if (response.data == null) {
+        return [];
+      }
+
+      // Agar `response.data` `List` formatida bo‘lmasa, bo‘sh list qaytaramiz
+      if (response.data is! List) {
+        return [];
+      }
+
+      // Stadionlarni JSON dan obyektga o‘girish
+      final List<StadiumDetail> stadiums = (response.data as List)
+          .map((item) => StadiumDetail.fromJson(item))
+          .toList();
+
+      return stadiums;
+    } on DioException catch (e) {
+      // Agar status kodi 404 bo‘lsa, bo‘sh list qaytaramiz (xatolik emas)
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
+
+      throw Exception('Error fetching stadiums: ${e.message}');
+    } catch (e) {
+      throw Exception('Error fetching stadiums: $e');
+    }
+  }
+
+
 
   //book a stadium
   Future bookStadium({
     required int subStadiumId,
     required List<TimeSlot> bookings,
   }) async {
-    print("bookStadium ishladi ✅"); // 🔥 Shu chiqyaptimi?
     try {
       final response = await dio.post(
         "/stadium/$subStadiumId/book",
@@ -366,58 +494,13 @@ class ApiService {
         options: Options(headers: {"Content-Type": "application/json"}),
       );
 
-      print("API javobi: ${response.data} ✅"); // 🔥 Shu chiqyaptimi?
-      logger.d("Success ${response.data}");
       return response.data;
     } on DioException catch (e) {
-      print("DioException bo‘ldi ❌"); // 🔥 Shu chiqyaptimi?
       if (e.response != null) {
-        print("Server javobi: ${e.response?.data} ❌"); // 🔥 Shu chiqyaptimi?
-        logger.e("Book error: ${e.response?.data}");
         return e.response?.data;
       }
-      logger.e("Book Error: $e");
+
       throw Exception('Book xatolik yuz berdi.');
-    }
-  }
-
-  //Get favourites
-  Future<List<StadiumDetail>> getFavourites({required int size}) async {
-    try {
-      final response = await dio.get('/user/favourites');
-
-      // Log the API response to debug its structure
-      logger.d("API Response: ${response.data}");
-
-      // Handle null response
-      if (response.data == null) {
-        throw Exception("API response is null");
-      }
-
-      // Ensure response.data is a list
-      if (response.data is! List) {
-        throw Exception("Expected a list but got ${response.data.runtimeType}");
-      }
-
-      final List<dynamic> rawList = response.data;
-
-      final List<StadiumDetail> stadiums = rawList
-          .whereType<Map<String, dynamic>>() // Only process valid maps
-          .map((item) {
-            try {
-              return StadiumDetail.fromJson(item);
-            } catch (e) {
-              logger.e("Error parsing stadium data: $e, Data: $item");
-              return null; // Skip invalid items
-            }
-          })
-          .whereType<StadiumDetail>() // Remove null values
-          .toList();
-
-      return stadiums;
-    } catch (e) {
-      logger.e("Error fetching stadiums: $e");
-      throw Exception('Error fetching stadiums: $e');
     }
   }
 }

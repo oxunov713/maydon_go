@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -7,10 +8,15 @@ import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
+import 'package:maydon_go/src/user/bloc/booking_history/booking_history_cubit.dart';
+import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
+import 'package:maydon_go/src/user/bloc/profile_cubit/profile_state.dart';
 import 'package:maydon_go/src/user/ui/home/profile_view_screen.dart';
 
 import '../../../../main.dart';
 import '../../../common/style/app_colors.dart';
+import '../../../common/widgets/home_menu_widget.dart';
+import '../../bloc/profile_cubit/profile_cubit.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,6 +27,12 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   @override
+  void initState() {
+    context.read<ProfileCubit>().loadUserData();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final height = MediaQuery.sizeOf(context).height;
     final width = MediaQuery.sizeOf(context).width;
@@ -30,15 +42,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
         automaticallyImplyLeading: false,
       ),
       backgroundColor: Color(0xffF2F3F5),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            spacing: 10,
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: RefreshIndicator(
+          onRefresh: () => context.read<ProfileCubit>().loadUserData(),
+          color: AppColors.green,
+          child: ListView(
             children: [
-              GestureDetector(
-                onTap: () => _showProfileBottomSheet(context),
-                child: Container(
+              BlocBuilder<ProfileCubit, ProfileState>(
+                  builder: (context, state) {
+                if (state is ProfileLoaded) {
+                  return GestureDetector(
+                    onTap: () => context.pushNamed(AppRoutes.profileView),
+                    child: SizedBox(
+                      height: height * 0.2,
+                      child: Card(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  blurRadius: 5,
+                                  color: AppColors.secondary,
+                                  offset: Offset(0, 2),
+                                )
+                              ],
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(15),
+                              ),
+                              color: AppColors.white),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              CircleAvatar(
+                                radius: height * 0.05,
+                                backgroundImage: getUserImage(
+                                    userAvatarUrl: state.user.imageUrl),
+                              ),
+                              SizedBox(width: 5),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${state.user.fullName}",
+                                    style: TextStyle(fontSize: height * 0.03),
+                                  ),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        height: height * 0.04,
+                                        child: Image.asset(
+                                          AppIcons.mCoins,
+                                        ),
+                                      ),
+                                      Text(
+                                        "${state.user.point ?? 0}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: height * 0.03),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return Container(
                   height: height * 0.2,
                   decoration: BoxDecoration(
                       boxShadow: [
@@ -48,43 +121,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Radius.circular(15),
                       ),
                       color: AppColors.white),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      CircleAvatar(
-                        radius: height * 0.05,
-                        backgroundImage: NetworkImage($users[2].imageUrl!),
-                      ),
-                      SizedBox(width: 5),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "",//"${$users[5].fullName!}",
-                            style: TextStyle(fontSize: height * 0.03),
-                          ),
-                          Row(
-                            children: [
-                              SizedBox(
-                                height: height * 0.04,
-                                child: Image.asset(
-                                  AppIcons.mCoins,
-                                ),
-                              ),
-                              Text(
-                                "256",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: height * 0.03),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ),
+                );
+              }),
+              SizedBox(height: 15),
               _listTile(
                 icon: AppIcons.notificationIcon,
                 title: "Notification",
@@ -94,59 +133,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
                 isActive: true,
               ),
-              _listTile(
-                icon: AppIcons.stadionsIcon,
-                title: "Subscription",
-                isActive: false,
-                onTap: () => context.pushNamed(AppRoutes.subscription),
-              ),
+              SizedBox(height: 10),
+              BlocBuilder<BookingHistoryCubit, BookingHistoryState>(
+                  builder: (context, state) {
+                if (state is BookingHistoryLoaded) {
+                  return _listTile(
+                    icon: AppIcons.stadionsIcon,
+                    title: "Bookings",
+                    isActive: state.bookingHistories.isNotEmpty,
+                    onTap: () => context.pushNamed(AppRoutes.history),
+                  );
+                }
+                return _listTile(
+                  icon: AppIcons.stadionsIcon,
+                  title: "History",
+                  isActive: false,
+                  onTap: () => context.pushNamed(AppRoutes.history),
+                );
+              }),
+              SizedBox(height: 10),
               _listTile(
                 icons: Icons.emoji_events_outlined,
                 title: "Tournament",
                 isSvg: false,
                 isActive: false,
-                onTap: () {
-                  return showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        title: const Text(
-                          "Tez kunda...",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold),
-                        ),
-                        content: const Text(
-                          "Yaqin orada qo‘shiladi!",
-                          textAlign: TextAlign.center,
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              context.pop(context);
-                            },
-                            child: const Text(
-                              "OK",
-                              style:
-                                  TextStyle(color: Colors.black, fontSize: 16),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
+                onTap: () => context.pushNamed(AppRoutes.tournament),
               ),
+              SizedBox(height: 10),
               _listTile(
                 icons: Icons.lightbulb_outline,
                 title: "Quizzes",
                 isActive: false,
                 isSvg: false,
                 onTap: () => context.pushNamed(AppRoutes.quizzes),
+              ), SizedBox(height: 10),
+              _listTile(
+                icons: CupertinoIcons.money_dollar_circle,
+                title: "Donation",
+                isActive: false,
+                isSvg: false,
+                onTap: () => context.pushNamed(AppRoutes.donation),
               ),
+              SizedBox(height: 10),
               _listTile(
                 icons: Icons.group_add,
                 title: "Find people for match",
@@ -154,18 +182,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 isSvg: false,
                 onTap: () => UrlLauncherService.openTelegram("maydongo"),
               ),
+              SizedBox(height: 10),
               _listTile(
-                icon: AppIcons.settingsIcon,
-                title: "Settings",
+                icons: Icons.subscriptions,
+                isSvg: false,
+                title: "Subscription",
                 isActive: false,
-                onTap: () => context.pushNamed(AppRoutes.settings),
+                onTap: () => context.pushNamed(AppRoutes.subscription),
               ),
-              _listTile(
-                icon: AppIcons.historyIcon,
-                title: "History",
-                isActive: false,
-                onTap: () => context.pushNamed(AppRoutes.history),
-              ),
+              SizedBox(height: 10),
               _listTile(
                 icon: AppIcons.faqIcon,
                 title: "Ilova haqida",
@@ -227,31 +252,13 @@ Widget _listTile({
   );
 }
 
-void _showProfileBottomSheet(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        expand: false,
-        builder: (context, scrollController) {
-          return ProfileViewScreen();
-        },
-      );
-    },
-  );
-}
-
 //TODO notificationni servicega olish kerak
 Future<void> showNotification() async {
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
     'channel_id', // Unikal kanal ID
     'General Notifications', // Kanal nomi
     channelDescription: 'This channel is used for general notifications.',
-    // Tavsif
+
     importance: Importance.max,
     priority: Priority.high,
   );

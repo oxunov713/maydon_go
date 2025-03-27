@@ -5,7 +5,7 @@ import 'package:maydon_go/src/common/model/main_model.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/model/time_slot_model.dart';
 import '../../../common/service/api_service.dart';
-import '../../../common/service/hive_service.dart';
+import '../../../common/service/booking_service.dart';
 import 'booking_state.dart';
 
 class BookingCubit extends Cubit<BookingState> {
@@ -242,14 +242,17 @@ class BookingCubit extends Cubit<BookingState> {
     final currentState = state as BookingLoaded;
 
     try {
-      Logger().e(currentState.bookings);
       await ApiService().bookStadium(
           bookings: currentState.bookings, subStadiumId: subStadiumId);
 
-      // To'g'ridan-to'g'ri refresh chaqiramiz
+      await BookingHistoryService().saveBookingHistory(
+          stadiumId: currentState.stadium.id!,
+          stadiumName: currentState.stadium.name!,
+          bookings: currentState.bookings,
+          stadiumPhoneNumber: currentState.stadium.owner!.phoneNumber!);
+
       await refreshStadium(currentState.stadium.id!);
     } catch (e) {
-      print("❌ Bookingda xatolik: $e");
       emit(BookingError("Failed to confirm booking: $e"));
     }
   }

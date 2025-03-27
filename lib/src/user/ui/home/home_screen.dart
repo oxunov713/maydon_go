@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
-
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 import '../../bloc/home_cubit/home_cubit.dart';
@@ -34,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     final homeCubit = context.read<HomeCubit>();
-
     if (!_isInitialized) {
       _isInitialized = true;
       homeCubit.initializeApp();
@@ -45,9 +43,11 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
 
-    double floatingButtonOuterRadius = screenWidth * 0.115;
-    double floatingButtonInnerRadius = screenWidth * 0.1;
-    double floatingButtonIconSize = screenWidth * 0.1;
+    // Hajmni kichraytirish uchun yangi o‘lchamlar
+    double floatingButtonOuterRadius = screenWidth * 0.09; // Kichraytirildi
+    double floatingButtonInnerRadius = screenWidth * 0.08; // Kichraytirildi
+    double floatingButtonIconSize = screenWidth * 0.08; // Kichraytirildi
+
     super.build(context);
     return SafeArea(
       child: PopScope(
@@ -62,14 +62,16 @@ class _HomeScreenState extends State<HomeScreen>
                   buildWhen: (previous, current) => previous != current,
                   builder: (context, state) {
                     return IndexedStack(
-
                       index: context.read<HomeCubit>().selectedIndex,
-                      children:  [
-                        AllStadiumsScreen(),
-                        SavedStadiums(key: PageStorageKey('savedStadiums')),
-                        LocationsScreen(key: PageStorageKey('locationsScreen')),
-                        MyClubScreen(key: PageStorageKey('myClubScreen')),
-                        ProfileScreen(key: PageStorageKey('profileScreen')),
+                      children: [
+                        const AllStadiumsScreen(),
+                        const SavedStadiums(
+                            key: PageStorageKey('savedStadiums')),
+                        const LocationsScreen(
+                            key: PageStorageKey('locationsScreen')),
+                        const MyClubScreen(key: PageStorageKey('myClubScreen')),
+                        const ProfileScreen(
+                            key: PageStorageKey('profileScreen')),
                       ],
                     );
                   },
@@ -81,21 +83,24 @@ class _HomeScreenState extends State<HomeScreen>
             behavior: HitTestBehavior.opaque,
             onTap: () => context.read<HomeCubit>().updateIndex(2),
             onDoubleTap: () => context.read<HomeCubit>().goToCurrentLocation(),
-            child: CircleAvatar(
-              radius: floatingButtonOuterRadius,
-              backgroundColor: AppColors.white,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              // Pastga siljitish uchun padding
               child: CircleAvatar(
-                radius: floatingButtonInnerRadius,
-                backgroundColor: AppColors.green,
-                child: SvgPicture.asset(
-                  AppIcons.locationIcon,
-                  height: floatingButtonIconSize,
+                radius: floatingButtonOuterRadius,
+                backgroundColor: AppColors.white,
+                child: CircleAvatar(
+                  radius: floatingButtonInnerRadius,
+                  backgroundColor: AppColors.green,
+                  child: SvgPicture.asset(
+                    AppIcons.locationIcon,
+                    height: floatingButtonIconSize,
+                  ),
                 ),
               ),
             ),
           ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.miniCenterDocked,
+          floatingActionButtonLocation: CustomFloatingActionButtonLocation(),
           bottomNavigationBar: BlocBuilder<HomeCubit, HomeState>(
             buildWhen: (previous, current) => previous != current,
             builder: (context, state) {
@@ -109,11 +114,11 @@ class _HomeScreenState extends State<HomeScreen>
                 items: [
                   BottomNavigationBarItem(
                     icon: Padding(
-                      padding: const EdgeInsets.only(bottom: 8, top: 5),
+                      padding: const EdgeInsets.only(bottom: 5, top: 5),
                       child: SvgPicture.asset(
                         AppIcons.stadionsIcon,
                         color: AppColors.white,
-                        height: floatingButtonIconSize * 0.7,
+                        height: floatingButtonIconSize * 0.8,
                       ),
                     ),
                     label: context.lan.stadiums,
@@ -155,5 +160,18 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+}
+
+class CustomFloatingActionButtonLocation extends FloatingActionButtonLocation {
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final double fabX = (scaffoldGeometry.scaffoldSize.width -
+            scaffoldGeometry.floatingActionButtonSize.width) /
+        2;
+    final double fabY = scaffoldGeometry.contentBottom -
+        scaffoldGeometry.floatingActionButtonSize.height -
+        -60;
+    return Offset(fabX, fabY);
   }
 }

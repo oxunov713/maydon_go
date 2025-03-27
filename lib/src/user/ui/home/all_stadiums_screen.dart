@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
@@ -142,19 +143,6 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   }
 
   Widget _buildErrorWidget(BuildContext context, StadiumError state) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      String message = "Noma'lum xatolik yuz berdi.";
-      if (state.isNetworkError) {
-        message = "Internet mavjud emas.";
-      } else if (state.isTokenExpired) {
-        message = "Tizimga qayta kirish kerak.";
-      } else if (state.isServerError) {
-        message = "Server xatosi! Keyinroq urinib ko‘ring.";
-      }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
-    });
-
     return ListView(
       controller: _scrollController,
       padding: const EdgeInsets.only(top: 250),
@@ -190,29 +178,34 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
       lan,
       int stadiumIndex,
       StadiumLoaded state) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(20)),
-        color: AppColors.white,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildStadiumHeader(context, stadium, deviceHeight, deviceWidth),
-            const SizedBox(height: 10),
-            _buildStadiumImages(
-                context, stadium, deviceHeight, stadiumIndex, state),
-            const SizedBox(height: 12),
-            _buildStadiumPriceAndSave(context, stadium, deviceHeight),
-            const SizedBox(height: 10),
-            _buildAvailableSlots(
-                context, todaySlots, deviceWidth, deviceHeight, lan),
-            const Divider(height: 30),
-            _buildStadiumLocation(context, stadium, deviceWidth, deviceHeight),
-          ],
+    return BlocProvider(
+      // BlocProvider ni shu yerga ko'chiramiz
+      create: (context) => SavedStadiumsCubit(),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+          color: AppColors.white,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStadiumHeader(context, stadium, deviceHeight, deviceWidth),
+              const SizedBox(height: 10),
+              _buildStadiumImages(
+                  context, stadium, deviceHeight, stadiumIndex, state),
+              const SizedBox(height: 12),
+              _buildStadiumPriceAndSave(context, stadium, deviceHeight),
+              const SizedBox(height: 10),
+              _buildAvailableSlots(
+                  context, todaySlots, deviceWidth, deviceHeight, lan),
+              const Divider(height: 30),
+              _buildStadiumLocation(
+                  context, stadium, deviceWidth, deviceHeight),
+            ],
+          ),
         ),
       ),
     );
@@ -359,23 +352,51 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
             fontSize: deviceHeight * 0.025,
           ),
         ),
-        _buildSaveButton(context, stadium),
+        SizedBox.square(
+            dimension: 50,
+            child: _buildSaveButton(
+                context, stadium, context.read<SavedStadiumsCubit>())),
       ],
     );
   }
 
-  Widget _buildSaveButton(BuildContext context, StadiumDetail stadium) {
+  Widget _buildSaveButton(
+      BuildContext context, StadiumDetail stadium, SavedStadiumsCubit cubit) {
     return BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
+      bloc: cubit,
+      buildWhen: (previous, current) {
+        final id = stadium.id;
+        return cubit.isStadiumSaved(id!) !=
+            (previous is SavedStadiumsLoaded &&
+                previous.savedStadiums.contains(stadium));
+      },
       builder: (context, savedState) {
-        final cubit = context.read<SavedStadiumsCubit>();
-        bool isSaved =
-            savedState is SavedStadiumsLoaded && cubit.isStadiumSaved(stadium);
+        final id = stadium.id;
+        bool isSaved = cubit.isStadiumSaved(id!);
+        bool isLoading = cubit.isLoading(id);
+
         return IconButton(
-          icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border,
-              color: AppColors.green),
-          onPressed: () => isSaved
-              ? cubit.removeStadiumFromSaved(stadium)
-              : cubit.addStadiumToSaved(stadium),
+          icon: isLoading
+              ? SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    color: AppColors.green,
+                  ),
+                )
+              : Icon(
+                  isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  color: AppColors.green,
+                ),
+          onPressed: isLoading
+              ? null
+              : () {
+                  if (isSaved) {
+                    cubit.removeStadiumFromSaved(stadium);
+                  } else {
+                    cubit.addStadiumToSaved(stadium);
+                  }
+                },
         );
       },
     );

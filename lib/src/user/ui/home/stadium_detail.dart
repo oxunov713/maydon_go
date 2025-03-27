@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
-import 'package:maydon_go/src/common/service/hive_service.dart';
+import 'package:maydon_go/src/common/service/booking_service.dart';
 import 'package:maydon_go/src/common/service/maps_launch_service.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import '../../../common/tools/average_rating_extension.dart';

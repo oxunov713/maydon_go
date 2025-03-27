@@ -52,16 +52,15 @@ class _LocationsScreenState extends State<LocationsScreen>
       body: BlocBuilder<HomeCubit, HomeState>(
         buildWhen: (previous, current) {
           if (previous is! HomeLoadedState || current is! HomeLoadedState) {
-            return true; // Agar holatlardan biri HomeLoadedState bo'lmasa, qayta chizamiz
+            return true;
           }
           final shouldRebuild = previous.markers != current.markers ||
               previous.stadiums != current.stadiums ||
               previous.currentLocation != current.currentLocation;
-          logger.d("LocationsScreen BlocBuilder rebuild: $shouldRebuild");
+
           return shouldRebuild;
         },
         builder: (context, state) {
-          logger.d("LocationsScreen BlocBuilder builder");
           if (state is HomeInitialState) {
             return const Center(child: CircularProgressIndicator());
           }

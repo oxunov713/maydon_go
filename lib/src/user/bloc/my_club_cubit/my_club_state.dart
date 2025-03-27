@@ -4,40 +4,45 @@ abstract class MyClubState extends Equatable {
   const MyClubState();
 
   @override
-  List<Object?> get props => [];
-}
-
-class MyClubLoading extends MyClubState {}
-
-class MyClubLoaded extends MyClubState {
-  final List<UserModel> connections;
-  final List<UserModel> searchResults;
-  final UserModel user;
-
-  const MyClubLoaded(
-      {required this.user,
-      required this.connections,
-      required this.searchResults});
+  List<Object> get props => [];
 
   @override
-  List<Object?> get props => [connections, searchResults];
+  String toString() => 'MyClubState'; // toString() metodini qayta yozamiz
+}
+
+class MyClubLoading extends MyClubState {
+  @override
+  String toString() => 'MyClubLoading'; // toString() metodini qayta yozamiz
+}
+
+class MyClubLoaded extends MyClubState {
+  final UserModel user;
+  final List<Friendship> connections;
+  final List<UserModel> searchResults;
+  final List<UserPoints> liderBoard;
+
+  const MyClubLoaded({
+    required this.user,
+    required this.connections,
+    required this.searchResults,
+    required this.liderBoard,
+  });
+
+  @override
+  List<Object> get props => [user, connections, searchResults, liderBoard];
+
+  @override
+  String toString() => 'MyClubLoaded(user: $user, connections: $connections, searchResults: $searchResults, liderBoard: $liderBoard)'; // toString() metodini qayta yozamiz
 }
 
 class MyClubError extends MyClubState {
-  final String message;
-  final int? errorCode;
-  final bool isNetworkError; // Internet yo‘qligini tekshirish uchun flag
+  final String error;
 
-  const MyClubError(this.message, {this.errorCode, this.isNetworkError = false});
-
-  bool get isTokenExpired => errorCode == 401;
-
-  bool get isServerError => errorCode != null && errorCode! >= 500;
-
-  bool get isNotFound => errorCode == 404;
-
-  bool get isForbidden => errorCode == 403;
+  const MyClubError(this.error);
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [error];
+
+  @override
+  String toString() => 'MyClubError(error: $error)'; // toString() metodini qayta yozamiz
 }
