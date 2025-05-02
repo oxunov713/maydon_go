@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_multi_formatter/formatters/masked_input_formatter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/tools/language_extension.dart';
-import 'package:maydon_go/src/common/tools/phone_formatter_extension.dart';
-import 'package:maydon_go/src/common/widgets/sign_log_app_bar.dart';
 
+import '../tools/language_extension.dart';
+import '../tools/phone_formatter_extension.dart';
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../../user/bloc/auth_cubit/auth_state.dart';
-import '../../user/bloc/locale_cubit/locale_cubit.dart';
 import '../router/app_routes.dart';
 import '../style/app_colors.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/sign_button.dart';
+import '../widgets/sign_log_app_bar.dart';
 
 class LogInScreen extends StatefulWidget {
   const LogInScreen({super.key});
@@ -40,8 +39,6 @@ class _LogInScreenState extends State<LogInScreen> {
       );
 
       if (authCubit.state is AuthLoginSuccess) {
-
-
         // Barcha oldingi sahifalarni tozalab, faqat `home` yoki `ownerDashboard` sahifasiga o'tish
         if (authCubit.selectedRole == UserRole.user) {
           context.goNamed(AppRoutes.home);
@@ -105,7 +102,8 @@ class _LogInScreenState extends State<LogInScreen> {
                       controller: _passwordController,
                       labelText: context.lan.password,
                       isPassword: true,
-                      obscureText: context.read<AuthCubit>().obscureLoginPassword,
+                      obscureText:
+                          context.read<AuthCubit>().obscureLoginPassword,
                       toggleVisibility: () =>
                           context.read<AuthCubit>().togglePassword(type: 3),
                       validator: (value) {

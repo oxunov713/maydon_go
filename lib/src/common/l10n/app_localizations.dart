@@ -378,6 +378,372 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data available'**
   String get noData;
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Fields'**
+  String get appTitle;
+
+  /// No description provided for @noFieldsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No fields found'**
+  String get noFieldsFound;
+
+  /// No description provided for @addField.
+  ///
+  /// In en, this message translates to:
+  /// **'Add field'**
+  String get addField;
+
+  /// No description provided for @dataLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load data'**
+  String get dataLoadError;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @booked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get booked;
+
+  /// No description provided for @available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get available;
+
+  /// No description provided for @manage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get manage;
+
+  /// No description provided for @unknownField.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown field'**
+  String get unknownField;
+
+  /// No description provided for @addStadiumTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Stadium'**
+  String get addStadiumTitle;
+
+  /// No description provided for @stadiumAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium added successfully!'**
+  String get stadiumAddedSuccess;
+
+  /// No description provided for @nameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameLabel;
+
+  /// No description provided for @nameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Novza Stadium'**
+  String get nameHint;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name is required'**
+  String get nameRequired;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get descriptionLabel;
+
+  /// No description provided for @descriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., A stadium with all amenities'**
+  String get descriptionHint;
+
+  /// No description provided for @descriptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Description is required'**
+  String get descriptionRequired;
+
+  /// No description provided for @priceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get priceLabel;
+
+  /// No description provided for @priceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 200,000 UZS'**
+  String get priceHint;
+
+  /// No description provided for @priceRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Price is required'**
+  String get priceRequired;
+
+  /// No description provided for @stadiumCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium count'**
+  String get stadiumCountLabel;
+
+  /// No description provided for @stadiumCountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Number of side-by-side stadiums'**
+  String get stadiumCountHint;
+
+  /// No description provided for @stadiumCountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Count must be greater than 0'**
+  String get stadiumCountRequired;
+
+  /// No description provided for @selectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Location from Google Maps'**
+  String get selectLocation;
+
+  /// No description provided for @hasUniforms.
+  ///
+  /// In en, this message translates to:
+  /// **'Uniforms available?'**
+  String get hasUniforms;
+
+  /// No description provided for @hasBathroom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bathroom available?'**
+  String get hasBathroom;
+
+  /// No description provided for @isIndoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Indoor stadium available?'**
+  String get isIndoor;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @submitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting...'**
+  String get submitting;
+
+  /// No description provided for @bookingListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking List'**
+  String get bookingListTitle;
+
+  /// No description provided for @noBookingsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings available'**
+  String get noBookingsAvailable;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get errorOccurred;
+
+  /// No description provided for @unknownStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown stadium'**
+  String get unknownStadium;
+
+  /// No description provided for @noNameAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No name available'**
+  String get noNameAvailable;
+
+  /// No description provided for @call.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get call;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @selectLocationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Location'**
+  String get selectLocationTitle;
+
+  /// No description provided for @confirmLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Location'**
+  String get confirmLocation;
+
+  /// No description provided for @currentLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Location'**
+  String get currentLocation;
+
+  /// No description provided for @loadingLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading location...'**
+  String get loadingLocation;
+
+  /// No description provided for @locationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load location'**
+  String get locationError;
+
+  /// No description provided for @bookingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookings'**
+  String get bookingsLabel;
+
+  /// No description provided for @profileLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileLabel;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTitle;
+
+  /// No description provided for @noName.
+  ///
+  /// In en, this message translates to:
+  /// **'No name'**
+  String get noName;
+
+  /// No description provided for @notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification'**
+  String get notification;
+
+  /// No description provided for @subscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get subscription;
+
+  /// No description provided for @addImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add image'**
+  String get addImage;
+
+  /// No description provided for @aboutApp.
+  ///
+  /// In en, this message translates to:
+  /// **'About app'**
+  String get aboutApp;
+
+  /// No description provided for @imagesUploadedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Images uploaded successfully!'**
+  String get imagesUploadedSuccess;
+
+  /// No description provided for @imageUploadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error uploading images: {error}'**
+  String imageUploadError(Object error);
+
+  /// No description provided for @noImagesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No images selected'**
+  String get noImagesSelected;
+
+  /// No description provided for @subscriptionPackages.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription Packages'**
+  String get subscriptionPackages;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactive;
+
+  /// Message shown when a subscription is selected
+  ///
+  /// In en, this message translates to:
+  /// **'You have selected the {price} subscription!'**
+  String subscriptionSelected(String price);
+
+  /// No description provided for @errorLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading subscriptions'**
+  String get errorLoading;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @noBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings available on the selected day'**
+  String get noBookings;
+
+  /// No description provided for @client.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get client;
+
+  /// No description provided for @bookingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Substadium Bookings'**
+  String get bookingsTitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

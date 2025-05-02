@@ -1,3 +1,5 @@
+import 'package:maydon_go/src/common/model/time_slot_model.dart';
+
 class UserModel {
   final int? id;
   final String? phoneNumber;
@@ -61,11 +63,15 @@ class SubscriptionModel {
   final String? name;
   final String? description;
   final double? price;
+  final int? durationInDays;
+  final TimeSlot? timeSlot;
 
   SubscriptionModel({
     this.name,
     this.description,
     this.price,
+    this.durationInDays,
+    this.timeSlot
   });
 
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
@@ -73,6 +79,8 @@ class SubscriptionModel {
       name: json['name'] as String?,
       description: json['description'] as String?,
       price: (json['price'] as num?)?.toDouble(),
+      durationInDays: (json['durationInDays'] as num?)?.toInt(),
+      timeSlot: TimeSlot.fromJson(json),
     );
   }
 
@@ -81,6 +89,8 @@ class SubscriptionModel {
       'name': name,
       'description': description,
       'price': price,
+      'durationInDays': durationInDays,
+      'timeSlot': timeSlot,
     };
   }
 }

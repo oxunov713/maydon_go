@@ -1,9 +1,7 @@
-
+import 'main_model.dart';
 
 class TimeSlot {
-
   final DateTime? startTime;
-
   final DateTime? endTime;
 
   TimeSlot({this.startTime, this.endTime});
@@ -35,4 +33,20 @@ class TimeSlot {
 
   @override
   int get hashCode => startTime.hashCode ^ endTime.hashCode;
+}
+
+class BronModel {
+  final int id;
+  final TimeSlot timeSlot;
+  final UserModel user;
+
+  BronModel({required this.id, required this.timeSlot, required this.user});
+
+  factory BronModel.fromJson(Map<String, dynamic> json) {
+    return BronModel(
+      id: json['id'],
+      timeSlot: TimeSlot.fromJson(json),
+      user: UserModel.fromJson(json['user']),
+    );
+  }
 }

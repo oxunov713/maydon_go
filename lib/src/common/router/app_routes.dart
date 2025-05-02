@@ -15,6 +15,8 @@ class AppRoutes {
   static const String myClub = 'myClub';
   static const String clubDetail = 'clubDetail';
   static const String clubTeammates = 'clubTeammates';
+  static const String messages = 'messages';
+  static const String story = 'storyScreen';
   static const String chat = 'chat';
   static const String teamChat = 'teamChat';
   static const String coinsRanking = 'coinsRanking';
@@ -25,10 +27,12 @@ class AppRoutes {
   static const String notification = 'notification';
   static const String subscription = 'subscription';
   static const String quizzes = 'quizzes_cubit';
+  static const String quizDetail = 'quiz_detail';
   static const String history = 'history';
   static const String about = 'about';
 
   static const String ownerDashboard = "dashboard";
+  static const String subStadium = "subStadium";
   static const String ownerDetail = "owDetail";
   static const String locationPicker = "locationPicker";
   static const String addStadium = "addStadium";

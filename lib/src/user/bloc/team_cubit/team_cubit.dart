@@ -34,8 +34,6 @@ class TeamCubit extends Cubit<TeamState> {
     }
   }
 
-
-
   void togglePositionVisibility() {
     emit(state.copyWith(showPositions: !state.showPositions));
   }

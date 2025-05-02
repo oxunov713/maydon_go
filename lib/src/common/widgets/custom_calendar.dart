@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/service/booking_service.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
+import 'package:maydon_go/src/common/widgets/premium_widget.dart';
 
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_state.dart';
@@ -274,37 +276,40 @@ class _CustomCalendarState extends State<CustomCalendar> {
               if (state is BookingLoaded) {
                 final currentState = state;
                 final subscription = currentState.user.subscriptionModel?.name;
-                final currentBookings = currentState.bookings.length;
-                String errorMessage = "";
+                // selectedDate, String formatida ekan
+                final selectedDateString = currentState.selectedDate
+                    ?.split('T')[0]; // masalan, "2025-05-01"
 
-                if (isBooked) {
-                  bookingCubit.removeSlot(slot);
+// Stringni DateTimega o‘zgartirish
+                DateTime selectedDate = DateTime.parse(selectedDateString!);
+                // Haftaning boshlanishi (dushanba) va oxiri (yakshanba) ni aniqlash
+                DateTime getStartOfWeek(DateTime date) {
+                  // Dushanbadan boshlash uchun, `date.weekday - 1` ni kamaytiramiz (1 - Dushanba, 7 - Yakshanba)
+                  return date.subtract(Duration(days: date.weekday - 1));
+                }
+
+                DateTime getEndOfWeek(DateTime startOfWeek) {
+                  return startOfWeek.add(Duration(days: 6));
+                }
+
+                final startOfWeek = getStartOfWeek(selectedDate);
+                final endOfWeek = getEndOfWeek(startOfWeek);
+
+                final weeklyBookings = currentState.bookings.where((slot) {
+                  final slotDate = slot.startTime;
+                  return slotDate != null &&
+                      slotDate.isAfter(startOfWeek) &&
+                      slotDate.isBefore(endOfWeek);
+                }).length;
+
+                if (subscription == "Go" &&
+                    weeklyBookings >= GoSubscriptionFeatures.timeSlotsLength) {
+                  showBuyPremiumBottomSheet(context);
                   return;
-                }
-
-                if (subscription == null) {
-                  errorMessage = "Sizning obunangiz mavjud emas!";
-                } else if (subscription == "Go") {
-                  if (currentBookings >= 2) {
-                    errorMessage =
-                        '"Go" obuna foydalanuvchilari kuniga faqat 2 ta slot band qila oladi!';
-                  }
-                } else if (subscription == "Go+") {
-                  if (currentBookings >= 5) {
-                    errorMessage =
-                        '"Go+" obuna foydalanuvchilari kuniga faqat 5 ta slot band qila oladi!';
-                  }
-                }
-
-                if (errorMessage.isNotEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(errorMessage),
-                      backgroundColor: Colors.red,
-                      showCloseIcon: true,
-                      duration: Duration(seconds: 5),
-                    ),
-                  );
+                } else if (subscription == "Go+" &&
+                    weeklyBookings >=
+                        GoPlusSubscriptionFeatures.timeSlotsLength) {
+                  showBuyPremiumBottomSheet(context);
                   return;
                 }
 

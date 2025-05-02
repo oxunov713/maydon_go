@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
-import 'package:maydon_go/src/common/style/app_icons.dart';
+import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_cubit.dart';
+import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_state.dart';
+import '../../../common/l10n/app_localizations.dart';
+import '../../../common/model/time_slot_model.dart';
 
 class BronListScreen extends StatefulWidget {
   const BronListScreen({super.key});
@@ -17,202 +18,319 @@ class BronListScreen extends StatefulWidget {
 }
 
 class _BronListScreenState extends State<BronListScreen> {
-  String _currentTime = "";
+  final _scrollController = ScrollController();
+  final _listKey = PageStorageKey<String>('bronList');
 
   @override
   void initState() {
     super.initState();
-
-    _updateTime();
+    context.read<AddStadiumCubit>().loadSubstadiums();
+    _scrollController.addListener(_onScroll);
   }
 
-  void _updateTime() {
-    setState(() {
-      _currentTime = DateFormat('HH:mm').format(DateTime.now());
-    });
-    // Har soniya soatni yangilash
-    Future.delayed(const Duration(seconds: 1), _updateTime);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      context.read<AddStadiumCubit>().loadSubstadiums();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-
-
+    final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
+    final l10n = AppLocalizations.of(context); // Access translations
+
     return Scaffold(
       backgroundColor: AppColors.white2,
       appBar: AppBar(
+        title: Text(l10n!.bookingListTitle),
+        centerTitle: false,
         automaticallyImplyLeading: false,
-        title: Text("Bronlar listi"),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: Text(
-                _currentTime,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView.separated(
-          itemCount: $users.length,
-          itemBuilder: (context, index) => ListTile(
-            tileColor: Colors.white,
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage($users[index].imageUrl!),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(15)),
-            ),
-            title: Text(
-              "${$users[index].fullName} ",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              "Stadium $index",
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(
-                  width: width * 0.25,
-                  height: 30,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.green3,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: InkWell(
-                      customBorder: const StadiumBorder(),
-                      onTap: () {},
-                      child: Center(
-                        child: Text(
-                          "${DateFormat('HH:mm').format(DateTime.parse("2025-02-10T10:00:00"))} - ${DateFormat('HH:mm').format(DateTime.parse("2025-02-10T14:00:00"))}",
-                          style: TextStyle(
-                            //fontSize: 14,
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+      body: RefreshIndicator(
+        color: AppColors.green,
+        onRefresh: () async {
+          context.read<AddStadiumCubit>().loadSubstadiums();
+        },
+        child: BlocConsumer<AddStadiumCubit, AddStadiumState>(
+          listener: (context, state) {
+            if (state.hasError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.errorMessage ?? l10n.noData)),
+              );
+            }
+          },
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.green),
+              );
+            }
+
+            if (!state.isLoading && !state.hasError) {
+              final substadiums = state.substadiums;
+              final allBookings = substadiums
+                  .expand((substadium) => (substadium.bookings ?? [])
+                  .map((bron) => _BookingWithStadium(
+                bron: bron,
+                stadiumName: substadium.name ?? l10n.unknownStadium,
+                startTime: bron.timeSlot.startTime!,
+              )))
+                  .toList();
+
+              allBookings.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+              if (allBookings.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.calendar_today,
+                          size: 50, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.noBookingsAvailable,
+                        style: theme.textTheme.titleMedium,
                       ),
-                    ),
+                    ],
                   ),
-                ),
-                Text(
-                  "16-sentabr",
-                  style: TextStyle(
-                      color: AppColors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-            onTap: () => _showBottomSheet(context, index),
-          ),
-          separatorBuilder: (context, index) => SizedBox(height: 15),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.green,
-        shape: CircleBorder(),
-        onPressed: () =>
-            context.pushNamed(AppRoutes.ownerDetail),
-        child: Icon(
-          Icons.add,
-          color: AppColors.white,
+                );
+              }
+
+              return ListView.separated(
+                key: _listKey,
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: allBookings.length,
+                itemBuilder: (context, index) {
+                  final booking = allBookings[index];
+                  return _buildBronListItem(context, booking, width, l10n);
+                },
+                separatorBuilder: (context, index) =>
+                const SizedBox(height: 12),
+              );
+            }
+
+            return Center(
+              child: Text(
+                state.errorMessage!.isNotEmpty
+                    ? state.errorMessage!
+                    : l10n.errorOccurred,
+                style:
+                theme.textTheme.titleMedium?.copyWith(color: AppColors.red),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
+  Widget _buildBronListItem(
+      BuildContext context, _BookingWithStadium booking, double width, AppLocalizations l10n) {
+    final bron = booking.bron;
+    return GestureDetector(
+      onTap: () => _showBronDetails(context, booking, l10n),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundImage: bron.user.imageUrl != null
+                    ? NetworkImage(bron.user.imageUrl!)
+                    : null,
+                child: bron.user.imageUrl == null
+                    ? const Icon(Icons.person, size: 24)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      bron.user.fullName ?? l10n.noNameAvailable,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      booking.stadiumName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.green3,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      "${DateFormat('HH:mm').format(bron.timeSlot.startTime!)} - ${DateFormat('HH:mm').format(bron.timeSlot.endTime!)}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('dd MMMM').format(bron.timeSlot.startTime!),
+                    style: const TextStyle(
+                      color: AppColors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBronDetails(BuildContext context, _BookingWithStadium booking, AppLocalizations l10n) {
+    final bron = booking.bron;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: bron.user.imageUrl != null
+                    ? NetworkImage(bron.user.imageUrl!)
+                    : null,
+                child: bron.user.imageUrl == null
+                    ? const Icon(Icons.person, size: 40)
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                bron.user.fullName ?? l10n.noNameAvailable,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                bron.user.phoneNumber ?? "5555",
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Stadion: ${booking.stadiumName}",
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.phone, size: 20),
+                        label: Text(l10n.call),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => UrlLauncherService.callPhoneNumber(
+                            bron.user.phoneNumber ?? "555"),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(l10n.close),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
-void _showBottomSheet(BuildContext context, int index) {
-  showModalBottomSheet(
-    context: context,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            SizedBox(height: 10),
+// Stadion nomi bilan bronni birlashtirish uchun yordamchi sinf
+class _BookingWithStadium {
+  final BronModel bron;
+  final String stadiumName;
+  final DateTime startTime;
 
-            /// Profil rasmi
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage($users[index].imageUrl!),
-                ),
-                CircleAvatar(
-                  radius: 15,
-                  backgroundColor: Colors.green,
-                  child: Icon(Icons.edit, color: Colors.white, size: 15),
-                ),
-              ],
-            ),
-            SizedBox(height: 10),
-
-            /// Ism va kontakt ma'lumotlari
-            Text(
-              "${$users[index].fullName} ",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
-            Text(
-              "${$users[index].phoneNumber}",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-
-            /// Ajratilgan vaqt va sanasi
-            Divider(height: 20),
-
-            /// Tugmalar
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => UrlLauncherService.callPhoneNumber(
-                      $users[index].phoneNumber!),
-                  icon: Icon(Icons.phone, color: Colors.white),
-                  label: Text("Qo‘ng‘iroq qilish"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () => context.pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text("Yopish"),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    },
-  );
+  _BookingWithStadium({
+    required this.bron,
+    required this.stadiumName,
+    required this.startTime,
+  });
 }

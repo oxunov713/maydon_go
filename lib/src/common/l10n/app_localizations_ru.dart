@@ -152,4 +152,191 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noData => 'Данные отсутствуют';
+
+  @override
+  String get appTitle => 'Поля';
+
+  @override
+  String get noFieldsFound => 'Поля не найдены';
+
+  @override
+  String get addField => 'Добавить поле';
+
+  @override
+  String get dataLoadError => 'Не удалось загрузить данные';
+
+  @override
+  String get retry => 'Повторить попытку';
+
+  @override
+  String get booked => 'Забронировано';
+
+  @override
+  String get available => 'Свободно';
+
+  @override
+  String get manage => 'Управлять';
+
+  @override
+  String get unknownField => 'Неизвестное поле';
+
+  @override
+  String get addStadiumTitle => 'Добавить стадион';
+
+  @override
+  String get stadiumAddedSuccess => 'Стадион успешно добавлен!';
+
+  @override
+  String get nameLabel => 'Название';
+
+  @override
+  String get nameHint => 'например: Стадион Новза';
+
+  @override
+  String get nameRequired => 'Название обязательно';
+
+  @override
+  String get descriptionLabel => 'Описание';
+
+  @override
+  String get descriptionHint => 'например: Стадион со всеми удобствами';
+
+  @override
+  String get descriptionRequired => 'Описание обязательно';
+
+  @override
+  String get priceLabel => 'Цена';
+
+  @override
+  String get priceHint => 'например: 200 000 сум';
+
+  @override
+  String get priceRequired => 'Цена обязательна';
+
+  @override
+  String get stadiumCountLabel => 'Количество стадионов';
+
+  @override
+  String get stadiumCountHint => 'например: Количество соседних стадионов';
+
+  @override
+  String get stadiumCountRequired => 'Количество должно быть больше 0';
+
+  @override
+  String get selectLocation => 'Выбрать местоположение на Google Картах';
+
+  @override
+  String get hasUniforms => 'Есть форма?';
+
+  @override
+  String get hasBathroom => 'Есть душ?';
+
+  @override
+  String get isIndoor => 'Есть крытый стадион?';
+
+  @override
+  String get submit => 'Отправить';
+
+  @override
+  String get submitting => 'Отправка...';
+
+  @override
+  String get bookingListTitle => 'Список бронирований';
+
+  @override
+  String get noBookingsAvailable => 'Бронирований нет';
+
+  @override
+  String get errorOccurred => 'Произошла ошибка';
+
+  @override
+  String get unknownStadium => 'Неизвестный стадион';
+
+  @override
+  String get noNameAvailable => 'Имя отсутствует';
+
+  @override
+  String get call => 'Позвонить';
+
+  @override
+  String get close => 'Закрыть';
+
+  @override
+  String get selectLocationTitle => 'Выбрать местоположение';
+
+  @override
+  String get confirmLocation => 'Подтвердить местоположение';
+
+  @override
+  String get currentLocation => 'Текущее местоположение';
+
+  @override
+  String get loadingLocation => 'Загрузка местоположения...';
+
+  @override
+  String get locationError => 'Не удалось загрузить местоположение';
+
+  @override
+  String get bookingsLabel => 'Бронирования';
+
+  @override
+  String get profileLabel => 'Профиль';
+
+  @override
+  String get profileTitle => 'Профиль';
+
+  @override
+  String get noName => 'Нет имени';
+
+  @override
+  String get notification => 'Уведомления';
+
+  @override
+  String get subscription => 'Подписка';
+
+  @override
+  String get addImage => 'Добавить изображение';
+
+  @override
+  String get aboutApp => 'О приложении';
+
+  @override
+  String get imagesUploadedSuccess => 'Изображения успешно загружены!';
+
+  @override
+  String imageUploadError(Object error) {
+    return 'Ошибка загрузки изображений: $error';
+  }
+
+  @override
+  String get noImagesSelected => 'Изображения не выбраны';
+
+  @override
+  String get subscriptionPackages => 'Пакеты подписки';
+
+  @override
+  String get active => 'Активный';
+
+  @override
+  String get inactive => 'Неактивный';
+
+  @override
+  String subscriptionSelected(String price) {
+    return 'Вы выбрали подписку на $price!';
+  }
+
+  @override
+  String get errorLoading => 'Ошибка загрузки подписок';
+
+  @override
+  String get loading => 'Загрузка...';
+
+  @override
+  String get noBookings => 'На выбранный день бронирований нет';
+
+  @override
+  String get client => 'Клиент';
+
+  @override
+  String get bookingsTitle => 'Бронирования стадиона';
 }

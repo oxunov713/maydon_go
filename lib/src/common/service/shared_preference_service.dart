@@ -1,7 +1,20 @@
+import 'dart:convert';
+
+import 'package:maydon_go/src/user/bloc/auth_cubit/auth_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ShPService {
   const ShPService._();
+
+  static Future<void> saveRole(UserRole role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('role', role.toString());
+  }
+
+  static Future<String?> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('role');
+  }
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -20,7 +33,7 @@ class ShPService {
 
   static Future<void> clearAllData() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Barcha ma’lumotlarni tozalaydi
+    await prefs.clear();
   }
 
   static const String _votedTournamentsKey = 'voted_tournaments';
@@ -42,6 +55,16 @@ class ShPService {
         votedTournaments.map((id) => id.toString()).toList(),
       );
     }
+  }
+
+  static Future<void> saveOwnerStadiumId(int stadiumId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('owner_stadium_id', stadiumId);
+  }
+
+  static Future getOwnerStadiumId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('owner_stadium_id');
   }
 
   static Future<void> clearVotedTournaments() async {

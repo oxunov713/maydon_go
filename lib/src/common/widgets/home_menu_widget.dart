@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
 import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 
-import '../../user/ui/home/all_stadiums_screen.dart';
+import '../../user/ui/home/stadiums_screen/all_stadiums_screen.dart';
 import '../style/app_colors.dart';
 
 Widget buildIconButton({
@@ -56,9 +56,4 @@ Widget buildIconButton({
   );
 }
 
-ImageProvider getUserImage({userAvatarUrl}) {
-  if (userAvatarUrl != null && userAvatarUrl!.isNotEmpty) {
-    return NetworkImage(userAvatarUrl!);
-  }
-  return const AssetImage(AppIcons.avatarImage);
-}
+
