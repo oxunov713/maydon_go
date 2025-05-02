@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/service/shared_preference_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/service/api_service.dart';
 import 'auth_state.dart';
@@ -15,8 +17,9 @@ class AuthCubit extends Cubit<AuthState> {
   // 📌 1️⃣ ROLE SELECTION (Foydalanuvchi rolini tanlash)
   UserRole selectedRole = UserRole.none;
 
-  void onRoleSelect(UserRole role) {
+  void onRoleSelect(UserRole role) async {
     selectedRole = role;
+    await ShPService.saveRole(role);
     emit(AuthRoleSelected(selectedRole));
   }
 
@@ -93,9 +96,13 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       if (response is Map && response.containsKey('token')) {
-        selectedRole = (response['user']['role'] == "OWNER")
-            ? UserRole.owner
-            : UserRole.user;
+        if ((response['user']['role'] == "OWNER")) {
+          selectedRole = UserRole.owner;
+          onRoleSelect(UserRole.owner);
+        } else {
+          selectedRole = UserRole.user;
+          onRoleSelect(UserRole.user);
+        }
         Logger().e(selectedRole);
         emit(AuthLoginSuccess());
       } else {

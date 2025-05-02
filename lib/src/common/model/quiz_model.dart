@@ -39,3 +39,29 @@ class Quiz {
     );
   }
 }
+
+class QuizPack {
+  final int id;
+  final String name;
+  final String? difficultyLevel;
+  final List<Quiz> quizzes;
+
+  QuizPack({
+    required this.id,
+    required this.name,
+    this.difficultyLevel,
+    required this.quizzes,
+  });
+
+  factory QuizPack.fromJson(Map<String, dynamic> json) {
+    return QuizPack(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      difficultyLevel: json['difficultyLevel'] as String?,
+      quizzes: (json['quizzes'] as List?)
+              ?.map((quizJson) => Quiz.fromJson(quizJson))
+              .toList() ??
+          [],
+    );
+  }
+}

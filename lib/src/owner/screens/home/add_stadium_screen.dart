@@ -5,7 +5,7 @@ import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
 import 'package:maydon_go/src/common/widgets/sign_button.dart';
-
+import '../../../common/l10n/app_localizations.dart';
 import '../../bloc/add_stadium/add_stadium_cubit.dart';
 import '../../bloc/add_stadium/add_stadium_state.dart';
 
@@ -14,16 +14,16 @@ class AddStadiumScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return SafeArea(
       child: Scaffold(
-
         appBar: AppBar(
-          title: const Text('Add Stadium'),
+          title: Text(l10n.addStadiumTitle),
           centerTitle: true,
           elevation: 0,
           backgroundColor: AppColors.green,
         ),
-
         body: const _AddStadiumForm(),
       ),
     );
@@ -35,23 +35,30 @@ class _AddStadiumForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final cubit = context.read<AddStadiumCubit>();
+
     return BlocConsumer<AddStadiumCubit, AddStadiumState>(
+      listenWhen: (previous, current) =>
+          previous.isSuccess != current.isSuccess ||
+          previous.errorMessage != current.errorMessage,
       listener: (context, state) {
-        if (state.status == AddStadiumStatus.success) {
+        if (state.isSuccess && !state.isSubmitting) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Stadium added successfully!')),
+            SnackBar(content: Text(l10n.stadiumAddedSuccess)),
           );
-          context.read<AddStadiumCubit>().reset();
-          context.pop();
-        } else if (state.status == AddStadiumStatus.error) {
+          context.goNamed(AppRoutes.ownerDashboard);
+        }
+        if (state.errorMessage != null && !state.isSubmitting) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage ?? 'Error occurred')),
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       },
       builder: (context, state) {
-        final cubit = context.read<AddStadiumCubit>();
-
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -62,61 +69,63 @@ class _AddStadiumForm extends StatelessWidget {
               ),
               const SizedBox(height: 25),
               _buildTextField(
-                label: 'Name',
-                hint: "ex: Novza stadioni",
-                icon: Icons.stadium,
+                label: l10n.nameLabel,
+                hint: l10n.nameHint,
                 value: state.name,
                 onChanged: cubit.updateName,
+                errorText: state.isFormSubmitted && state.name.isEmpty
+                    ? l10n.nameRequired
+                    : null,
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                label: 'Description',
-                hint: "ex: Barcha qulayliklar ega stadion",
-                icon: Icons.description,
+                label: l10n.descriptionLabel,
+                hint: l10n.descriptionHint,
                 value: state.description,
                 onChanged: cubit.updateDescription,
+                errorText: state.isFormSubmitted && state.description.isEmpty
+                    ? l10n.descriptionRequired
+                    : null,
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                label: 'Price',
-                hint: "ex: 200 000 so'm",
-                icon: Icons.attach_money,
+                label: l10n.priceLabel,
+                hint: l10n.priceHint,
                 value: state.price,
                 onChanged: cubit.updatePrice,
                 keyboardType: TextInputType.number,
+                errorText: state.isFormSubmitted && state.price.isEmpty
+                    ? l10n.priceRequired
+                    : null,
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                label: 'Stadium count',
-                hint: "ex: Yonma-yon stadionlar soni",
-                icon: Icons.numbers,
-                value: state.count,
-                onChanged: cubit.updateCount,
+                label: l10n.stadiumCountLabel,
+                hint: l10n.stadiumCountHint,
+                value: state.count.toString(),
+                onChanged: cubit.updateCount, // O'zgartirish
                 keyboardType: TextInputType.number,
+                errorText: state.isFormSubmitted && state.count <= 0
+                    ? l10n.stadiumCountRequired
+                    : null,
               ),
               const SizedBox(height: 15),
-              _buildLocationPicker(context),
-              const SizedBox(height: 20),
-              _buildImagePicker(context, cubit, state),
-              if (state.selectedImages.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                _buildImagePreview(state),
-              ],
+              _buildLocationPicker(context, state, l10n),
               const SizedBox(height: 20),
               _buildSwitchListTile(
-                title: "Forma mavjudmi?",
+                title: l10n.hasUniforms,
                 value: state.hasUniforms,
                 onChanged: (_) => cubit.toggleHasUniforms(),
               ),
               const SizedBox(height: 20),
               _buildSwitchListTile(
-                title: "Dush mavjudmi?",
+                title: l10n.hasBathroom,
                 value: state.hasBathroom,
                 onChanged: (_) => cubit.toggleHasBathroom(),
               ),
               const SizedBox(height: 20),
               _buildSwitchListTile(
-                title: "Yopiq stadion mavjudmi?",
+                title: l10n.isIndoor,
                 value: state.isIndoor,
                 onChanged: (_) => cubit.toggleIsIndoor(),
               ),
@@ -125,9 +134,9 @@ class _AddStadiumForm extends StatelessWidget {
                 width: double.infinity,
                 child: BottomSignButton(
                   function: () =>
-                      state.isValid ? () => cubit.submitStadium() : null,
-                  text: "Submit",
-                  isdisabledBT: !state.isValid,
+                      state.isSubmitting ? null : cubit.submitStadium(),
+                  text: state.isSubmitting ? l10n.submitting : l10n.submit,
+                  isdisabledBT: true,
                 ),
               ),
             ],
@@ -140,10 +149,10 @@ class _AddStadiumForm extends StatelessWidget {
   Widget _buildTextField({
     required String label,
     required String hint,
-    required IconData icon,
     required String value,
     required Function(String) onChanged,
     TextInputType keyboardType = TextInputType.text,
+    String? errorText,
   }) {
     return TextFormField(
       onChanged: onChanged,
@@ -151,7 +160,6 @@ class _AddStadiumForm extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.main),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
@@ -165,14 +173,23 @@ class _AddStadiumForm extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: AppColors.red, width: 2),
         ),
+        errorText: errorText,
       ),
       keyboardType: keyboardType,
     );
   }
 
-  Widget _buildLocationPicker(BuildContext context) {
+  Widget _buildLocationPicker(
+      BuildContext context, AddStadiumState state, AppLocalizations l10n) {
     return InkWell(
-      onTap: () => context.pushNamed(AppRoutes.locationPicker),
+      onTap: () async {
+        final locationData = await context.pushNamed<Map<String, dynamic>>(
+          AppRoutes.locationPicker,
+        );
+        if (locationData != null) {
+          context.read<AddStadiumCubit>().updateLocation(locationData);
+        }
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -182,60 +199,22 @@ class _AddStadiumForm extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Select Location from Google Maps',
-              style: TextStyle(color: AppColors.main),
+            Expanded(
+              child: Text(
+                state.locationData['address'] ?? l10n.selectLocation,
+                style: TextStyle(
+                  color:
+                      state.latitude == null ? AppColors.main : AppColors.green,
+                ),
+              ),
             ),
-            Icon(Icons.location_pin, color: AppColors.main),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImagePicker(
-    BuildContext context,
-    AddStadiumCubit cubit,
-    AddStadiumState state,
-  ) {
-    return InkWell(
-      onTap: cubit.pickImages,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.main, width: 1.5),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.image, color: AppColors.main),
-            const SizedBox(width: 10),
-            Text(
-              'Pick Images',
-              style: TextStyle(color: AppColors.main),
+            Icon(
+              Icons.location_pin,
+              color: state.latitude == null ? AppColors.main : AppColors.green,
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildImagePreview(AddStadiumState state) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: state.selectedImages.map((image) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.file(
-            image,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-          ),
-        );
-      }).toList(),
     );
   }
 

@@ -9,6 +9,7 @@ import 'package:maydon_go/src/common/service/location_service.dart';
 import 'package:maydon_go/src/common/service/marker_service.dart';
 import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_cubit.dart';
 import 'package:maydon_go/src/owner/bloc/home/owner_home_cubit.dart';
+import 'package:maydon_go/src/owner/bloc/location_picker/location_picker_cubit.dart';
 import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
@@ -19,8 +20,11 @@ import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
 import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
 import 'package:maydon_go/src/user/bloc/quizzes_cubit/quizzes_cubit.dart';
 import 'package:maydon_go/src/user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
+import 'package:maydon_go/src/user/bloc/subscription_cubit/subscription_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_cubit.dart';
 import 'package:maydon_go/src/user/bloc/tournament_cubit/tournament_cubit.dart';
+
+import 'src/user/bloc/my_club_cubit/fab_visibility_cubit.dart';
 
 // Notifications pluginni global o‘zgaruvchi sifatida ishlatamiz
 final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -60,19 +64,22 @@ Widget _buildApp() {
       BlocProvider(create: (_) => TournamentCubit()),
       BlocProvider(create: (_) => TeamCubit()..loadFriends()),
       BlocProvider(create: (_) => BookingCubit()),
+      BlocProvider(create: (_) => SubscriptionCubit()),
+      BlocProvider(create: (_) => FabVisibilityCubit()),
       BlocProvider(create: (_) => BookingHistoryCubit()),
       BlocProvider(
         create: (_) => HomeCubit(
           locationService: LocationService(),
           markerService: MarkerService(),
-        ),
+        )..initializeApp(),
       ),
       BlocProvider(create: (_) => SavedStadiumsCubit()),
       BlocProvider(create: (_) => StadiumCubit()),
       BlocProvider(create: (_) => MyClubCubit()),
-      BlocProvider(create: (_) => QuizCubit()),
+      BlocProvider(create: (_) => QuizPackCubit()),
       BlocProvider(create: (_) => OwnerHomeCubit()),
-      BlocProvider(create: (_) => AddStadiumCubit()),
+      BlocProvider(create: (_) => AddStadiumCubit()..loadSubstadiums()),
+      BlocProvider(create: (_) => LocationPickerCubit()),
     ],
     child: const App(),
   );

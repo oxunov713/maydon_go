@@ -4,6 +4,7 @@ class AppIcons {
   static const locationIcon = "assets/icons/location_icon.svg";
   static const searchIcon = "assets/icons/search_icon.svg";
   static const menuIcon = "assets/icons/menu_icon.svg";
+  static const homeIcon = "assets/icons/home_icon.svg";
   static const uzbIcon = "assets/images/uzb_maydon.png";
 
   static const instagram = "assets/images/instagram-1_svgrepo.com.png";
@@ -13,8 +14,8 @@ class AppIcons {
   static const downloadLottie = "assets/lottie/downloading.json";
   static const splashScreen = "assets/images/splash.png";
   static const stadionIcon = "assets/icons/stadion_icon.png";
+  static const defaultStadium = "assets/images/default_stadium.jpg";
   static const currentLocation = "assets/icons/current_location.png";
-  static const avatarImage = "assets/images/ronaldu_avatar.jpg";
 
   static const stadionsIcon = "assets/icons/stadions_icon.svg";
   static const topRatingsIcon = "assets/icons/stars_icon.svg";

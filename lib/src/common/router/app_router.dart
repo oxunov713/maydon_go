@@ -1,16 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/quiz_model.dart';
+import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
-import 'package:maydon_go/src/user/ui/home/donation_page.dart';
-import 'package:maydon_go/src/user/ui/home/team_chat_screen.dart';
-import 'package:maydon_go/src/user/ui/home/tournament_page.dart';
+import 'package:maydon_go/src/owner/screens/home/substadium_screen.dart';
+import 'package:maydon_go/src/user/ui/home/profile_screen/donation_page.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/messages_screen.dart';
+import 'package:maydon_go/src/user/ui/home/profile_screen/quiz_detail_page.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/story_screen.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/team_chat_screen.dart';
+import 'package:maydon_go/src/user/ui/home/profile_screen/tournament_page.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 import '../../owner/bloc/add_stadium/add_stadium_cubit.dart';
 import '../../owner/bloc/home/owner_home_cubit.dart';
 import '../../owner/screens/home/add_stadium_screen.dart';
 import '../../owner/screens/home/location_picker_screen.dart';
 import '../../owner/screens/home/owner_dashboard.dart';
-import '../../owner/screens/home/owner_detail_screen.dart';
 import '../../user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
@@ -19,34 +25,34 @@ import '../../user/bloc/locale_cubit/locale_cubit.dart';
 import '../../user/bloc/my_club_cubit/my_club_cubit.dart';
 import '../../user/bloc/quizzes_cubit/quizzes_cubit.dart';
 import '../../user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
-import '../../user/ui/home/about_app.dart';
-import '../../user/ui/home/all_stadiums_screen.dart';
-import '../../user/ui/home/chat_screen.dart';
-import '../../user/ui/home/club_detail_screen.dart';
-import '../../user/ui/home/club_teammates.dart';
-import '../../user/ui/home/history_screen.dart';
-import '../../user/ui/home/home_screen.dart';
-import '../../user/ui/home/locations_screen.dart';
+import '../../user/ui/home/profile_screen/about_app.dart';
+import '../../user/ui/home/stadiums_screen/all_stadiums_screen.dart';
+import '../../user/ui/home/home_screen/chat_screen.dart';
+import '../../user/ui/home/home_screen/club_detail_screen.dart';
+import '../../user/ui/home/home_screen/club_teammates.dart';
+import '../../user/ui/home/profile_screen/history_screen.dart';
+import '../../user/ui/home/home_screen/home_screen.dart';
+import '../../user/ui/home/stadiums_screen/locations_screen.dart';
 
-import '../../user/ui/home/my_club_screen.dart';
-import '../../user/ui/home/notification_screen.dart';
-import '../../user/ui/home/profile_screen.dart';
-import '../../user/ui/home/profile_view_screen.dart';
-import '../../user/ui/home/quizzes_screen.dart';
-import '../../user/ui/home/saved_stadiums.dart';
-import '../../user/ui/home/stadium_detail.dart';
-import '../../user/ui/home/subscription_screen.dart';
-import '../../user/ui/home/user_coins_ranking.dart';
+import '../../user/ui/home/home_screen/my_club_screen.dart';
+import '../../user/ui/home/profile_screen/notification_screen.dart';
+import '../../user/ui/home/profile_screen/profile_screen.dart';
+import '../../user/ui/home/profile_screen/profile_view_screen.dart';
+import '../../user/ui/home/profile_screen/quizzes_screen.dart';
+import '../../user/ui/home/stadiums_screen/saved_stadiums.dart';
+import '../../user/ui/home/stadiums_screen/stadium_detail.dart';
+import '../../user/ui/home/profile_screen/subscription_screen.dart';
+import '../../user/ui/home/home_screen/user_coins_ranking.dart';
 import '../auth/log_in_screen.dart';
 import '../auth/sign_up_screen.dart';
 import '../model/main_model.dart';
 import '../model/stadium_model.dart';
 import '../screens/choose_language_screens.dart';
-import '../screens/owner_subscription.dart';
+import '../../owner/screens/home/owner_subscription.dart';
 import '../screens/role_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/welcome_screen.dart';
-import '../../user/ui/home/sms_verification.dart';
+import '../../user/ui/home/profile_screen/sms_verification.dart';
 import '../style/app_icons.dart';
 import 'app_routes.dart';
 
@@ -119,11 +125,37 @@ final GoRouter _router = GoRouter(
                               builder: (context, state) => UserCoinsRanking(),
                             ),
                             GoRoute(
+                              path: "story_screen",
+                              name: AppRoutes.story,
+                              builder: (context, state) {
+                                final extra =
+                                    state.extra as Map<String, dynamic>;
+                                final mediaUrls = extra['url'] as List<String>;
+                                final mediaTypes =
+                                    extra['types'] as List<String>;
+                                final user = extra['user'] as UserModel;
+                                return StoryScreen(
+                                    mediaUrls: mediaUrls,
+                                    mediaTypes: mediaTypes,
+                                    user: user);
+                              },
+                            ),
+                            GoRoute(
                               path: "chat",
                               name: AppRoutes.chat,
                               builder: (context, state) {
-                                final user = state.extra as UserModel;
-                                return ChatScreen(user: user);
+                                final extra =
+                                    state.extra as Map<String, dynamic>;
+                                final currentUser =
+                                    extra['currentUser'] as types.User;
+                                final receiverUser =
+                                    extra['receiverUser'] as types.User;
+                                final id = extra['chatId'] as int;
+                                return ChatScreen(
+                                  chatId: id,
+                                  currentUser: currentUser,
+                                  receiverUser: receiverUser,
+                                );
                               },
                             ),
                             GoRoute(
@@ -135,6 +167,11 @@ final GoRouter _router = GoRouter(
                                   teamName: "Real Madrid",
                                 );
                               },
+                            ),
+                            GoRoute(
+                              path: "messages",
+                              name: AppRoutes.messages,
+                              builder: (context, state) => MessagesScreen(),
                             ),
                             GoRoute(
                               path: "clubDetail",
@@ -186,8 +223,22 @@ final GoRouter _router = GoRouter(
                                   GoRoute(
                                     path: "quizzes_cubit",
                                     name: AppRoutes.quizzes,
-                                    builder: (context, state) =>
-                                        QuizzesPage(),
+                                    builder: (context, state) => QuizzesPage(),
+                                  ),
+                                  GoRoute(
+                                    path: "quiz_detail",
+                                    name: AppRoutes.quizDetail,
+                                    builder: (context, state) {
+                                      final extra = state.extra as Map<String,
+                                          dynamic>; // Map sifatida parse qilamiz
+                                      final quizId = extra["quizId"] as int;
+                                      final packName =
+                                          extra["packName"] as String;
+                                      return QuizDetailPage(
+                                        quizPackId: quizId,
+                                        packName: packName,
+                                      );
+                                    },
                                   ),
                                   GoRoute(
                                     path: "history",
@@ -224,9 +275,12 @@ final GoRouter _router = GoRouter(
                   builder: (context, state) => const OwnerDashboard(),
                 ),
                 GoRoute(
-                  path: "ownerStadiumDetail",
-                  name: AppRoutes.ownerDetail,
-                  builder: (context, state) => OwnerDetailScreen(),
+                  path: "subStadium",
+                  name: AppRoutes.subStadium,
+                  builder: (context, state) {
+                    final substadium = state.extra as Substadiums;
+                    return SubstadiumScreen(substadium: substadium);
+                  },
                 ),
                 GoRoute(
                   path: "locationPicker",
@@ -242,11 +296,6 @@ final GoRouter _router = GoRouter(
                   path: "ownerSubs",
                   name: AppRoutes.ownerSubs,
                   builder: (context, state) => OwnerSubscriptionPage(),
-                ),
-                GoRoute(
-                  path: "ownerProfileDetail",
-                  name: AppRoutes.ownerProfileDetail,
-                  builder: (context, state) => OwnerDetailScreen(),
                 ),
               ]),
         ]),

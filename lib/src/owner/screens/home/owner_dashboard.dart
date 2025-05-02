@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:maydon_go/generated/l10n.dart'; // Import generated localizations
 import 'package:maydon_go/src/owner/bloc/home/owner_home_cubit.dart';
 import 'package:maydon_go/src/owner/bloc/home/owner_home_state.dart';
-
+import 'package:maydon_go/src/owner/screens/home/add_slot_screen.dart';
+import 'package:maydon_go/src/owner/screens/home/bron_list_screen.dart';
+import 'package:maydon_go/src/owner/screens/home/owner_profile_screen.dart';
+import '../../../common/l10n/app_localizations.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
 
@@ -16,22 +20,33 @@ class OwnerDashboard extends StatefulWidget {
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContextContext) {
+    final l10n = AppLocalizations.of(context); // Access translations
     double screenWidth = MediaQuery.of(context).size.width;
 
     double floatingButtonOuterRadius = screenWidth * 0.115;
     double floatingButtonInnerRadius = screenWidth * 0.1;
     double floatingButtonIconSize = screenWidth * 0.1;
+
     return SafeArea(
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         body: Column(
           children: [
             Expanded(
-              // ✅ Oq bo'sh joyni yo'q qiladi
               child: BlocBuilder<OwnerHomeCubit, OwnerHomeState>(
+                buildWhen: (previous, current) {
+                  return previous.selectedIndex != current.selectedIndex;
+                },
                 builder: (context, state) {
-                  return context.read<OwnerHomeCubit>().currentPage();
+                  return IndexedStack(
+                    index: state.selectedIndex,
+                    children: [
+                      const BronListScreen(),
+                      const AddSlotScreen(),
+                      OwnerProfileScreen(),
+                    ],
+                  );
                 },
               ),
             ),
@@ -55,20 +70,22 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           ),
         ),
         floatingActionButtonLocation:
-            FloatingActionButtonLocation.miniCenterDocked,
+        FloatingActionButtonLocation.miniCenterDocked,
         bottomNavigationBar: BlocBuilder<OwnerHomeCubit, OwnerHomeState>(
+          buildWhen: (previous, current) {
+            return previous.selectedIndex != current.selectedIndex;
+          },
           builder: (context, state) {
             return BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
               iconSize: floatingButtonIconSize,
-              currentIndex: context.read<OwnerHomeCubit>().selectedIndex,
-              onTap: (value) => (value == 1)
-                  ? null
-                  : context.read<OwnerHomeCubit>().updateIndex(value),
+              currentIndex: state.selectedIndex,
+              onTap: (value) =>
+                  context.read<OwnerHomeCubit>().updateIndex(value),
               items: [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.menu),
-                  label: "Bronlar",
+                  icon: const Icon(Icons.menu),
+                  label: l10n?.bookingsLabel,
                 ),
                 const BottomNavigationBarItem(
                   icon: SizedBox.shrink(),
@@ -78,9 +95,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   icon: SvgPicture.asset(
                     AppIcons.profileIcon,
                     color: AppColors.white,
-                    height: floatingButtonIconSize * 0.8,
+                    height: 24,
                   ),
-                  label: "Profile",
+                  label: l10n?.profileLabel,
                 ),
               ],
             );

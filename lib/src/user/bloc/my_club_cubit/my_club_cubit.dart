@@ -15,34 +15,41 @@ class MyClubCubit extends Cubit<MyClubState> {
   }
 
   late UserModel user;
-  List<UserModel> _allUsers = [];
-  List<Friendship> _connections = [];
+  List<UserModel> allUsers = [];
+  List<Friendship> connections = [];
   List<UserPoints> _liderBoard = [];
   Timer? _debounce;
   int limit = 10;
 
   Future<void> loadData() async {
     try {
+      print("Loading data...");
       final results = await Future.wait([
         ApiService().getAllUsers(),
         ApiService().getFriends(),
         ApiService().getLiderBoard(limit: limit),
       ]);
-      user = await ApiService().getUser();
+      print("Finished fetching users, friends, and leaderboard.");
 
-      _allUsers = List<UserModel>.from(results[0]);
-      _connections = results[1] as List<Friendship>;
+      user = await ApiService().getUser();
+      print("Fetched user: ${user.id}");
+
+      allUsers = List<UserModel>.from(results[0]);connections = results[1] as List<Friendship>;
       _liderBoard = results[2] as List<UserPoints>;
+
       emit(MyClubLoaded(
         user: user,
         liderBoard: _liderBoard,
-        connections: List.from(_connections),
-        searchResults: List.from(_allUsers),
+        connections: List.from(connections),
+        searchResults: List.from(allUsers),
       ));
+      print("Emitted MyClubLoaded");
     } catch (e) {
+      print("ERROR in loadData: $e");
       emit(MyClubError("❌ Xatolik: ${e.toString()}"));
     }
   }
+
 
   /// Foydalanuvchini do'stlar ro'yxatiga qo'shish yoki olib tashlash
   void toggleConnection(UserModel friend) async {
@@ -62,13 +69,13 @@ class MyClubCubit extends Cubit<MyClubState> {
           newFriendshipsJson.map((json) => Friendship.fromJson(json)));
 
       if (newFriendships.isNotEmpty) {
-        _connections.add(newFriendships
+        connections.add(newFriendships
             .last); // Oxirgi qo'shilgan Friendship obyektini olamiz
         emit(MyClubLoaded(
           liderBoard: _liderBoard,
           user: user,
-          connections: List.from(_connections),
-          searchResults: List.from(_allUsers),
+          connections: List.from(connections),
+          searchResults: List.from(allUsers),
         ));
       }
     }
@@ -78,20 +85,20 @@ class MyClubCubit extends Cubit<MyClubState> {
   Future<void> removeConnection(UserModel friend) async {
     if (isConnected(friend.id!)) {
       await ApiService().removeFromFriends(userId: friend.id!);
-      _connections.removeWhere((f) => f.friend.id == friend.id);
+      connections.removeWhere((f) => f.friend.id == friend.id);
 
       emit(MyClubLoaded(
         user: user,
         liderBoard: _liderBoard,
-        connections: List.from(_connections),
-        searchResults: List.from(_allUsers),
+        connections: List.from(connections),
+        searchResults: List.from(allUsers),
       ));
     }
   }
 
   /// Berilgan foydalanuvchi do'stlar ro'yxatida bor-yo'qligini tekshirish
   bool isConnected(int userId) {
-    return _connections.any((f) => f.friend.id == userId);
+    return connections.any((f) => f.friend.id == userId);
   }
 
   Future<void> searchUsers(String query) async {
@@ -102,8 +109,8 @@ class MyClubCubit extends Cubit<MyClubState> {
         emit(MyClubLoaded(
           user: user,
           liderBoard: _liderBoard,
-          connections: List.from(_connections),
-          searchResults: List.from(_allUsers),
+          connections: List.from(connections),
+          searchResults: List.from(allUsers),
         ));
         return;
       }
@@ -114,7 +121,7 @@ class MyClubCubit extends Cubit<MyClubState> {
           emit(MyClubLoaded(
             user: user,
             liderBoard: _liderBoard,
-            connections: List.from(_connections),
+            connections: List.from(connections),
             searchResults: [],
           ));
           return;
@@ -124,7 +131,7 @@ class MyClubCubit extends Cubit<MyClubState> {
         emit(MyClubLoaded(
           user: user,
           liderBoard: _liderBoard,
-          connections: List.from(_connections),
+          connections: List.from(connections),
           searchResults: results,
         ));
       } catch (e) {

@@ -152,4 +152,191 @@ class AppLocalizationsUz extends AppLocalizations {
 
   @override
   String get noData => 'Ma\'lumot mavjud emas';
+
+  @override
+  String get appTitle => 'Maydonlar';
+
+  @override
+  String get noFieldsFound => 'Maydonlar topilmadi';
+
+  @override
+  String get addField => 'Maydon qo\'shish';
+
+  @override
+  String get dataLoadError => 'Ma\'lumotlarni yuklab bo\'lmadi';
+
+  @override
+  String get retry => 'Qayta urinish';
+
+  @override
+  String get booked => 'Band qilingan';
+
+  @override
+  String get available => 'Bo\'sh';
+
+  @override
+  String get manage => 'Boshqarish';
+
+  @override
+  String get unknownField => 'Noma\'lum maydon';
+
+  @override
+  String get addStadiumTitle => 'Stadion qo\'shish';
+
+  @override
+  String get stadiumAddedSuccess => 'Stadion muvaffaqiyatli qo\'shildi!';
+
+  @override
+  String get nameLabel => 'Nomi';
+
+  @override
+  String get nameHint => 'masalan: Novza stadioni';
+
+  @override
+  String get nameRequired => 'Nomi kiritilishi shart';
+
+  @override
+  String get descriptionLabel => 'Tavsif';
+
+  @override
+  String get descriptionHint => 'masalan: Barcha qulayliklar ega stadion';
+
+  @override
+  String get descriptionRequired => 'Tavsif kiritilishi shart';
+
+  @override
+  String get priceLabel => 'Narxi';
+
+  @override
+  String get priceHint => 'masalan: 200 000 so\'m';
+
+  @override
+  String get priceRequired => 'Narxi kiritilishi shart';
+
+  @override
+  String get stadiumCountLabel => 'Stadionlar soni';
+
+  @override
+  String get stadiumCountHint => 'masalan: Yonma-yon stadionlar soni';
+
+  @override
+  String get stadiumCountRequired => 'Son 0 dan katta bo\'lishi kerak';
+
+  @override
+  String get selectLocation => 'Google Xaritalardan joy tanlash';
+
+  @override
+  String get hasUniforms => 'Forma mavjudmi?';
+
+  @override
+  String get hasBathroom => 'Dush mavjudmi?';
+
+  @override
+  String get isIndoor => 'Yopiq stadion mavjudmi?';
+
+  @override
+  String get submit => 'Yuborish';
+
+  @override
+  String get submitting => 'Yuborilmoqda...';
+
+  @override
+  String get bookingListTitle => 'Bronlar ro\'yxati';
+
+  @override
+  String get noBookingsAvailable => 'Bronlar mavjud emas';
+
+  @override
+  String get errorOccurred => 'Xatolik yuz berdi';
+
+  @override
+  String get unknownStadium => 'Noma\'lum stadion';
+
+  @override
+  String get noNameAvailable => 'Ism mavjud emas';
+
+  @override
+  String get call => 'Qo\'ng\'iroq qilish';
+
+  @override
+  String get close => 'Yopish';
+
+  @override
+  String get selectLocationTitle => 'Joy tanlash';
+
+  @override
+  String get confirmLocation => 'Joyni tasdiqlash';
+
+  @override
+  String get currentLocation => 'Hozirgi joy';
+
+  @override
+  String get loadingLocation => 'Joy yuklanmoqda...';
+
+  @override
+  String get locationError => 'Joyni yuklab bo‘lmadi';
+
+  @override
+  String get bookingsLabel => 'Bronlar';
+
+  @override
+  String get profileLabel => 'Profil';
+
+  @override
+  String get profileTitle => 'Profil';
+
+  @override
+  String get noName => 'Ism yo\'q';
+
+  @override
+  String get notification => 'Bildirishnoma';
+
+  @override
+  String get subscription => 'Obuna';
+
+  @override
+  String get addImage => 'Rasm qo\'shish';
+
+  @override
+  String get aboutApp => 'Ilova haqida';
+
+  @override
+  String get imagesUploadedSuccess => 'Rasmlar muvaffaqiyatli yuklandi!';
+
+  @override
+  String imageUploadError(Object error) {
+    return 'Rasmlarni yuklashda xatolik: $error';
+  }
+
+  @override
+  String get noImagesSelected => 'Rasmlar tanlanmadi';
+
+  @override
+  String get subscriptionPackages => 'Obuna paketlari';
+
+  @override
+  String get active => 'Faol';
+
+  @override
+  String get inactive => 'Nofaol';
+
+  @override
+  String subscriptionSelected(String price) {
+    return 'Siz $price obunasini tanladingiz!';
+  }
+
+  @override
+  String get errorLoading => 'Obunalarni yuklashda xatolik';
+
+  @override
+  String get loading => 'Yuklanmoqda...';
+
+  @override
+  String get noBookings => 'Tanlangan kunda bronlar mavjud emas';
+
+  @override
+  String get client => 'Mijoz';
+
+  @override
+  String get bookingsTitle => 'Maydon bronlari';
 }

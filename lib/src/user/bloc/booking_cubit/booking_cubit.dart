@@ -13,57 +13,53 @@ class BookingCubit extends Cubit<BookingState> {
   String? selectedDate;
   double position = 0.0;
   bool confirmed = false;
+  final ApiService _apiService;
+  final BookingHistoryService _bookingHistoryService;
+  final Logger _logger;
 
-  BookingCubit() : super(BookingInitial());
+  BookingCubit({
+    ApiService? apiService,
+    BookingHistoryService? bookingHistoryService,
+    Logger? logger,
+  })  : _apiService = apiService ?? ApiService(),
+        _bookingHistoryService = bookingHistoryService ?? BookingHistoryService(),
+        _logger = logger ?? Logger(),
+        super(BookingInitial());
 
-  void rateStadium(int stadiumId, int rating) async {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
+  void rateStadium(int stadiumId, int rating) {
+    final currentState = state;
+    if (currentState is BookingLoaded) {
       emit(currentState.copyWith(rating: rating));
     }
   }
 
-  void sendRating() async {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
+  Future<void> sendRating() async {
+    final currentState = state;
+    if (currentState is! BookingLoaded || currentState.stadium.id == null) return;
 
-      try {
-        await ApiService()
-            .rateTheStadium(currentState.stadium.id!, currentState.rating);
-        emit(currentState.copyWith(rating: 0));
-      } catch (e) {
-        emit(BookingError('Xatolik yuz berdi: $e')); // Xato bo'lsa error
-      }
+    try {
+
+      await _apiService.rateTheStadium(currentState.stadium.id!, currentState.rating);
+      emit(currentState.copyWith(rating: 0)); // Yangi reytingni yuborib bo'lgach, bahoni nolga o'zgartirish
+    } catch (e) {
+      emit(BookingError('Xatolik yuz berdi: $e'));
     }
   }
+
 
   void setSelectedDate(String date) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-
-      emit(
-        BookingLoaded(
-          user: currentState.user,
-          stadium: currentState.stadium,
-          bookedSlots: currentState.bookedSlots,
-          selectedDate: date,
-          selectedStadiumName: currentState.selectedStadiumName,
-          bookings: currentState.bookings,
-        ),
-      );
+    final currentState = state;
+    if (currentState is BookingLoaded) {
+      emit(currentState.copyWith(selectedDate: date));
     }
   }
 
-  /// API dan stadiumni ID bo‘yicha olib kelish
   Future<void> fetchStadiumById(int stadiumId) async {
     emit(BookingLoading());
     try {
-      final stadium = await ApiService().getStadiumById(stadiumId: stadiumId);
-      final user = await ApiService().getUser();
-
-      // Set the initial selected stadium name
-      selectedStadiumName = stadium.fields?.first.name ?? "No subStadium";
-
+      final stadium = await _apiService.getStadiumById(stadiumId: stadiumId);
+      final user = await _apiService.getUser();
+      selectedStadiumName = stadium.fields?.firstOrNull?.name ?? "No subStadium";
       _updateSlots(stadium, user);
     } catch (e) {
       emit(BookingError("Failed to fetch stadium: $e"));
@@ -71,59 +67,52 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void setSelectedField(String fieldName) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      selectedStadiumName = fieldName;
-      Logger().i("Selected Stadium Name: $selectedStadiumName");
+    final currentState = state;
+    if (currentState is! BookingLoaded || currentState.stadium.fields == null) return;
 
-      final updatedFields = currentState.stadium.fields?.map((substadium) {
-        if (substadium.name == fieldName) {
-          final allSlots = _generateSlotsForDateRange(List.generate(
-              30, (index) => DateTime.now().add(Duration(days: index))));
-          final availableSlots =
-              _removeBookedSlots(allSlots, substadium.bookings ?? []);
-          return substadium.copyWith(availableSlots: availableSlots);
-        } else {
-          return substadium;
-        }
-      }).toList();
+    selectedStadiumName = fieldName;
+    _logger.i("Selected Stadium Name: $selectedStadiumName");
 
-      emit(BookingLoaded(
-        user: currentState.user,
-        stadium: currentState.stadium.copyWith(fields: updatedFields),
-        bookedSlots: currentState.bookedSlots,
-        selectedStadiumName: fieldName,
-        selectedDate: currentState.selectedDate,
-      ));
-    }
+    final updatedFields = currentState.stadium.fields!.map((substadium) {
+      if (substadium.name != fieldName) return substadium;
+
+      final allSlots = _generateSlotsForDateRange(
+        List.generate(30, (index) => DateTime.now().add(Duration(days: index))),
+      );
+      final availableSlots = _removeBookedSlots(
+        allSlots,
+        substadium.bookings?.map((b) => b.timeSlot).toList() ?? [],
+      );
+      return substadium.copyWith(availableSlots: availableSlots);
+    }).toList();
+
+    emit(currentState.copyWith(
+      stadium: currentState.stadium.copyWith(fields: updatedFields),
+      selectedStadiumName: fieldName,
+    ));
   }
 
   bool isSlotBooked(TimeSlot slot) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      return currentState.bookings.any((bookedSlot) =>
-          bookedSlot.startTime == slot.startTime &&
-          bookedSlot.endTime == slot.endTime);
-    }
-    return false;
+    final currentState = state;
+    if (currentState is! BookingLoaded) return false;
+
+    return currentState.bookings.any((bookedSlot) =>
+    bookedSlot.startTime == slot.startTime &&
+        bookedSlot.endTime == slot.endTime);
   }
 
   void updatePosition(double delta, double maxPosition) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      double newPosition = currentState.position + delta;
-      if (newPosition < 0) newPosition = 0;
-      if (newPosition > maxPosition) newPosition = maxPosition;
-
+    final currentState = state;
+    if (currentState is BookingLoaded) {
+      final newPosition = (currentState.position + delta).clamp(0.0, maxPosition);
       emit(currentState.copyWith(position: newPosition));
     }
   }
 
   void confirmPosition(double maxPosition) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
+    final currentState = state;
+    if (currentState is BookingLoaded) {
       final isConfirmed = currentState.position >= maxPosition;
-
       emit(currentState.copyWith(
         position: isConfirmed ? maxPosition : 0.0,
         confirmed: isConfirmed,
@@ -131,52 +120,40 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
-  /// Eski slotlarni o‘chirib, yangilarini qo‘shish
   void _updateSlots(StadiumDetail stadium, UserModel user) {
-    final log = Logger();
-    log.e("📅 Slotlarni yangilash...");
+    _logger.i("📅 Slotlarni yangilash...");
 
     final now = DateTime.now();
-    final today = now.toIso8601String().split("T")[0];
-
-    final startDay = DateTime(now.year, now.month, now.day);
-    final next30Days =
-        List.generate(30, (index) => startDay.add(Duration(days: index)));
+    final today = DateTime(now.year, now.month, now.day);
+    final next30Days = List.generate(30, (index) => today.add(Duration(days: index)));
 
     final updatedFields = stadium.fields?.map((substadium) {
       final allSlots = _generateSlotsForDateRange(next30Days);
-      final availableSlots =
-          _removeBookedSlots(allSlots, substadium.bookings ?? []);
-      log.e(
-          "🔄 ${substadium.name} uchun yangi slotlar: ${availableSlots.length}");
+      final availableSlots = _removeBookedSlots(
+        allSlots,
+        substadium.bookings?.map((b) => b.timeSlot).toList() ?? [],
+      );
+      _logger.i("🔄 ${substadium.name} uchun yangi slotlar: ${availableSlots.length}");
       return substadium.copyWith(availableSlots: availableSlots);
     }).toList();
 
     emit(BookingLoaded(
       user: user,
       stadium: stadium.copyWith(fields: updatedFields),
-      selectedDate: selectedDate?.isNotEmpty == true ? selectedDate : today,
+      selectedDate: selectedDate ?? today.toIso8601String().split("T")[0],
       selectedStadiumName: selectedStadiumName,
     ));
-    log.e("✅ State o‘zgardi: $state");
+    _logger.i("✅ State o'zgardi: $state");
   }
 
-  /// 30 kunlik 1 soatlik slotlarni generatsiya qilish
   List<TimeSlot> _generateSlotsForDateRange(List<DateTime> dates) {
     final List<TimeSlot> allSlots = [];
     final now = DateTime.now();
 
-    for (var day in dates) {
-      DateTime slotStart = DateTime(day.year, day.month, day.day, 0, 0);
-
-      // If today, start from the next full hour
-      if (day.day == now.day &&
-          day.month == now.month &&
-          day.year == now.year) {
-        slotStart = DateTime(now.year, now.month, now.day, now.hour + 1, 0);
-      }
-
-      DateTime slotEnd = slotStart.add(const Duration(hours: 1));
+    for (final day in dates) {
+      var slotStart = DateTime(day.year, day.month, day.day,
+          day.isAtSameMomentAs(now) ? now.hour + 1 : 0, 0);
+      var slotEnd = slotStart.add(const Duration(hours: 1));
 
       while (slotStart.day == day.day) {
         if (slotStart.isAfter(now)) {
@@ -186,70 +163,55 @@ class BookingCubit extends Cubit<BookingState> {
         slotEnd = slotStart.add(const Duration(hours: 1));
       }
     }
-
     return allSlots;
   }
 
-  /// API dan kelgan book qilingan slotlarni o‘chirib tashlash
-  List<TimeSlot> _removeBookedSlots(
-      List<TimeSlot> allSlots, List<TimeSlot> bookedSlots) {
-    return allSlots.where((slot) {
-      return !bookedSlots.any((booking) =>
-          slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
-          (slot.startTime!.isAfter(booking.startTime!) &&
-              slot.startTime!.isBefore(booking.endTime!)));
-    }).toList();
+  List<TimeSlot> _removeBookedSlots(List<TimeSlot> allSlots, List<TimeSlot> bookedSlots) {
+    return allSlots.where((slot) => !bookedSlots.any((booking) =>
+    slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
+        (slot.startTime!.isAfter(booking.startTime!) &&
+            slot.startTime!.isBefore(booking.endTime!)))).toList();
   }
 
-  /// Booking Listga slot qo‘shish
   void addSlot(TimeSlot slot) {
-    final currentState = state as BookingLoaded;
-    if (state is BookingLoaded) {
-      final updatedBookings = List<TimeSlot>.from(currentState.bookings)
-        ..add(slot);
-      emit(currentState.copyWith(bookings: updatedBookings));
-    } else {
-      emit(BookingLoaded(
-        bookings: [slot],
-        stadium: currentState.stadium,
-        user: currentState.user,
-      ));
-    }
+    final currentState = state;
+    if (currentState is! BookingLoaded) return;
+
+    final updatedBookings = [...currentState.bookings, slot];
+    emit(currentState.copyWith(bookings: updatedBookings));
   }
 
   void removeSlot(TimeSlot slot) {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      final updatedBookings = List<TimeSlot>.from(currentState.bookings)
-        ..remove(slot);
-      emit(currentState.copyWith(bookings: updatedBookings));
-    }
+    final currentState = state;
+    if (currentState is! BookingLoaded) return;
+
+    final updatedBookings = currentState.bookings.where((s) => s != slot).toList();
+    emit(currentState.copyWith(bookings: updatedBookings));
   }
 
   void clearSlots() {
-    if (state is BookingLoaded) {
-      final currentState = state as BookingLoaded;
-      emit(currentState.copyWith(bookings: [], confirmed: false, position: 0));
+    final currentState = state;
+    if (currentState is BookingLoaded) {
+      emit(currentState.copyWith(bookings: [], confirmed: false, position: 0.0));
     }
   }
 
-  /// Bookingni tasdiqlash va API ga jo‘natish
   Future<void> confirmBooking(int subStadiumId) async {
-    if (state is! BookingLoaded) {
-      return;
-    }
-
-    final currentState = state as BookingLoaded;
+    final currentState = state;
+    if (currentState is! BookingLoaded || currentState.stadium.id == null) return;
 
     try {
-      await ApiService().bookStadium(
-          bookings: currentState.bookings, subStadiumId: subStadiumId);
+      await _apiService.bookStadium(
+        bookings: currentState.bookings,
+        subStadiumId: subStadiumId,
+      );
 
-      await BookingHistoryService().saveBookingHistory(
-          stadiumId: currentState.stadium.id!,
-          stadiumName: currentState.stadium.name!,
-          bookings: currentState.bookings,
-          stadiumPhoneNumber: currentState.stadium.owner!.phoneNumber!);
+      await _bookingHistoryService.saveBookingHistory(
+        stadiumId: currentState.stadium.id!,
+        stadiumName: currentState.stadium.name!,
+        bookings: currentState.bookings,
+        stadiumPhoneNumber: currentState.stadium.owner!.phoneNumber!,
+      );
 
       await refreshStadium(currentState.stadium.id!);
     } catch (e) {
@@ -257,8 +219,5 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
-  /// Stadiumni yangilash (pull-to-refresh)
-  Future<void> refreshStadium(int stadiumId) async {
-    await fetchStadiumById(stadiumId);
-  }
+  Future<void> refreshStadium(int stadiumId) => fetchStadiumById(stadiumId);
 }

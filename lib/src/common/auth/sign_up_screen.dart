@@ -161,13 +161,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
           body: BlocBuilder<AuthCubit, AuthState>(
             builder: (context, state) {
               if (state is AuthLoading) {
-                return Center(
+                return const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(color: AppColors.green),
-                      const SizedBox(height: 10),
-                      Text(context.lan.signupInProgress),
+                      CircularProgressIndicator(color: AppColors.green),
+                      SizedBox(height: 16),
+                      Text(
+                        'Iltimos, kuting...',
+                        style: TextStyle(
+                          color: AppColors.green,
+                          fontSize: 16,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -175,6 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               return _buildForm();
             },
           ),
+
           bottomNavigationBar: BottomSignButton(
             function: _onSignup,
             text: context.lan.signUp,
