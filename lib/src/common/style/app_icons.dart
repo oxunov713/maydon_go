@@ -37,4 +37,13 @@ class AppIcons {
   static const roofIcon = "assets/icons/roof.svg";
   static const ballIcon = "assets/icons/ball.svg";
   static const shirtsIcon = "assets/icons/shirt.svg";
+
+  static const chatWall1 = "assets/chat_wallpaper/wall1.jpg";
+  static const chatWall2 = "assets/chat_wallpaper/wall2.jpg";
+  static const chatWall3 = "assets/chat_wallpaper/wall3.jpg";
+  static const chatWall4 = "assets/chat_wallpaper/wall4.jfif";
+  static const chatWall5 = "assets/chat_wallpaper/wall5.jpg";
+  static const chatWall6 = "assets/chat_wallpaper/wall6.jpg";
+  static const chatWall7 = "assets/chat_wallpaper/wall7.jfif";
+  static const chatWall8 = "assets/chat_wallpaper/wall8.jfif";
 }

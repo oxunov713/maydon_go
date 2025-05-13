@@ -14,7 +14,6 @@ class QuizzesLoading extends QuizzesState {
 
 class QuizzesLoaded extends QuizzesState {
   final List<QuizPack> quizPacks;
-
   const QuizzesLoaded({required this.quizPacks});
 }
 
@@ -24,7 +23,6 @@ class QuizPackLoading extends QuizzesState {
 
 class QuizPackLoaded extends QuizzesState {
   final QuizPack quizPack;
-
   const QuizPackLoaded({required this.quizPack});
 }
 
@@ -78,6 +76,7 @@ class QuizFinished extends QuizzesState {
   final int totalQuestions;
   final String difficulty;
   final double difficultyMultiplier;
+  final int earnedCoins;
 
   const QuizFinished({
     required this.quizPack,
@@ -85,11 +84,11 @@ class QuizFinished extends QuizzesState {
     required this.totalQuestions,
     required this.difficulty,
     required this.difficultyMultiplier,
+    required this.earnedCoins,
   });
 }
 
 class QuizzesError extends QuizzesState {
   final String message;
-
   const QuizzesError({required this.message});
 }

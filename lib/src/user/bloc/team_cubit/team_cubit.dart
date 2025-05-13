@@ -1,8 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import 'package:maydon_go/src/common/service/api_service.dart';
 
 import '../../../common/model/main_model.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/user_service.dart';
 import '../../../common/tools/position_enum.dart';
 import 'team_state.dart';
 
@@ -14,7 +15,7 @@ class TeamCubit extends Cubit<TeamState> {
   Future<void> loadFriends() async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final response = await ApiService().getFriends();
+      final response = await UserService(ApiClient().dio).getFriends();
 
       print('API Response Count: ${response.length}');
       print('API Response Data: $response');

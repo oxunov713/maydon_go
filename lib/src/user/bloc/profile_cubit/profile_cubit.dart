@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/api_image_service.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
 
-import '../../../common/service/api_service.dart';
 import 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
@@ -13,8 +16,8 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> loadUserData() async {
     emit(ProfileLoading());
     try {
-      final user = await ApiService().getUser();
-
+      final user = await UserService(ApiClient().dio).getUser();
+      Logger().d(user.point);
       emit(ProfileLoaded(user));
     } catch (e) {
       emit(ProfileError('Failed to load user data'));
@@ -34,7 +37,8 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     try {
       // Upload to server
-      final imageUrl = await ApiService().uploadProfileImage(imageFile);
+      final imageUrl =
+          await ApiImageService(ApiClient().dio).uploadProfileImage(imageFile);
 
       // Update with server response
       emit(ProfileLoaded(
@@ -54,7 +58,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(ProfileUpdating(currentState.user));
 
     try {
-      final updatedUser = await ApiService().updateUserInfo(name: newName);
+      final updatedUser =
+          await UserService(ApiClient().dio).updateUserInfo(name: newName);
 
       emit(ProfileLoaded(updatedUser));
     } catch (e) {

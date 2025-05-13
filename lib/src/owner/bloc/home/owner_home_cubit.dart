@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/model/main_model.dart';
-import 'package:maydon_go/src/common/service/api_service.dart';
-import 'package:maydon_go/src/owner/bloc/home/owner_home_state.dart';
-import 'package:maydon_go/src/owner/screens/home/add_slot_screen.dart';
-import 'package:maydon_go/src/owner/screens/home/bron_list_screen.dart';
-import 'package:maydon_go/src/owner/screens/home/owner_profile_screen.dart';
+
+import '../../../common/model/main_model.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/user_service.dart';
+import '../../screens/home/add_slot_screen.dart';
+import '../../screens/home/bron_list_screen.dart';
+import '../../screens/home/owner_profile_screen.dart';
+import 'owner_home_state.dart';
 
 class OwnerHomeCubit extends Cubit<OwnerHomeState> {
   int selectedIndex = 1;
@@ -36,7 +38,8 @@ class OwnerHomeCubit extends Cubit<OwnerHomeState> {
   Future<void> fetchSubscriptions() async {
     try {
       emit(OwnerHomeLoading(selectedIndex: selectedIndex));
-      final subscriptions = await ApiService().getOwnerSubscription();
+      final subscriptions =
+          await UserService(ApiClient().dio).getOwnerSubscription();
       emit(OwnerHomeLoadedState(subscriptions, selectedIndex: selectedIndex));
     } catch (e) {
       emit(OwnerHomeError(e.toString(), selectedIndex: selectedIndex));

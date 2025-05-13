@@ -20,11 +20,15 @@ import '../../owner/screens/home/owner_dashboard.dart';
 import '../../user/bloc/all_stadium_cubit/all_stadium_cubit.dart';
 import '../../user/bloc/auth_cubit/auth_cubit.dart';
 import '../../user/bloc/booking_cubit/booking_cubit.dart';
+import '../../user/bloc/chat_cubit/chat_cubit.dart';
 import '../../user/bloc/home_cubit/home_cubit.dart';
 import '../../user/bloc/locale_cubit/locale_cubit.dart';
 import '../../user/bloc/my_club_cubit/my_club_cubit.dart';
+import '../../user/bloc/profile_cubit/profile_cubit.dart';
 import '../../user/bloc/quizzes_cubit/quizzes_cubit.dart';
 import '../../user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
+import '../../user/ui/home/home_screen/other_user_profile.dart';
+import '../../user/ui/home/home_screen/pick_chat_wallpaper.dart';
 import '../../user/ui/home/profile_screen/about_app.dart';
 import '../../user/ui/home/stadiums_screen/all_stadiums_screen.dart';
 import '../../user/ui/home/home_screen/chat_screen.dart';
@@ -145,16 +149,33 @@ final GoRouter _router = GoRouter(
                               name: AppRoutes.chat,
                               builder: (context, state) {
                                 final extra =
-                                    state.extra as Map<String, dynamic>;
+                                    state.extra as Map<String, Object?>;
                                 final currentUser =
-                                    extra['currentUser'] as types.User;
+                                    extra['currentUser'] as UserModel;
                                 final receiverUser =
-                                    extra['receiverUser'] as types.User;
+                                    extra['receiverUser'] as UserModel;
                                 final id = extra['chatId'] as int;
                                 return ChatScreen(
                                   chatId: id,
                                   currentUser: currentUser,
                                   receiverUser: receiverUser,
+                                );
+                              },
+                            ),
+                            GoRoute(
+                              name: AppRoutes.wallpaper,
+                              path: 'wallpaper',
+                              builder: (context, state) => WallpaperPage(),
+                            ),
+                            GoRoute(
+                              name: AppRoutes.profileChat,
+                              path: 'user-profile',
+                              builder: (context, state) {
+                                final extra = state.extra as Map;
+                                return OtherUserProfilePage(
+                                  receivedUser: extra['receivedUser'],
+                                  currentUser: context.read<MyClubCubit>().user,
+                                  id: extra['chatId'],
                                 );
                               },
                             ),

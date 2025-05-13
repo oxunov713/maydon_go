@@ -1,19 +1,32 @@
-import 'package:equatable/equatable.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+part of 'chat_cubit.dart';
 
-class ChatSState extends Equatable {
+enum ChatStatus { initial, loading, loaded, error }
+
+class ChatSState {
   final List<types.Message> messages;
+  final String? wallpaper;
 
-  const ChatSState({required this.messages});
+  final ChatStatus status;
+  final String? errorMessage;
+
+  ChatSState({
+    this.wallpaper,
+    required this.messages,
+    this.status = ChatStatus.initial,
+    this.errorMessage,
+  });
 
   ChatSState copyWith({
     List<types.Message>? messages,
+    ChatStatus? status,
+    final String? wallpaper,
+    String? errorMessage,
   }) {
     return ChatSState(
       messages: messages ?? this.messages,
+      status: status ?? this.status,
+      wallpaper: wallpaper ?? this.wallpaper,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
-
-  @override
-  List<Object> get props => [messages];
 }

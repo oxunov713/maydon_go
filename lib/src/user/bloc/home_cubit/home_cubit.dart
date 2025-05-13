@@ -5,19 +5,19 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:logger/logger.dart';
-import 'package:maydon_go/src/common/model/stadium_model.dart';
-import 'package:maydon_go/src/common/service/api_service.dart';
-import 'package:maydon_go/src/common/service/location_service.dart';
-import 'package:maydon_go/src/common/service/marker_service.dart';
-
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/stadium_service.dart';
+import '../../../common/model/stadium_model.dart';
 import '../../../common/router/app_routes.dart';
+import '../../../common/service/location_service.dart';
+import '../../../common/service/marker_service.dart';
 import 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
   final LocationService _locationService;
 
   final MarkerService _markerService;
-  final Logger _logger = Logger();
+
 
   int _selectedIndex = 2;
   LocationData? _currentLocation;
@@ -76,25 +76,25 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   Future<void> _fetchDailyUpdates() async {
-    _logger.d('Fetching daily updates at 6:00 AM');
+
     await _fetchStadiums();
     await _fetchLocation();
   }
 
   Future<void> initializeApp() async {
     try {
-      _logger.d('Initializing app...');
+
       await _fetchLocation();
       await _fetchStadiums();
     } catch (e) {
-      _logger.e('Error initializing app: $e');
+
     }
   }
 
   Future<void> _fetchStadiums() async {
     try {
-      _logger.d('Fetching stadiums...');
-      _stadiums = await ApiService().getAllStadiums();
+
+      _stadiums = await StadiumService(ApiClient().dio).getAllStadiums();
       _stadiumStreamController.add(_stadiums);
       _searchStreamController.add(_stadiums);
       await _setMarkers();
@@ -105,26 +105,26 @@ class HomeCubit extends Cubit<HomeState> {
         searchResults: _searchResults,
       ));
     } catch (e) {
-      _logger.e('Error fetching stadiums: $e');
+
     }
   }
 
   Future<void> _fetchLocation() async {
     try {
-      _logger.d('Initializing location...');
+
       _currentLocation = await _locationService.getCurrentLocation();
       if (_currentLocation != null) {
         _locationStreamController.add(_currentLocation);
         await _setMarkers();
       }
     } catch (e) {
-      _logger.e('Error initializing location: $e');
+
     }
   }
 
   void goToCurrentLocation() {
     if (_currentLocation != null && _mapController != null) {
-      _logger.d('Going to current location...');
+
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -156,7 +156,7 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> _setMarkers() async {
     if (_stadiums.isEmpty || _currentLocation == null) return;
     try {
-      _logger.d('Setting markers...');
+
       _markers = await _markerService.setMarkers(
         LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
         _stadiums,
@@ -169,7 +169,7 @@ class HomeCubit extends Cubit<HomeState> {
         searchResults: _searchResults,
       ));
     } catch (e) {
-      _logger.e('Error setting markers: $e');
+
     }
   }
 
@@ -187,7 +187,7 @@ class HomeCubit extends Cubit<HomeState> {
 
   void moveCamera(LatLng target) {
     if (_mapController != null) {
-      _logger.d('Moving camera to: $target');
+
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
             CameraPosition(target: target, zoom: 15)),
@@ -235,7 +235,7 @@ class HomeCubit extends Cubit<HomeState> {
 
   @override
   Future<void> close() {
-    _logger.w('Closing HomeCubit...');
+
     _mapController?.dispose();
     _debounce?.cancel();
     _dailyUpdateTimer?.cancel();

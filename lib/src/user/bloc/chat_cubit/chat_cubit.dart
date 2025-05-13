@@ -1,171 +1,230 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
-import 'package:logger/logger.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/common_service.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
+import 'package:maydon_go/src/common/service/shared_preference_service.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
+import '../../../common/constants/config.dart';
 import '../../../common/model/chat_model.dart';
-import '../../../common/service/api_service.dart';
-import 'chat_state.dart';
+
+part 'chat_state.dart';
 
 class ChatCubit extends Cubit<ChatSState> {
-  final String serverUrl;
-  final types.User currentUser;
-  late final StompClient _stompClient;
-
+  final String serverUrl = Config.wsServerUrl;
+  late types.User currentUser;
   final Logger _logger = Logger();
-  late int _activeChatId;
+  final Set<String> _messageIds = {};
+  late final StompClient _stompClient;
+  int? _activeChatId;
+  StompUnsubscribe? _unsubscribeCallback;
+  final apiService = CommonService(ApiClient().dio);
+  bool _isConnected = false;
 
-  ChatCubit({
-    required this.serverUrl,
-    required this.currentUser,
-  }) : super(const ChatSState(messages: [])) {
-    _connect();
+  ChatCubit() : super(ChatSState(messages: [], status: ChatStatus.initial)) {
+    _initStomp();
   }
 
-  void _connect() {
+  void _initStomp() async {
+    final wallpaper = await ShPService.getWallpaper();
+    emit(ChatSState(messages: [], wallpaper: wallpaper));
+    final user = await UserService(ApiClient().dio).getUser();
+    currentUser = types.User(
+      id: user.id.toString(),
+      imageUrl: user.imageUrl,
+      firstName: user.fullName,
+    );
     _stompClient = StompClient(
       config: StompConfig(
         url: serverUrl,
-        // e.g., ws://localhost:8080/ws
         onConnect: _onConnect,
-        beforeConnect: () async {
-          _logger.d("Connecting to STOMP...");
-          await Future.delayed(const Duration(milliseconds: 200));
-        },
         onWebSocketError: (error) {
           _logger.e("WebSocket error: $error");
+          _isConnected = false;
         },
         onStompError: (frame) {
-          _logger.e("STOMP error: ${frame.body}");
+          _logger.e("STOMP protocol error: ${frame.body}");
+          _isConnected = false;
         },
-        onDisconnect: (frame) {
-          _logger.d("Disconnected from STOMP");
+        onDisconnect: (_) {
+          _logger.w("STOMP disconnected");
+          _isConnected = false;
         },
+        beforeConnect: () async {
+          _logger.i("Connecting to STOMP...");
+          await Future.delayed(const Duration(milliseconds: 200));
+        },
+        reconnectDelay: const Duration(seconds: 5),
+        connectionTimeout: const Duration(seconds: 10),
       ),
     );
-
     _stompClient.activate();
   }
 
-  void _onConnect(StompFrame frame) {
-    _logger.d("Connected to STOMP");
-    joinChat(_activeChatId);
+  void changeWallpaper(String path) async {
+    await ShPService.setWallpaper(path);
+    final wallpaper = await ShPService.getWallpaper();
+
+    emit(state.copyWith(wallpaper: wallpaper));
   }
 
-  /// ✅ Chatga ulanadi va kelayotgan xabarlarni tinglaydi
-  void joinChat(int chatId) async {
-    _activeChatId = chatId;
-    final destination = '/topic/chat.$chatId';
-    await loadMessagesFromApi(chatId);
-    _logger.d("Subscribing to $destination");
+  void _onConnect(StompFrame frame) async {
+    _logger.i("Connected to STOMP");
+    _isConnected = true;
 
-    _stompClient.subscribe(
+    if (_activeChatId != null) {
+      await _subscribeToChat(_activeChatId!);
+    }
+  }
+
+  Future<void> joinChat(int chatId) async {
+    if (_activeChatId == chatId && _isConnected) return;
+
+    _unsubscribePrevious();
+    _activeChatId = chatId;
+
+    await _loadMessages(chatId);
+
+    if (_isConnected) {
+      await _subscribeToChat(chatId);
+    }
+  }
+
+  void _unsubscribePrevious() {
+    _unsubscribeCallback?.call();
+    _unsubscribeCallback = null;
+  }
+
+  Future<void> _subscribeToChat(int chatId) async {
+    final destination = '/topic/chat.$chatId';
+
+    _unsubscribeCallback = _stompClient.subscribe(
       destination: destination,
+      headers: {'id': 'chat-$chatId'},
       callback: (frame) {
         if (frame.body != null) {
-          final data = jsonDecode(frame.body!);
-          _logger.d("Received: $data");
+          try {
+            final data = jsonDecode(frame.body!);
 
-          final message = types.TextMessage(
-            id: data['id'] ?? DateTime.now().toString(),
-            text: data['content'],
-            createdAt:
-                data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
-            author: types.User(
-              id: data['senderId'].toString(),
-              firstName: data['senderName'] ?? 'Unknown',
-            ),
-          );
+            if (data['senderId'].toString() == currentUser.id) return;
 
-          void sendMessage(String text) {
             final message = types.TextMessage(
-              id: DateTime.now().millisecondsSinceEpoch.toString(),
-              text: text,
-              createdAt: DateTime.now().millisecondsSinceEpoch,
-              author: currentUser,
+              id: data['id'].toString(),
+              text: data['content'] ?? '',
+              createdAt:
+                  data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+              author: types.User(
+                id: data['senderId'].toString(),
+                firstName: data['senderName'] ?? 'Unknown',
+              ),
             );
 
-            final data = {
-              'senderId': currentUser.id,
-              'content': message.text,
-            };
-
-            _stompClient.send(
-              destination: '/app/chat.send/$_activeChatId',
-              body: jsonEncode(data),
-            );
-
-            // Create a new list instance when emitting the state
-            emit(ChatSState(messages: [message] + List.from(state.messages)));
+            _addMessageToState(message);
+          } catch (e) {
+            _logger.e("Error parsing STOMP message: $e");
           }
         }
       },
     );
+
+    _logger.i("Subscribed to $destination");
   }
 
-  /// ✅ Xabar yuborish
-  void sendMessage(String text) {
-    final message = types.TextMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: text,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      author: currentUser,
-    );
-
-    final data = {
-      'senderId': currentUser.id,
-      'content': message.text,
-    };
-
-    _stompClient.send(
-      destination: '/app/chat.send/$_activeChatId',
-      body: jsonEncode(data),
-    );
-
-    emit(ChatSState(messages: [message] + List.from(state.messages)));
-  }
-
-  Future<void> loadMessagesFromApi(int chatId) async {
+  Future<void> _loadMessages(int chatId) async {
+    emit(state.copyWith(status: ChatStatus.loading));
     try {
-      final chatModel = await ApiService().getChatFromApi(chatId);
+      final chatModel = await apiService.getChatFromApi(chatId);
 
-      // API'dan kelgan ChatMessage'larni TextMessage'ga aylantiramiz
       final messages = chatModel.messages
-          .map((chatMessage) {
+          .map((msg) {
+            final sender = chatModel.members.firstWhere(
+              (m) => m.userId == msg.senderId,
+              orElse: () => ChatMember(
+                id: msg.id,
+                userId: msg.senderId,
+                role: 'unknown',
+                joinedAt: DateTime.now(),
+              ),
+            );
+
             return types.TextMessage(
-              id: chatMessage.id.toString(),
-              text: chatMessage.content,
-              createdAt: chatMessage.sentAt.millisecondsSinceEpoch,
+              id: msg.id.toString(),
+              text: msg.content,
+              createdAt: msg.sentAt.millisecondsSinceEpoch,
               author: types.User(
-                id: chatMessage.senderId.toString(),
-                firstName: chatModel.members
-                    .firstWhere(
-                      (member) => member.userId == chatMessage.senderId,
-                      orElse: () => ChatMember(
-                        id: chatMessage.id,
-                        userId: chatMessage.senderId,
-                        role: 'unknown',
-                        joinedAt: DateTime.now(),
-                      ),
-                    )
-                    .role, // yoki ismingiz bo'lsa o'shani qo'yish mumkin
+                id: sender.userId.toString(),
+                firstName: sender.role,
               ),
             );
           })
           .toList()
           .reversed
-          .toList(); // eski xabarlar pastda bo'lishi uchun reversed
+          .toList();
 
-      emit(ChatSState(messages: messages));
+      emit(state.copyWith(messages: messages, status: ChatStatus.loaded));
     } catch (e) {
-      _logger.e("Xatolik yuz berdi: $e");
+      _logger.e("Failed to load messages: $e");
+      emit(
+          state.copyWith(status: ChatStatus.error, errorMessage: e.toString()));
+    }
+  }
+
+  void _addMessageToState(types.TextMessage message) {
+    if (_messageIds.contains(message.id)) return;
+
+    _messageIds.add(message.id);
+    final newMessages = [message, ...state.messages];
+    emit(state.copyWith(messages: newMessages));
+  }
+
+  void sendMessage(String text) {
+    if (!_isConnected || _activeChatId == null) {
+      _logger.w("Not connected or no active chat");
+      return;
+    }
+
+    final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    final message = types.TextMessage(
+      id: messageId,
+      text: text,
+      createdAt: timestamp,
+      author: currentUser,
+    );
+
+    emit(state.copyWith(messages: [message, ...state.messages]));
+
+    final data = {
+      'id': messageId,
+      'senderId': currentUser.id,
+      'senderName': currentUser.firstName,
+      'content': text,
+      'createdAt': timestamp,
+    };
+
+    try {
+      _stompClient.send(
+        destination: '/app/chat.send/$_activeChatId',
+        body: jsonEncode(data),
+      );
+    } catch (e) {
+      _logger.e("Failed to send message: $e");
+
+// Revert optimistic update
+      final filtered = state.messages.where((m) => m.id != messageId).toList();
+      emit(state.copyWith(messages: filtered));
     }
   }
 
   @override
-  Future<void> close() {
-    _logger.d("Closing STOMP connection");
+  Future<void> close() async {
+    _logger.i("Closing ChatCubit and STOMP connection");
+    _unsubscribePrevious();
     _stompClient.deactivate();
     return super.close();
   }

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/service/api_service.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/common_service.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
 import '../../../common/model/quiz_model.dart';
 import 'quizzes_state.dart';
 
@@ -8,7 +10,8 @@ class QuizPackCubit extends Cubit<QuizzesState> {
   QuizPackCubit() : super(QuizzesInitial());
 
   Timer? _questionTimer;
-  final ApiService _apiService = ApiService();
+  final  _apiService = CommonService(ApiClient().dio);
+  late int userId;
 
   Future<void> fetchQuizzes() async {
     emit(QuizzesLoading());
@@ -20,10 +23,14 @@ class QuizPackCubit extends Cubit<QuizzesState> {
     }
   }
 
-  Future<void> loadQuizPack({required int quizPackId}) async {
+  Future<void> loadQuizPack({
+    required int quizPackId,
+    required int userId,
+  }) async {
     emit(QuizPackLoading());
     try {
       final quizPack = await _apiService.getQuizPack(quizPackId: quizPackId);
+      this.userId = userId;
       emit(QuizPackLoaded(quizPack: quizPack));
     } catch (e) {
       emit(QuizzesError(message: 'Error loading quiz pack: $e'));
@@ -58,7 +65,6 @@ class QuizPackCubit extends Cubit<QuizzesState> {
 
     final currentState = state as QuizInProgress;
 
-    // Only allow selection if no answer has been selected yet
     if (currentState.selectedAnswer != null) return;
 
     emit(currentState.copyWith(
@@ -81,57 +87,74 @@ class QuizPackCubit extends Cubit<QuizzesState> {
     _questionTimer?.cancel();
 
     if (nextIndex < currentState.totalQuestions) {
-      final newState = currentState.copyWith(
+      emit(currentState.copyWith(
         currentQuiz: quizPack.quizzes[nextIndex],
         currentQuestionIndex: nextIndex,
         timeLeft: 30000,
-        selectedAnswer: null, // Explicitly pass null
-      );
-      print("Before emit - selectedAnswer: ${currentState.selectedAnswer}");
-      print("New state - selectedAnswer: ${newState.selectedAnswer}");
-      emit(newState);
-      print("After emit - selectedAnswer: ${newState.selectedAnswer}");
+        selectedAnswer: null,
+      ));
       _startQuestionTimer(quizPack);
     } else {
       _finishQuiz(quizPack);
     }
   }
 
-  void _finishQuiz(QuizPack quizPack) {
+  void _finishQuiz(QuizPack quizPack) async {
     if (state is! QuizInProgress) return;
 
     final currentState = state as QuizInProgress;
     int correctAnswers = 0;
 
-    // Calculate correct answers from all selected answers
     currentState.selectedAnswers.forEach((index, answer) {
       if (answer != null) {
         final question = quizPack.quizzes[index];
-        if (question.answers.any((a) => a.answerText == answer.answerText && a.correct)) {
+        if (question.answers
+            .any((a) => a.answerText == answer.answerText && a.correct)) {
           correctAnswers++;
         }
       }
     });
+
+    // Coinsni hisoblash uchun yagona funksiya chaqiriladi
+    final coins = calculateCoins(
+        correctAnswers, currentState.totalQuestions, quizPack.difficultyLevel);
+
+    await UserService(ApiClient().dio).addCoinsToUser(userId, coins);
 
     emit(QuizFinished(
       quizPack: quizPack,
       correctAnswers: correctAnswers,
       totalQuestions: currentState.totalQuestions,
       difficulty: quizPack.difficultyLevel ?? 'Easy',
-      difficultyMultiplier: _getMultiplierForDifficulty(quizPack.difficultyLevel),
+      difficultyMultiplier:
+          _getMultiplierForDifficulty(quizPack.difficultyLevel),
+      earnedCoins: coins,
     ));
+  }
+
+  // Bir xil formulani qo'llash uchun
+  int calculateReward(QuizPack pack) {
+    return calculateCoins(
+        pack.quizzes.length, pack.quizzes.length, pack.difficultyLevel);
+  }
+
+  int calculateCoins(
+      int correctAnswers, int totalQuestions, String? difficultyLevel) {
+    final multiplier = _getMultiplierForDifficulty(difficultyLevel);
+
+    return (correctAnswers * 5000 * multiplier).toInt();
   }
 
   double _getMultiplierForDifficulty(String? difficulty) {
     switch (difficulty?.toLowerCase()) {
       case 'easy':
-        return 1.0;
+        return 1;
       case 'medium':
-        return 1.5;
+        return 2;
       case 'hard':
-        return 2.0;
+        return 3;
       default:
-        return 1.0;
+        return 1;
     }
   }
 
@@ -159,7 +182,6 @@ class QuizPackCubit extends Cubit<QuizzesState> {
   @override
   Future<void> close() {
     _questionTimer?.cancel();
-    _questionTimer = null;
     return super.close();
   }
 }

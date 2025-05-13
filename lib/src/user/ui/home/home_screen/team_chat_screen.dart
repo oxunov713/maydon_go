@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:maydon_go/src/common/model/main_model.dart';
 
 import 'package:maydon_go/src/common/model/team_model.dart';
 
@@ -28,7 +29,7 @@ class _FootballTeamChatScreenState extends State<TeamChatScreen> {
 
   late types.User _currentUser;
 
-  final List<TeamMember> _players = [];
+  final List<UserModel> _players = [];
 
   @override
   void initState() {
@@ -52,30 +53,30 @@ class _FootballTeamChatScreenState extends State<TeamChatScreen> {
   void _initializeTeam() {
 // Starting 11 with standard positions (4-3-3 formation)
 
-    _players.addAll([
-      TeamMember(id: '1', name: 'David De Gea', position: 'GK', photoUrl: ''),
-      TeamMember(
-          id: '2',
-          name: 'Trent Alexander-Arnold',
-          position: 'RB',
-          photoUrl: ''),
-      TeamMember(
-          id: '3', name: 'Virgil van Dijk', position: 'CB', photoUrl: ''),
-      TeamMember(id: '4', name: 'Rúben Dias', position: 'CB', photoUrl: ''),
-      TeamMember(
-          id: '5', name: 'Andrew Robertson', position: 'LB', photoUrl: ''),
-      TeamMember(
-          id: '6', name: 'Kevin De Bruyne', position: 'CMF', photoUrl: ''),
-      TeamMember(id: '7', name: 'N\'Golo Kanté', position: 'DMF', photoUrl: ''),
-      TeamMember(id: '8', name: 'Luka Modrić', position: 'CMF', photoUrl: ''),
-      TeamMember(id: '9', name: 'Mohamed Salah', position: 'RWF', photoUrl: ''),
-      TeamMember(
-          id: '10', name: 'Robert Lewandowski', position: 'CF', photoUrl: ''),
-      TeamMember(
-          id: '11', name: 'Kylian Mbappé', position: 'LWF', photoUrl: ''),
-    ]);
+    // _players.addAll([
+    //   TeamMember(id: '1', name: 'David De Gea', position: 'GK', photoUrl: ''),
+    //   TeamMember(
+    //       id: '2',
+    //       name: 'Trent Alexander-Arnold',
+    //       position: 'RB',
+    //       photoUrl: ''),
+    //   TeamMember(
+    //       id: '3', name: 'Virgil van Dijk', position: 'CB', photoUrl: ''),
+    //   TeamMember(id: '4', name: 'Rúben Dias', position: 'CB', photoUrl: ''),
+    //   TeamMember(
+    //       id: '5', name: 'Andrew Robertson', position: 'LB', photoUrl: ''),
+    //   TeamMember(
+    //       id: '6', name: 'Kevin De Bruyne', position: 'CMF', photoUrl: ''),
+    //   TeamMember(id: '7', name: 'N\'Golo Kanté', position: 'DMF', photoUrl: ''),
+    //   TeamMember(id: '8', name: 'Luka Modrić', position: 'CMF', photoUrl: ''),
+    //   TeamMember(id: '9', name: 'Mohamed Salah', position: 'RWF', photoUrl: ''),
+    //   TeamMember(
+    //       id: '10', name: 'Robert Lewandowski', position: 'CF', photoUrl: ''),
+    //   TeamMember(
+    //       id: '11', name: 'Kylian Mbappé', position: 'LWF', photoUrl: ''),
+    // ]);
+    // }
   }
-
   void _loadFakeMessages() {
     final messages = [
       types.TextMessage(
@@ -233,14 +234,14 @@ class _FootballTeamChatScreenState extends State<TeamChatScreen> {
                   itemBuilder: (context, index) {
                     final player = _players[index];
 
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.green,
-                        backgroundImage: NetworkImage(player.photoUrl),
-                      ),
-                      title: Text(player.name),
-                      trailing: Text('Position: ${player.position}'),
-                    );
+                    // return ListTile(
+                    //   leading: CircleAvatar(
+                    //     backgroundColor: AppColors.green,
+                    //     backgroundImage: NetworkImage(player.photoUrl),
+                    //   ),
+                    //   title: Text(player.name),
+                    //   trailing: Text('Position: ${player.position}'),
+                    // );
                   },
                 ),
               ),

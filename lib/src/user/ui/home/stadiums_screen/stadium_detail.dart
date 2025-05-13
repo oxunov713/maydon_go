@@ -107,7 +107,7 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
     // Responsivlik uchun asosiy o'lchamlar
     final double titleFontSize = deviceHeight * 0.025;
     final double addressFontSize = deviceHeight * 0.02;
-    final double priceFontSize = deviceHeight * 0.03;
+    final double priceFontSize = deviceHeight * 0.025;
     final double ratingFontSize = deviceHeight * 0.015;
     final double iconSize = deviceHeight * 0.02;
     final double tabBarHeight = deviceHeight * 0.7;
@@ -122,7 +122,7 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
             if (state is BookingLoaded) {
               Logger().d(state.stadium.facilities);
               final stadium = state.stadium;
-              final images = stadium.images??[];
+              final images = stadium.images ?? [];
               return RefreshIndicator(
                 edgeOffset: deviceHeight * 0.5,
                 onRefresh: () => context
@@ -132,86 +132,92 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                   body: CustomScrollView(
                     slivers: [
                       SliverAppBar(
-                          floating: false,
-                          pinned: true,
-                          expandedHeight: deviceHeight * 0.25,
-                          actions: [
-                            // BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
-                            //   builder: (context, savedState) {
-                            //     bool isSaved = false;
-                            //
-                            //     if (savedState is SavedStadiumsLoaded) {
-                            //       isSaved = savedState.savedStadiums
-                            //           .any((stadium) => stadium.id == widget.stadiumId);
-                            //     }
-                            //
-                            //     return IconButton(
-                            //       icon: Icon(
-                            //         isSaved ? Icons.bookmark : Icons.bookmark_border,
-                            //         color: AppColors.white,
-                            //       ),
-                            //       onPressed: () {
-                            //         final cubit = context.read<SavedStadiumsCubit>();
-                            //         if (isSaved) {
-                            //           cubit.removeStadiumFromSaved(widget.stadiumId);
-                            //         } else {
-                            //           cubit.addStadiumToSaved(widget.stadiumId);
-                            //         }
-                            //       },
-                            //     );
-                            //   },
-                            // ),
-                          ],
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Padding(
-                        padding: EdgeInsets.only(right: deviceWidth * 0.1),
-                        child: Text(
-                          stadium.name ?? 'Nomaʼlum stadion',
-                          maxLines: 1,
-                          style: TextStyle(
-                            fontSize: titleFontSize,
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w800,
-                            overflow: TextOverflow.clip,
-                          ),
-                        ),
-                      ),
-                      background: images.isNotEmpty  // Ro'yxat bo'sh emasligini tekshiramiz
-                          ? CarouselSlider.builder(
-                        itemCount: images.length,
-                        itemBuilder: (context, index, realIndex) {
-                          final imageUrl = images[index]; // Custom yoki real image URL
+                        floating: false,
+                        pinned: true,
+                        expandedHeight: deviceHeight * 0.25,
+                        actions: [
+                          BlocBuilder<SavedStadiumsCubit, SavedStadiumsState>(
+                            builder: (context, savedState) {
+                              bool isSaved = false;
 
-                          return SizedBox(
-                            width: deviceWidth,
-                            child: CachedNetworkImage(
-                              imageUrl: imageUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                              errorWidget: (context, url, error) => Image.asset(
-                                AppIcons.defaultStadium, // default asset image
-                                fit: BoxFit.cover,
+                              if (savedState is SavedStadiumsLoaded) {
+                                isSaved = savedState.savedStadiums
+                                    .any((stadium) => stadium.id == widget.stadiumId);
+                              }
+
+                              return IconButton(
+                                icon: Icon(
+                                  isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                  color: AppColors.white,
+                                ),
+                                onPressed: () {
+                                  final cubit = context.read<SavedStadiumsCubit>();
+                                  if (isSaved) {
+                                    cubit.removeStadiumFromSaved(stadium);
+                                  } else {
+                                    cubit.addStadiumToSaved(stadium);
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                        flexibleSpace: FlexibleSpaceBar(
+                          title: Padding(
+                            padding: EdgeInsets.only(right: deviceWidth * 0.1),
+                            child: Text(
+                              stadium.name ?? 'Nomaʼlum stadion',
+                              maxLines: 1,
+                              style: TextStyle(
+                                fontSize: titleFontSize,
+                                color: AppColors.white,
+                                fontWeight: FontWeight.w800,
+                                overflow: TextOverflow.clip,
                               ),
                             ),
-                          );
-                        },
-                        options: CarouselOptions(
-                          viewportFraction: 1.0,
-                          initialPage: 0,
-                          autoPlay: true,
-                          autoPlayInterval: const Duration(seconds: 5),
-                        ),
-                      )
-                          : Image.asset(
-                            AppIcons.defaultStadium, // default asset image
-                            fit: BoxFit.cover,
                           ),
+                          background: images
+                                  .isNotEmpty // Ro'yxat bo'sh emasligini tekshiramiz
+                              ? CarouselSlider.builder(
+                                  itemCount: images.length,
+                                  itemBuilder: (context, index, realIndex) {
+                                    final imageUrl = images[
+                                        index]; // Custom yoki real image URL
 
-                    )
-,),
-                    SliverList(
+                                    return SizedBox(
+                                      width: deviceWidth,
+                                      child: CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Image.asset(
+                                          AppIcons.defaultStadium,
+                                          // default asset image
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  options: CarouselOptions(
+                                    viewportFraction: 1.0,
+                                    initialPage: 0,
+                                    autoPlay: true,
+                                    autoPlayInterval:
+                                        const Duration(seconds: 5),
+                                  ),
+                                )
+                              : Image.asset(
+                                  AppIcons
+                                      .defaultStadium, // default asset image
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                      SliverList(
                         delegate: SliverChildListDelegate(
                           [
                             Padding(
@@ -397,39 +403,42 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                                                 }
                                               },
                                             ),
-                                            Column(
-                                              children: [
-                                                Text(
-                                                  "Narxi:",
-                                                  style: TextStyle(
-                                                    fontSize:
-                                                        deviceHeight * 0.02,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: deviceWidth * 0.45,
-                                                  child: Text(
-                                                    textAlign: TextAlign.center,
-                                                    "${stadium.price?.formatWithSpace()} so'm",
+                                            Expanded(
+                                              child: Column(
+                                                children: [
+                                                  Text(
+                                                    "Narxi:",
                                                     style: TextStyle(
-                                                        fontSize: priceFontSize,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: AppColors.green,
-                                                        overflow: TextOverflow
-                                                            .ellipsis),
+                                                      fontSize:
+                                                          deviceHeight * 0.02,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                  SizedBox(
+                                                    width: deviceWidth * 0.45,
+                                                    child: Text(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      "${stadium.price?.formatWithSpace()} so'm",
+                                                      style: TextStyle(
+                                                          fontSize:
+                                                              priceFontSize,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              AppColors.green,
+                                                          overflow: TextOverflow
+                                                              .clip),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  SizedBox(
-                                    height: 5,
                                   ),
 
                                   const TabBar(
@@ -1055,22 +1064,22 @@ void showRatingDialog(BuildContext context) {
               state.rating == 0
                   ? SizedBox()
                   : SizedBox(
-                width: MediaQuery.sizeOf(context).width * 0.7,
-                child: TextButton(
-                  style: ButtonStyle(
-                      backgroundColor:
-                      WidgetStatePropertyAll(AppColors.green)),
-                  onPressed: () async {
-                    // sendRating() metodini await qilish zarur
-                    await cubit.sendRating();
-                    context.pop(); // Dialogni yopish
-                  },
-                  child: const Text(
-                    "Jo'natish",
-                    style: TextStyle(color: AppColors.white),
-                  ),
-                ),
-              ),
+                      width: MediaQuery.sizeOf(context).width * 0.7,
+                      child: TextButton(
+                        style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStatePropertyAll(AppColors.green)),
+                        onPressed: () async {
+                          // sendRating() metodini await qilish zarur
+                          await cubit.sendRating();
+                          context.pop(); // Dialogni yopish
+                        },
+                        child: const Text(
+                          "Jo'natish",
+                          style: TextStyle(color: AppColors.white),
+                        ),
+                      ),
+                    ),
             ],
           );
         }
@@ -1080,4 +1089,3 @@ void showRatingDialog(BuildContext context) {
     },
   );
 }
-

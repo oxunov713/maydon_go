@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/model/friend_model.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
@@ -24,23 +25,15 @@ class MessagesScreen extends StatefulWidget {
 class _MessagesScreenState extends State<MessagesScreen> {
   late List<Friendship> friendsMessages;
 
-  late final List<ChatUser> _users;
+  late final List<Friendship> _users;
 
   @override
-  void initState() {
-    super.initState();
-
-    friendsMessages = context.read<MyClubCubit>().connections;
-
-    _users = friendsMessages.map((friendship) {
-      return ChatUser(
-        user: friendship.friend,
-        lastMessage: "No messages yet",
-        time: _formatTime(DateTime.now()),
-        isOnline: true,
-        unreadCount: 0,
-      );
-    }).toList();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentState = context.read<MyClubCubit>().state;
+    if (currentState is MyClubLoaded) {
+      _users = currentState.connections;
+    }
   }
 
   String _formatTime(DateTime? time) {
@@ -75,7 +68,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     : GoSubscriptionFeatures.friendsLength;
                 return Text("${state.connections.length}/$maxLength");
               } else if (state is MyClubLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                    child: SizedBox.square(
+                        dimension: 10,
+                        child: CircularProgressIndicator(
+                          color: AppColors.white,
+                          strokeWidth: 2,
+                        )));
               } else if (state is MyClubError) {
                 return ListView(
                     padding: EdgeInsets.only(top: 250),
@@ -94,14 +93,39 @@ class _MessagesScreenState extends State<MessagesScreen> {
           )
         ],
       ),
-      body: (_users.isNotEmpty)
-          ? _buildMessagesList()
-          : Center(
-              child: Text(
-                "You have no chats yet.",
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
+      body: BlocBuilder<MyClubCubit, MyClubState>(
+
+          builder: (context, state) {
+            if (state is MyClubLoading) {
+              return const Center(
+                  child: CircularProgressIndicator(
+                color: AppColors.green,
+              ),);
+            }
+
+            if (state is MyClubError) {
+              return Center(child: Text(state.error));
+            }
+
+            if (state is MyClubLoaded) {
+              final users = state.connections;
+
+              return RefreshIndicator(
+                onRefresh: () => context.read<MyClubCubit>().loadData(),
+                child: users.isEmpty
+                    ? Center(child: Text("You have no chats yet"))
+                    : ListView.builder(
+                        itemCount: users.length,
+                        itemBuilder: (context, index) {
+                          final chatUser = users[index];
+                          return _buildUserTile(chatUser);
+                        },
+                      ),
+              );
+            }
+
+            return const SizedBox.shrink();
+          }),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.blue,
         shape: CircleBorder(),
@@ -124,47 +148,40 @@ class _MessagesScreenState extends State<MessagesScreen> {
             }
           }
         },
-        child: const Icon(
-          Icons.edit,
+        child: Icon(
+          (_users.isNotEmpty) ? Icons.edit : Icons.add,
           color: AppColors.white,
         ),
       ),
     );
   }
 
-  Widget _buildMessagesList() {
-    return ListView.builder(
-      itemCount: _users.length,
-      itemBuilder: (context, index) {
-        final chatUser = _users[index];
-        return _buildUserTile(chatUser);
-      },
-    );
-  }
-
-  Widget _buildUserTile(ChatUser chatUser) {
-    final friend = chatUser.user;
+  Widget _buildUserTile(Friendship chatUser) {
+    final friend = chatUser.friend;
     return ListTile(
       leading: _buildUserAvatar(friend),
       title: Text(
         friend.fullName ?? 'Unknown',
         style: TextStyle(
-          fontWeight:
-              chatUser.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+          fontWeight: (friend.unreadCount ?? 0) > 0
+              ? FontWeight.bold
+              : FontWeight.normal,
         ),
       ),
       subtitle: Text(
-        chatUser.lastMessage,
+        friend.lastMessage.toString(),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: chatUser.unreadCount > 0 ? Colors.black : Colors.grey[600],
-          fontWeight:
-              chatUser.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+          color:
+              (friend.unreadCount ?? 0) > 0 ? Colors.black : Colors.grey[600],
+          fontWeight: (friend.unreadCount ?? 0) > 0
+              ? FontWeight.w500
+              : FontWeight.normal,
         ),
       ),
       trailing: _buildMessageTrailing(chatUser),
-      onTap: () => _navigateToChat(context, friend),
+      onTap: () => _navigateToChat(context, chatUser),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
     );
   }
@@ -209,19 +226,19 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildMessageTrailing(ChatUser chatUser) {
+  Widget _buildMessageTrailing(Friendship chatUser) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          chatUser.time,
+          chatUser.friend.time ?? "0",
           style: TextStyle(
             color: Colors.grey[600],
             fontSize: 12,
           ),
         ),
-        if (chatUser.unreadCount > 0)
+        if ((chatUser.friend.unreadCount ?? 0) > 0)
           Container(
             margin: const EdgeInsets.only(top: 4),
             padding: const EdgeInsets.all(5),
@@ -230,7 +247,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               shape: BoxShape.circle,
             ),
             child: Text(
-              chatUser.unreadCount.toString(),
+              chatUser.friend.unreadCount.toString(),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 10,
@@ -242,36 +259,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  void _navigateToChat(BuildContext context, UserModel friend) {
-    // context.pushNamed(
-    //   AppRoutes.chat,
-    //   extra: {
-    //     'currentUser': types.User(
-    //       id: currentUser.id.toString(),
-    //       firstName: currentUser.fullName,
-    //     ),
-    //     'receiverUser': types.User(
-    //       id: user.id.toString(),
-    //       firstName: user.fullName,
-    //     ),
-    //   },
-    // );
+  void _navigateToChat(BuildContext context, Friendship friend) {
+    final user = context.read<MyClubCubit>().user;
+
+    context.pushNamed(
+      AppRoutes.chat,
+      extra: {
+        'currentUser': user,
+        'receiverUser': friend.friend,
+        "chatId": friend.chatId
+      },
+    );
   }
-}
-
-class ChatUser {
-  final UserModel user;
-  final String lastMessage;
-
-  final String time;
-  final bool isOnline;
-  final int unreadCount;
-
-  ChatUser({
-    required this.user,
-    required this.lastMessage,
-    required this.time,
-    required this.isOnline,
-    required this.unreadCount,
-  });
 }

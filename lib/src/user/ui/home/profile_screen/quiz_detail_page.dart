@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/style/app_colors.dart';
-import 'package:maydon_go/src/user/bloc/quizzes_cubit/quizzes_cubit.dart';
-import 'package:maydon_go/src/common/model/quiz_model.dart';
+import 'package:intl/intl.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
 
+import '../../../../common/model/main_model.dart';
+import '../../../../common/model/quiz_model.dart';
+import '../../../../common/style/app_colors.dart';
+import '../../../bloc/quizzes_cubit/quizzes_cubit.dart';
 import '../../../bloc/quizzes_cubit/quizzes_state.dart';
 
 class QuizDetailPage extends StatelessWidget {
@@ -15,41 +19,61 @@ class QuizDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) =>
-          QuizPackCubit()..loadQuizPack(quizPackId: quizPackId),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(packName),
-          backgroundColor: AppColors.blue,
-        ),
-        backgroundColor: AppColors.white,
-        body: Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              fit: BoxFit.cover,
-              image: AssetImage("assets/images/champions.jpg"),
-            ),
-          ),
-          child: BlocBuilder<QuizPackCubit, QuizzesState>(
-            builder: (context, state) {
-              if (state is QuizzesLoading || state is QuizPackLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is QuizPackLoaded) {
-                return _QuizOverview(quizPack: state.quizPack);
-              } else if (state is QuizInProgress) {
-                return _QuizQuestionScreen(state: state);
-              } else if (state is QuizFinished) {
-                return _QuizResultScreen(state: state);
-              } else if (state is QuizzesError) {
-                return Center(child: Text(state.message));
-              }
-              return const Center(child: Text("Failed to load quiz"));
-            },
-          ),
-        ),
-      ),
-    );
+    return FutureBuilder<UserModel>(
+        future: UserService(ApiClient().dio).getUser(),
+        // Fetch the user asynchronously
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.hasData) {
+            final userId = snapshot.data!.id; // Access the user ID
+            return BlocProvider(
+              create: (context) => QuizPackCubit()
+                ..loadQuizPack(quizPackId: quizPackId, userId: userId ?? -1),
+              // Pass userId here
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text(packName),
+                  backgroundColor: AppColors.blue,
+                ),
+                backgroundColor: AppColors.white,
+                body: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      fit: BoxFit.cover,
+                      image: AssetImage("assets/images/champions.jpg"),
+                    ),
+                  ),
+                  child: BlocBuilder<QuizPackCubit, QuizzesState>(
+                    builder: (context, state) {
+                      if (state is QuizzesLoading || state is QuizPackLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is QuizPackLoaded) {
+                        return _QuizOverview(quizPack: state.quizPack);
+                      } else if (state is QuizInProgress) {
+                        return _QuizQuestionScreen(state: state);
+                      } else if (state is QuizFinished) {
+                        return _QuizResultScreen(state: state);
+                      } else if (state is QuizzesError) {
+                        return Center(child: Text(state.message));
+                      }
+                      return const Center(child: Text("Failed to load quiz"));
+                    },
+                  ),
+                ),
+              ),
+            );
+          }
+          return Center(
+            child: Text("No data"),
+          );
+        });
   }
 }
 
@@ -60,7 +84,7 @@ class _QuizOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final multiplier = _getMultiplierForDifficulty(quizPack.difficultyLevel);
+    final reward = context.read<QuizPackCubit>().calculateReward(quizPack);
 
     return Center(
       child: Padding(
@@ -102,7 +126,7 @@ class _QuizOverview extends StatelessWidget {
                       _DifficultyBadge(difficulty: quizPack.difficultyLevel),
                       const SizedBox(height: 32),
                       Text(
-                        "Potential reward: ${(quizPack.quizzes.length * multiplier).toInt()} coins",
+                        "Potential reward: ${NumberFormat.decimalPattern('en').format(reward)} coins",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.orange,
@@ -134,19 +158,6 @@ class _QuizOverview extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  double _getMultiplierForDifficulty(String? difficulty) {
-    switch (difficulty?.toLowerCase()) {
-      case 'easy':
-        return 1.0;
-      case 'medium':
-        return 1.5;
-      case 'hard':
-        return 2.0;
-      default:
-        return 1.5;
-    }
   }
 }
 
@@ -395,9 +406,6 @@ class _QuizResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coinsEarned =
-        (state.correctAnswers * state.difficultyMultiplier * 5).toInt();
-
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -439,7 +447,7 @@ class _QuizResultScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    "+$coinsEarned coins",
+                    "+${NumberFormat.decimalPattern('en').format(state.earnedCoins)} coins",
                     style: const TextStyle(
                       fontSize: 22,
                       color: Colors.orange,

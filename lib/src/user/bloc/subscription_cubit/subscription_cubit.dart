@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-
 import '../../../common/model/main_model.dart';
-import '../../../common/service/api_service.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/user_service.dart';
 
 part 'subscription_state.dart';
 
@@ -12,7 +12,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   Future<void> fetchSubscriptions() async {
     emit(SubscriptionLoading());
     try {
-      final subscriptions = await ApiService().getClientSubscription();
+      final subscriptions = await UserService(ApiClient().dio).getClientSubscription();
       emit(SubscriptionLoaded(subscriptions));
     } catch (e) {
       emit(SubscriptionError("Xatolik: ${e.toString()}"));

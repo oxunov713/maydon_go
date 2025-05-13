@@ -1,12 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
 import '../../../common/model/stadium_model.dart';
-import '../../../common/service/api_service.dart';
 import 'saved_stadium_state.dart';
 
 class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
-
   final Map<int, StadiumDetail> _savedStadiums = {};
   final Map<int, bool> _loadingStates = {};
+  final apiService = UserService(ApiClient().dio);
 
   SavedStadiumsCubit() : super(SavedStadiumsInitial()) {
     loadSavedStadiums();
@@ -16,7 +17,7 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
   Future<void> loadSavedStadiums() async {
     emit(SavedStadiumsLoading());
     try {
-      final List<StadiumDetail> savedList = await ApiService().getFavourites();
+      final List<StadiumDetail> savedList = await apiService.getFavourites();
       _savedStadiums.clear();
 
       for (var stadium in savedList ?? []) {
@@ -38,7 +39,7 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
     _notifyCurrentState();
 
     try {
-      await ApiService().addToFav(stadiumId: stadium.id!);
+      await apiService.addToFav(stadiumId: stadium.id!);
       _savedStadiums[stadium.id!] = stadium;
       _loadingStates[stadium.id!] = false;
       _notifyCurrentState();
@@ -56,7 +57,7 @@ class SavedStadiumsCubit extends Cubit<SavedStadiumsState> {
     _notifyCurrentState();
 
     try {
-      await ApiService().removeFromFav(stadiumId: stadium.id!);
+      await apiService.removeFromFav(stadiumId: stadium.id!);
       _savedStadiums.remove(stadium.id!);
       _loadingStates[stadium.id!] = false;
       _notifyCurrentState();

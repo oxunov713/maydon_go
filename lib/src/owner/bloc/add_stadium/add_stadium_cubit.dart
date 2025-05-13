@@ -1,16 +1,14 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:logger/logger.dart';
-import 'package:maydon_go/src/common/model/stadium_model.dart';
-import 'package:maydon_go/src/common/model/substadium_model.dart';
-import '../../../common/service/api_service.dart';
+import '../../../common/model/stadium_model.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/stadium_service.dart';
 import 'add_stadium_state.dart';
 
 class AddStadiumCubit extends Cubit<AddStadiumState> {
-  final Logger _logger = Logger();
   int size = 10;
   bool hasMoreData = true;
+  final apiService = StadiumService(ApiClient().dio);
 
   AddStadiumCubit() : super(AddStadiumState.initial());
 
@@ -64,7 +62,8 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
       // Generate a list of field objects based on the count
       final List<Map<String, String>> fields = List.generate(
         state.count,
-            (index) => {"name": "${state.name} Maydon ${index + 1}"}, // You can customize the name here
+        (index) =>
+            {"name": "Stadion ${index + 1}"}, // You can customize the name here
       );
 
       final stadiumData = {
@@ -88,13 +87,12 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
         "fields": fields, // Use the dynamically generated list of fields
       };
 
-      await ApiService().createStadium(body: stadiumData);
-      _logger.i('Stadium created with ${fields.length} fields: $stadiumData');
+      await apiService.createStadium(body: stadiumData);
+
       Future.delayed(Duration(seconds: 3));
       emit(state.copyWith(isSuccess: true, isSubmitting: false));
       await loadSubstadiums(isRefresh: true); // Refresh the list after adding
     } catch (e) {
-      _logger.e('Failed to create stadium with multiple fields: $e');
       emit(state.copyWith(
         errorMessage: 'Failed to create stadium: ${e.toString()}',
         isSubmitting: false,
@@ -129,35 +127,41 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
   }
 
   Future<void> loadSubstadiums({bool isRefresh = false}) async {
-    if (state.isLoading && !isRefresh) return; // Не загружать, если уже загружается и не обновление
+    if (state.isLoading && !isRefresh)
+      return; // Не загружать, если уже загружается и не обновление
 
     try {
       if (isRefresh) {
         size = 10;
         hasMoreData = true;
-        emit(state.copyWith(substadiums: [], isLoading: true, hasError: false)); // Очищаем список и начинаем загрузку
+        emit(state.copyWith(
+            substadiums: [],
+            isLoading: true,
+            hasError: false)); // Очищаем список и начинаем загрузку
       } else {
-        emit(state.copyWith(isLoading: true, hasError: false)); // Начинаем загрузку, но не очищаем список
+        emit(state.copyWith(
+            isLoading: true,
+            hasError: false)); // Начинаем загрузку, но не очищаем список
       }
 
-      final substadiums = await ApiService().getBronList(size: size);
-      _logger.i("Yuklangan substadionlar: ${substadiums.length}");
+      final substadiums = await apiService.getBronList(size: size);
 
       if (substadiums.isEmpty) {
         hasMoreData = false;
-        emit(state.copyWith(isLoading: false)); // Завершаем загрузку, если нет данных
+        emit(state.copyWith(
+            isLoading: false)); // Завершаем загрузку, если нет данных
         return;
       }
 
       size += 10;
 
       emit(state.copyWith(
-        substadiums: substadiums, // Заменяем список, если обновление, или добавляем, если нет
+        substadiums: substadiums,
+        // Заменяем список, если обновление, или добавляем, если нет
         isLoading: false,
         isSuccess: false,
       ));
     } catch (e) {
-      _logger.e('Failed to load substadiums: $e');
       emit(state.copyWith(
           isLoading: false, hasError: true, errorMessage: e.toString()));
     }
@@ -167,11 +171,10 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
     try {
       emit(state.copyWith(hasError: false, isLoading: true));
       final substadium =
-          await ApiService().getSubStadiumBooks(subStadiumId: fieldId);
+          await apiService.getSubStadiumBooks(subStadiumId: fieldId);
       emit(state.copyWith(
           isLoading: false, hasError: false, substadium: substadium));
     } catch (e) {
-      _logger.e('Failed to load substadiums: $e');
       emit(state.copyWith(
           isLoading: false, hasError: true, errorMessage: e.toString()));
     }
@@ -180,10 +183,8 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
   Future<int> getCurrentStadium() async {
     StadiumDetail stadium = StadiumDetail(name: "No name", id: -1);
     try {
-      stadium = await ApiService().getStadiumByToken();
-    } catch (e) {
-      _logger.e('Failed to load current stadium: $e');
-    }
+      stadium = await apiService.getStadiumByToken();
+    } catch (e) {}
     return stadium.id ?? -1;
   }
 }

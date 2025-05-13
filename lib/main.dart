@@ -14,6 +14,7 @@ import 'package:maydon_go/src/user/bloc/all_stadium_cubit/all_stadium_cubit.dart
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_history/booking_history_cubit.dart';
+import 'package:maydon_go/src/user/bloc/chat_cubit/chat_cubit.dart';
 import 'package:maydon_go/src/user/bloc/home_cubit/home_cubit.dart';
 import 'package:maydon_go/src/user/bloc/locale_cubit/locale_cubit.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
@@ -23,7 +24,9 @@ import 'package:maydon_go/src/user/bloc/saved_stadium_cubit/saved_stadium_cubit.
 import 'package:maydon_go/src/user/bloc/subscription_cubit/subscription_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_cubit.dart';
 import 'package:maydon_go/src/user/bloc/tournament_cubit/tournament_cubit.dart';
+import 'package:provider/provider.dart';
 
+import 'src/common/service/connectivity_service.dart';
 import 'src/user/bloc/my_club_cubit/fab_visibility_cubit.dart';
 
 // Notifications pluginni global o‘zgaruvchi sifatida ishlatamiz
@@ -58,9 +61,11 @@ Future<void> initNotifications() async {
 Widget _buildApp() {
   return MultiBlocProvider(
     providers: [
+      ChangeNotifierProvider(create: (_) => ConnectivityService()),
       BlocProvider(create: (_) => LocaleCubit()),
       BlocProvider(create: (_) => ProfileCubit()),
       BlocProvider(create: (_) => AuthCubit()),
+      BlocProvider(create: (_) => ChatCubit()),
       BlocProvider(create: (_) => TournamentCubit()),
       BlocProvider(create: (_) => TeamCubit()..loadFriends()),
       BlocProvider(create: (_) => BookingCubit()),

@@ -47,7 +47,7 @@ class QuizzesPage extends StatelessWidget {
               }
 
               if (state is QuizzesLoaded &&
-                  (state as QuizzesLoaded).quizPacks.isEmpty) {
+                  state.quizPacks.isEmpty) {
                 return EmptyStateWidget(
                   onRefresh: () => context.read<QuizPackCubit>().fetchQuizzes(),
                 );
@@ -139,7 +139,7 @@ class QuizCard extends StatelessWidget {
                   DifficultyBadge(difficulty: quiz.difficultyLevel ?? "Easy"),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Icon(

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:maydon_go/src/common/constants/config.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
@@ -105,13 +106,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     "${state.user.fullName}",
                                     style: TextStyle(fontSize: height * 0.03),
                                   ),
-                                  Row(spacing: 10,
+                                  Row(
+                                    spacing: 10,
                                     children: [
                                       Text(
-                                        "${state.user.point ?? 0}",
+                                        NumberFormat.decimalPattern('en')
+                                            .format(state.user.point ?? 0),
                                         style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: height * 0.03),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: height * 0.03,
+                                        ),
                                       ),
                                       CustomPaint(
                                         size: const Size(35, 35),
@@ -194,19 +198,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               SizedBox(height: 10),
               _listTile(
-                icons: Icons.group_add,
-                title: "Find people for match",
-                isActive: false,
-                isSvg: false,
-                onTap: () => UrlLauncherService.openTelegram("maydongo"),
-              ),
-              SizedBox(height: 10),
-              _listTile(
                 icons: Icons.subscriptions,
                 isSvg: false,
                 title: "Subscription",
                 isActive: false,
                 onTap: () => context.pushNamed(AppRoutes.subscription),
+              ),
+              SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => UrlLauncherService.openTelegram("maydongo"),
+                child: SizedBox(
+                  height: 60,
+                  width: double.infinity,
+                  child: Card(
+                    color: AppColors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        spacing: 15,
+                        children: [
+                          Row(
+                            spacing: 10,
+                            children: [
+                              Icon(Icons.group_add),
+                              Text("Find people for match"),
+                            ],
+                          ),
+                          Icon(Icons.telegram)
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 10),
               _listTile(

@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/stadium_service.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
 import '../../../common/model/stadium_model.dart';
 import '../../../common/model/time_slot_model.dart';
-import '../../../common/service/api_service.dart';
 import '../../../common/service/booking_service.dart';
 import 'booking_state.dart';
 
@@ -13,17 +15,16 @@ class BookingCubit extends Cubit<BookingState> {
   String? selectedDate;
   double position = 0.0;
   bool confirmed = false;
-  final ApiService _apiService;
+  final StadiumService _apiService;
   final BookingHistoryService _bookingHistoryService;
-  final Logger _logger;
 
   BookingCubit({
-    ApiService? apiService,
+    StadiumService? apiService,
     BookingHistoryService? bookingHistoryService,
     Logger? logger,
-  })  : _apiService = apiService ?? ApiService(),
-        _bookingHistoryService = bookingHistoryService ?? BookingHistoryService(),
-        _logger = logger ?? Logger(),
+  })  : _apiService = apiService ?? StadiumService(ApiClient().dio),
+        _bookingHistoryService =
+            bookingHistoryService ?? BookingHistoryService(),
         super(BookingInitial());
 
   void rateStadium(int stadiumId, int rating) {
@@ -35,17 +36,20 @@ class BookingCubit extends Cubit<BookingState> {
 
   Future<void> sendRating() async {
     final currentState = state;
-    if (currentState is! BookingLoaded || currentState.stadium.id == null) return;
+    if (currentState is! BookingLoaded || currentState.stadium.id == null) {
+      return;
+    }
 
     try {
-
-      await _apiService.rateTheStadium(currentState.stadium.id!, currentState.rating);
-      emit(currentState.copyWith(rating: 0)); // Yangi reytingni yuborib bo'lgach, bahoni nolga o'zgartirish
+      await _apiService.rateTheStadium(
+          currentState.stadium.id!, currentState.rating);
+      emit(currentState.copyWith(
+          rating:
+              0)); // Yangi reytingni yuborib bo'lgach, bahoni nolga o'zgartirish
     } catch (e) {
       emit(BookingError('Xatolik yuz berdi: $e'));
     }
   }
-
 
   void setSelectedDate(String date) {
     final currentState = state;
@@ -58,8 +62,9 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading());
     try {
       final stadium = await _apiService.getStadiumById(stadiumId: stadiumId);
-      final user = await _apiService.getUser();
-      selectedStadiumName = stadium.fields?.firstOrNull?.name ?? "No subStadium";
+      final user = await UserService(ApiClient().dio).getUser();
+      selectedStadiumName =
+          stadium.fields?.firstOrNull?.name ?? "No subStadium";
       _updateSlots(stadium, user);
     } catch (e) {
       emit(BookingError("Failed to fetch stadium: $e"));
@@ -68,10 +73,12 @@ class BookingCubit extends Cubit<BookingState> {
 
   void setSelectedField(String fieldName) {
     final currentState = state;
-    if (currentState is! BookingLoaded || currentState.stadium.fields == null) return;
+    if (currentState is! BookingLoaded || currentState.stadium.fields == null) {
+      return;
+    }
 
     selectedStadiumName = fieldName;
-    _logger.i("Selected Stadium Name: $selectedStadiumName");
+
 
     final updatedFields = currentState.stadium.fields!.map((substadium) {
       if (substadium.name != fieldName) return substadium;
@@ -97,14 +104,15 @@ class BookingCubit extends Cubit<BookingState> {
     if (currentState is! BookingLoaded) return false;
 
     return currentState.bookings.any((bookedSlot) =>
-    bookedSlot.startTime == slot.startTime &&
+        bookedSlot.startTime == slot.startTime &&
         bookedSlot.endTime == slot.endTime);
   }
 
   void updatePosition(double delta, double maxPosition) {
     final currentState = state;
     if (currentState is BookingLoaded) {
-      final newPosition = (currentState.position + delta).clamp(0.0, maxPosition);
+      final newPosition =
+          (currentState.position + delta).clamp(0.0, maxPosition);
       emit(currentState.copyWith(position: newPosition));
     }
   }
@@ -121,11 +129,12 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void _updateSlots(StadiumDetail stadium, UserModel user) {
-    _logger.i("📅 Slotlarni yangilash...");
+
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final next30Days = List.generate(30, (index) => today.add(Duration(days: index)));
+    final next30Days =
+        List.generate(30, (index) => today.add(Duration(days: index)));
 
     final updatedFields = stadium.fields?.map((substadium) {
       final allSlots = _generateSlotsForDateRange(next30Days);
@@ -133,7 +142,7 @@ class BookingCubit extends Cubit<BookingState> {
         allSlots,
         substadium.bookings?.map((b) => b.timeSlot).toList() ?? [],
       );
-      _logger.i("🔄 ${substadium.name} uchun yangi slotlar: ${availableSlots.length}");
+
       return substadium.copyWith(availableSlots: availableSlots);
     }).toList();
 
@@ -143,7 +152,7 @@ class BookingCubit extends Cubit<BookingState> {
       selectedDate: selectedDate ?? today.toIso8601String().split("T")[0],
       selectedStadiumName: selectedStadiumName,
     ));
-    _logger.i("✅ State o'zgardi: $state");
+
   }
 
   List<TimeSlot> _generateSlotsForDateRange(List<DateTime> dates) {
@@ -166,11 +175,14 @@ class BookingCubit extends Cubit<BookingState> {
     return allSlots;
   }
 
-  List<TimeSlot> _removeBookedSlots(List<TimeSlot> allSlots, List<TimeSlot> bookedSlots) {
-    return allSlots.where((slot) => !bookedSlots.any((booking) =>
-    slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
-        (slot.startTime!.isAfter(booking.startTime!) &&
-            slot.startTime!.isBefore(booking.endTime!)))).toList();
+  List<TimeSlot> _removeBookedSlots(
+      List<TimeSlot> allSlots, List<TimeSlot> bookedSlots) {
+    return allSlots
+        .where((slot) => !bookedSlots.any((booking) =>
+            slot.startTime!.isAtSameMomentAs(booking.startTime!) ||
+            (slot.startTime!.isAfter(booking.startTime!) &&
+                slot.startTime!.isBefore(booking.endTime!))))
+        .toList();
   }
 
   void addSlot(TimeSlot slot) {
@@ -185,20 +197,24 @@ class BookingCubit extends Cubit<BookingState> {
     final currentState = state;
     if (currentState is! BookingLoaded) return;
 
-    final updatedBookings = currentState.bookings.where((s) => s != slot).toList();
+    final updatedBookings =
+        currentState.bookings.where((s) => s != slot).toList();
     emit(currentState.copyWith(bookings: updatedBookings));
   }
 
   void clearSlots() {
     final currentState = state;
     if (currentState is BookingLoaded) {
-      emit(currentState.copyWith(bookings: [], confirmed: false, position: 0.0));
+      emit(
+          currentState.copyWith(bookings: [], confirmed: false, position: 0.0));
     }
   }
 
   Future<void> confirmBooking(int subStadiumId) async {
     final currentState = state;
-    if (currentState is! BookingLoaded || currentState.stadium.id == null) return;
+    if (currentState is! BookingLoaded || currentState.stadium.id == null) {
+      return;
+    }
 
     try {
       await _apiService.bookStadium(

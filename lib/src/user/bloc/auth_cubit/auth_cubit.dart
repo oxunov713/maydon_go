@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
 import 'package:maydon_go/src/common/service/shared_preference_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../common/router/app_routes.dart';
-import '../../../common/service/api_service.dart';
+import '../../../common/service/api/auth_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final ApiService apiService = ApiService();
+  final apiService = AuthService(ApiClient().dio);
 
   AuthCubit() : super(AuthInitial());
 

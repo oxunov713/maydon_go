@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/model/points_model.dart';
+import 'package:maydon_go/src/common/model/team_model.dart';
 import '../../../common/model/friend_model.dart';
 import '../../../common/model/main_model.dart';
-import '../../../common/service/api_service.dart';
+import '../../../common/model/points_model.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/club_service.dart';
+import '../../../common/service/api/common_service.dart';
+import '../../../common/service/api/user_service.dart';
 
 part 'my_club_state.dart';
 
@@ -18,38 +22,97 @@ class MyClubCubit extends Cubit<MyClubState> {
   List<UserModel> allUsers = [];
   List<Friendship> connections = [];
   List<UserPoints> _liderBoard = [];
+  List<ClubModel> _clubs = [];
   Timer? _debounce;
   int limit = 10;
+  final apiService = UserService(ApiClient().dio);
+  final clubService = ClubService(ApiClient().dio);
 
   Future<void> loadData() async {
+    emit(MyClubLoading());
     try {
-      print("Loading data...");
       final results = await Future.wait([
-        ApiService().getAllUsers(),
-        ApiService().getFriends(),
-        ApiService().getLiderBoard(limit: limit),
+        apiService.getAllUsers(),
+        apiService.getFriends(),
+        CommonService(ApiClient().dio).getLiderBoard(limit: limit),
+        clubService.getClubs(),
       ]);
-      print("Finished fetching users, friends, and leaderboard.");
 
-      user = await ApiService().getUser();
-      print("Fetched user: ${user.id}");
-
-      allUsers = List<UserModel>.from(results[0]);connections = results[1] as List<Friendship>;
-      _liderBoard = results[2] as List<UserPoints>;
+      user = await apiService.getUser();
+      allUsers = List<UserModel>.from(results[0]);
+      connections = List<Friendship>.from(results[1]);
+      _liderBoard = List<UserPoints>.from(results[2]);
+      _clubs = List<ClubModel>.from(results[3]);
+      print("USER: $user");
+      print("CLUBS: $_clubs");
+      print("LEADERBOARD: $_liderBoard");
+      print("CONNECTIONS: $connections");
+      print("ALL USERS: $allUsers");
 
       emit(MyClubLoaded(
         user: user,
+        clubs: _clubs,
         liderBoard: _liderBoard,
-        connections: List.from(connections),
-        searchResults: List.from(allUsers),
+        connections: connections,
+        searchResults: allUsers,
       ));
-      print("Emitted MyClubLoaded");
     } catch (e) {
-      print("ERROR in loadData: $e");
       emit(MyClubError("❌ Xatolik: ${e.toString()}"));
     }
   }
 
+  Future<void> addConnection(UserModel friend) async {
+    if (!isConnected(friend.id!)) {
+      try {
+        final newFriendshipsJson =
+            await apiService.addToFriends(userId: friend.id!);
+        final newFriendships = List<Friendship>.from(
+            newFriendshipsJson.map((json) => Friendship.fromJson(json)));
+
+        if (newFriendships.isNotEmpty) {
+          // Create a NEW list instead of modifying the existing one
+          final updatedConnections = List<Friendship>.from(connections)
+            ..add(newFriendships.last);
+
+          connections = updatedConnections;
+
+          emit(MyClubLoaded(
+            user: user,
+            clubs: _clubs,
+            liderBoard: _liderBoard,
+            connections: updatedConnections,
+            searchResults: allUsers,
+          ));
+        }
+      } catch (e) {
+        emit(MyClubError("Do'st qo'shishda xatolik: ${e.toString()}"));
+      }
+    }
+  }
+
+  Future<void> removeConnection(UserModel friend) async {
+    if (isConnected(friend.id!)) {
+      try {
+        await apiService.removeFromFriends(userId: friend.id!);
+
+        // Create a NEW filtered list instead of modifying in-place
+        final updatedConnections =
+            connections.where((f) => f.friend.id != friend.id).toList();
+
+        connections = updatedConnections;
+
+        emit(MyClubLoaded(
+          user: user,
+          clubs: _clubs,
+          liderBoard: _liderBoard,
+          connections: updatedConnections,
+          searchResults: allUsers,
+        ));
+      } catch (e) {
+        emit(MyClubError("Do'stni o'chirishda xatolik: ${e.toString()}"));
+      }
+    }
+  }
 
   /// Foydalanuvchini do'stlar ro'yxatiga qo'shish yoki olib tashlash
   void toggleConnection(UserModel friend) async {
@@ -57,42 +120,6 @@ class MyClubCubit extends Cubit<MyClubState> {
       await removeConnection(friend);
     } else {
       await addConnection(friend);
-    }
-  }
-
-  /// Yangi foydalanuvchini do'stlar ro'yxatiga qo'shish
-  Future<void> addConnection(UserModel friend) async {
-    if (!isConnected(friend.id!)) {
-      final newFriendshipsJson =
-          await ApiService().addToFriends(userId: friend.id!);
-      final newFriendships = List<Friendship>.from(
-          newFriendshipsJson.map((json) => Friendship.fromJson(json)));
-
-      if (newFriendships.isNotEmpty) {
-        connections.add(newFriendships
-            .last); // Oxirgi qo'shilgan Friendship obyektini olamiz
-        emit(MyClubLoaded(
-          liderBoard: _liderBoard,
-          user: user,
-          connections: List.from(connections),
-          searchResults: List.from(allUsers),
-        ));
-      }
-    }
-  }
-
-  /// Foydalanuvchini do'stlar ro'yxatidan olib tashlash
-  Future<void> removeConnection(UserModel friend) async {
-    if (isConnected(friend.id!)) {
-      await ApiService().removeFromFriends(userId: friend.id!);
-      connections.removeWhere((f) => f.friend.id == friend.id);
-
-      emit(MyClubLoaded(
-        user: user,
-        liderBoard: _liderBoard,
-        connections: List.from(connections),
-        searchResults: List.from(allUsers),
-      ));
     }
   }
 
@@ -108,6 +135,7 @@ class MyClubCubit extends Cubit<MyClubState> {
       if (query.isEmpty) {
         emit(MyClubLoaded(
           user: user,
+          clubs: _clubs,
           liderBoard: _liderBoard,
           connections: List.from(connections),
           searchResults: List.from(allUsers),
@@ -120,6 +148,7 @@ class MyClubCubit extends Cubit<MyClubState> {
         if (number == null) {
           emit(MyClubLoaded(
             user: user,
+            clubs: _clubs,
             liderBoard: _liderBoard,
             connections: List.from(connections),
             searchResults: [],
@@ -127,9 +156,11 @@ class MyClubCubit extends Cubit<MyClubState> {
           return;
         }
 
-        final results = await ApiService().findUserByNumber(number: number);
+        final results = await CommonService(ApiClient().dio)
+            .findUserByNumber(number: number);
         emit(MyClubLoaded(
           user: user,
+          clubs: _clubs,
           liderBoard: _liderBoard,
           connections: List.from(connections),
           searchResults: results,
@@ -139,6 +170,18 @@ class MyClubCubit extends Cubit<MyClubState> {
       }
     });
   }
+
+  // ------[Club]-----
+  Future<void> createClub(String name, String position) async {
+    emit(MyClubLoading());
+    try {
+      await clubService.createClub(clubName: name, position: position);
+      await loadData(); // 👈 To‘liq ma’lumotni yangilaydi
+    } catch (e) {
+      emit(MyClubError("Klub yaratishda xatolik: ${e.toString()}"));
+    }
+  }
+
 
   @override
   Future<void> close() {

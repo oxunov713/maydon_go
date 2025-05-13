@@ -8,17 +8,20 @@ import '../style/app_colors.dart';
 import '../style/app_icons.dart';
 
 class ClubCard extends StatelessWidget {
-  const ClubCard(
-      {super.key,
-      required this.visibleFriends,
-      required this.remainingFriends,
-      required this.index,
-      required this.state});
+  const ClubCard({
+    super.key,
+    required this.visibleFriends,
+    required this.remainingFriends,
+    required this.index,
+    required this.state,
+    required this.isOwnedByUser,
+  });
 
   final List visibleFriends;
   final int remainingFriends;
   final int index;
   final MyClubLoaded state;
+  final bool isOwnedByUser;
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +32,17 @@ class ClubCard extends StatelessWidget {
       // Maksimum o'lcham
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [AppColors.green, AppColors.green2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: isOwnedByUser
+            ? const LinearGradient(
+                colors: [Colors.deepPurple, Colors.purpleAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: [AppColors.green, AppColors.green2],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
@@ -43,6 +52,7 @@ class ClubCard extends StatelessWidget {
           ),
         ],
       ),
+
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -53,7 +63,7 @@ class ClubCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Do'stlar: ${state.connections.length}/11",
+                  "Do'stlar: ${state.clubs[index].members.length}/11",
                   style: const TextStyle(
                     color: AppColors.white,
                     fontWeight: FontWeight.w600,
@@ -81,18 +91,35 @@ class ClubCard extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Klub nomi
-            const Center(
-              child: Text(
-                "Tashkent Bulls",
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    state.clubs[index].name,
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (isOwnedByUser)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "You",
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
 
             // Do'stlar avatarlari
             Center(

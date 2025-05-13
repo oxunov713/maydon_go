@@ -120,50 +120,39 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 child: SizedBox(
                   height: 55, // <-- bu yerda balandligini pasaytiryapmiz
-                  child: BottomNavigationBar(
+                  child:BottomNavigationBar(
                     type: BottomNavigationBarType.fixed,
-                    iconSize: floatingButtonIconSize * 0.75,
-                    // kichikroq ikon
                     currentIndex: context.read<HomeCubit>().selectedIndex,
-                    onTap: (value) => (value == 2)
-                        ? null
-                        : context.read<HomeCubit>().updateIndex(value),
+                    onTap: (value) {
+                      if (value != 2) {
+                        context.read<HomeCubit>().updateIndex(value);
+                      }
+                    },
                     items: [
-                      BottomNavigationBarItem(
-                        icon: SvgPicture.asset(
-                          AppIcons.homeIcon,
-                          color: AppColors.white,
-                          height: floatingButtonIconSize * 0.75,
-                        ),
-                        label: "",
+                      _buildNavItem(
+                        icon: AppIcons.homeIcon,
+                        isActive: context.read<HomeCubit>().selectedIndex == 0,
                       ),
-                      BottomNavigationBarItem(
-                        icon: SvgPicture.asset(
-                          AppIcons.stadionsIcon,
-                          color: AppColors.white,
-                          height: floatingButtonIconSize * 0.75,
-                        ),
-                        label: "",
+                      _buildNavItem(
+                        icon: AppIcons.stadionsIcon,
+                        isActive: context.read<HomeCubit>().selectedIndex == 1,
                       ),
                       const BottomNavigationBarItem(
                         icon: SizedBox.shrink(),
-                        label: "",
+                        label: '',
                       ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.bookmark_border,
-                            size: floatingButtonIconSize * 0.8,color: AppColors.white,),
-                        label: "",
+                      _buildNavItem(
+                        icon: Icons.bookmark_border,
+                        isActive: context.read<HomeCubit>().selectedIndex == 3,
+                        isSvg: false,
                       ),
-                      BottomNavigationBarItem(
-                        icon: SvgPicture.asset(
-                          AppIcons.profileIcon,
-                          color: AppColors.white,
-                          height: floatingButtonIconSize * 0.8,
-                        ),
-                        label: "",
+                      _buildNavItem(
+                        icon: AppIcons.profileIcon,
+                        isActive: context.read<HomeCubit>().selectedIndex == 4,
                       ),
                     ],
                   ),
+
                 ),
               );
             },
@@ -172,6 +161,41 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+}
+BottomNavigationBarItem _buildNavItem({
+  required dynamic icon,
+  required bool isActive,
+  bool isSvg = true,
+}) {
+  return BottomNavigationBarItem(
+    icon: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        isSvg
+            ? SvgPicture.asset(
+          icon,
+          color: AppColors.white,
+          height: 22,
+        )
+            : Icon(
+          icon,
+          color: AppColors.white,
+          size: 24,
+        ),
+        const SizedBox(height: 4),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 6,
+          width: 6,
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.white : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ],
+    ),
+    label: '',
+  );
 }
 
 class CustomFloatingActionButtonLocation extends FloatingActionButtonLocation {

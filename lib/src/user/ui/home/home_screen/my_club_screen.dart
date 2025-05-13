@@ -1,25 +1,19 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:maydon_go/src/common/constants/config.dart';
+import 'package:maydon_go/src/common/widgets/create_club.dart';
 
-import 'package:maydon_go/src/common/router/app_routes.dart';
-import 'package:maydon_go/src/common/tools/language_extension.dart';
-import 'package:maydon_go/src/common/widgets/club_card.dart';
-import 'package:maydon_go/src/common/widgets/premium_widget.dart';
-import 'package:maydon_go/src/user/ui/home/profile_screen/other_user_profile.dart';
-
+import '../../../../common/tools/language_extension.dart';
+import '../../../../common/constants/config.dart';
+import '../../../../common/router/app_routes.dart';
 import '../../../../common/style/app_colors.dart';
-import '../../../../common/style/app_icons.dart';
-
+import '../../../../common/widgets/club_card.dart';
 import '../../../../common/widgets/custom_coin.dart';
+import '../../../../common/widgets/premium_widget.dart';
 import '../../../../common/widgets/story_avatar.dart';
 import '../../../bloc/my_club_cubit/fab_visibility_cubit.dart';
 import '../../../bloc/my_club_cubit/my_club_cubit.dart';
@@ -38,7 +32,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
   void initState() {
     super.initState();
     context.read<MyClubCubit>().loadData();
-    context.read<MyClubCubit>().loadData();
+
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -265,11 +259,14 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                             title: Text('Profilga o‘tish'),
                                             onTap: () {
                                               context.pop(context);
-                                              // context.pushNamed(
-                                              //     OtherUserProfile(
-                                              //         receivedUser: friend,
-                                              //         currentUser: currentUser,
-                                              //         id: id))
+                                              context.pushNamed(
+                                                AppRoutes.profileChat,
+                                                extra: {
+                                                  'receivedUser': friend,
+                                                  // UserModel
+                                                  'chatId': friendship.chatId,
+                                                },
+                                              );
                                             },
                                           ),
                                           ListTile(
@@ -277,7 +274,18 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                             title: Text('Xabar yuborish'),
                                             onTap: () {
                                               context.pop();
-                                              // Send message
+                                              final user = context
+                                                  .read<MyClubCubit>()
+                                                  .user;
+
+                                              context.pushNamed(
+                                                AppRoutes.chat,
+                                                extra: {
+                                                  'currentUser': user,
+                                                  'receiverUser': friend,
+                                                  "chatId": friendship.chatId,
+                                                },
+                                              );
                                             },
                                           ),
                                           ListTile(
@@ -326,7 +334,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
                     //Clubs
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.only(bottom: 15),
+                        padding: EdgeInsets.only(bottom: 15, right: 5),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -336,8 +344,9 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                   fontWeight: FontWeight.bold, fontSize: 20),
                             ),
                             Text(
-                              "1/$clubMaxLength",
-                              style: TextStyle(fontSize: 15),
+                              "${state.clubs.length}/$clubMaxLength",
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -345,55 +354,72 @@ class _MyClubScreenState extends State<MyClubScreen> {
                     ),
                     SliverToBoxAdapter(
                       child: SizedBox(
-                        height: MediaQuery.of(context).size.height *
-                            0.4, // Responsive height
-                        child: ListView.separated(
+                        height: MediaQuery.of(context).size.height * 0.4,
+                        child: state.clubs.isEmpty
+                            ? Center(
+                          child: GestureDetector(
+                            onTap: () => showCreateClubDialog(context),
+                            child: DottedBorder(
+                              borderType: BorderType.RRect,
+                              radius: Radius.circular(16),
+                              color: Colors.grey,
+                              dashPattern: [6, 3],
+                              child: Container(
+                                width: MediaQuery.of(context).size.width * 0.6, // Kattaroq qilish
+                                height: MediaQuery.of(context).size.height * 0.2,
+                                padding: EdgeInsets.all(16),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.add, size: 40, color: Colors.grey),
+                                      SizedBox(height: 12),
+                                      Text(
+                                        "Sizda hali klublar yo'q\nYangi klub yarating",
+                                        style: TextStyle(fontSize: 14),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                            : ListView.separated(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 16),
-                          itemCount: clubMaxLength + 1,
+                          separatorBuilder: (context, index) => const SizedBox(width: 16),
+                          itemCount: state.clubs.length + 1,
                           itemBuilder: (context, index) {
-                            final visibleFriends =
-                                state.connections.take(3).toList();
-                            final remainingFriends =
-                                state.connections.length - 3;
-                            if (index < clubMaxLength) {
+                            if (index < state.clubs.length) {
+                              final visibleFriends = state.connections.take(3).toList();
+                              final remainingFriends = state.connections.length - 3;
                               return ClubCard(
-                                  visibleFriends: visibleFriends,
-                                  remainingFriends: remainingFriends,
-                                  index: index,
-                                  state: state);
+                                visibleFriends: visibleFriends,
+                                remainingFriends: remainingFriends,
+                                index: index,
+                                state: state,
+                                isOwnedByUser: true,
+                              );
                             } else {
-                              final hasReachedLimit = true;
-
                               return GestureDetector(
-                                onTap: () {
-                                  if (hasReachedLimit) {
-                                    showBuyPremiumBottomSheet(context);
-                                  } else {
-                                    // Hali limitga yetmagan bo‘lsa → Add club ekrani
-                                  }
-                                },
+                                onTap: () => showCreateClubDialog(context),
                                 child: DottedBorder(
                                   borderType: BorderType.RRect,
                                   radius: Radius.circular(16),
                                   color: Colors.grey,
                                   dashPattern: [6, 3],
                                   child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.3,
+                                    width: MediaQuery.of(context).size.width * 0.3,
                                     padding: EdgeInsets.all(16),
                                     child: Center(
                                       child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: const [
-                                          Icon(Icons.add,
-                                              size: 40, color: Colors.grey),
+                                          Icon(Icons.add, size: 40, color: Colors.grey),
                                           SizedBox(height: 8),
-                                          Text("Create Club",
-                                              style: TextStyle(fontSize: 12)),
+                                          Text("Create Club", style: TextStyle(fontSize: 12)),
                                         ],
                                       ),
                                     ),
@@ -525,7 +551,7 @@ class UserCoinsDiagram extends StatelessWidget {
     final coinColor = Colors.orangeAccent;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: bgColor,
@@ -552,7 +578,6 @@ class UserCoinsDiagram extends StatelessWidget {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: CircleAvatar(
@@ -565,8 +590,7 @@ class UserCoinsDiagram extends StatelessWidget {
                     )
                   : CircleAvatar(
                       radius: size.width * 0.055,
-                      backgroundColor:
-                          AppColors.green2, // Telegram uslubida fon
+                      backgroundColor: AppColors.green2,
                       child: Text(
                         userName.isNotEmpty ? userName[0].toUpperCase() : "?",
                         style: const TextStyle(
@@ -578,8 +602,6 @@ class UserCoinsDiagram extends StatelessWidget {
                     ),
             ),
           ),
-
-          // User ma'lumotlari
           Expanded(
             child: Text(
               userName,
@@ -592,8 +614,6 @@ class UserCoinsDiagram extends StatelessWidget {
               ),
             ),
           ),
-
-          // Coinlar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -601,17 +621,17 @@ class UserCoinsDiagram extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
-              spacing: 8,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  coins.toString(),
+                  formatCoins(coins),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: coinColor,
                   ),
                 ),
+                const SizedBox(width: 4),
                 CustomPaint(
                   size: const Size(20, 20),
                   painter: CoinPainter(),
@@ -622,6 +642,17 @@ class UserCoinsDiagram extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Kattaroq raqamlarni qisqartirib formatlaydi (masalan: 1.2K, 3.4M)
+  String formatCoins(int number) {
+    if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}M';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    } else {
+      return number.toString();
+    }
   }
 }
 

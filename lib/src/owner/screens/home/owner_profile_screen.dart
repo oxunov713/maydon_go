@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
-import 'package:maydon_go/generated/l10n.dart'; // Import generated localizations
-import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_cubit.dart';
-import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_state.dart';
-import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
-import 'package:maydon_go/src/user/bloc/profile_cubit/profile_state.dart';
-import '../../../../main.dart';
-import '../../../common/constants/config.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/api_image_service.dart';
 import '../../../common/l10n/app_localizations.dart';
 import '../../../common/router/app_routes.dart';
-import '../../../common/service/api_service.dart';
 import '../../../common/style/app_colors.dart';
 import '../../../common/style/app_icons.dart';
+import '../../../user/bloc/profile_cubit/profile_cubit.dart';
+import '../../../user/bloc/profile_cubit/profile_state.dart';
+import '../../bloc/add_stadium/add_stadium_cubit.dart';
+import '../../bloc/add_stadium/add_stadium_state.dart';
 
 class OwnerProfileScreen extends StatefulWidget {
   @override
@@ -179,7 +176,7 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
     Logger().e(id);
     if (images.isNotEmpty) {
       try {
-        await ApiService().addStadiumImages(id, images);
+        await ApiImageService(ApiClient().dio).addStadiumImages(id, images);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.imagesUploadedSuccess)),
         );

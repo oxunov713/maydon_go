@@ -4,10 +4,10 @@ import 'package:carousel_slider/carousel_controller.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/model/stadium_model.dart';
-import 'package:maydon_go/src/user/bloc/booking_cubit/booking_state.dart';
 
-import '../../../common/service/api_service.dart';
+import '../../../common/model/stadium_model.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/stadium_service.dart';
 import 'all_stadium_state.dart';
 
 class StadiumCubit extends Cubit<StadiumState> {
@@ -17,6 +17,7 @@ class StadiumCubit extends Cubit<StadiumState> {
   List<StadiumDetail> stadiums = [];
   List<StadiumDetail> filteredStadiums = [];
   int _size = 0; // _size boshlang'ich qiymati 0 ga o'zgartirildi
+  final apiService = StadiumService(ApiClient().dio);
 
   StadiumCubit() : super(StadiumInitial()) {
     currentDate = DateTime.now();
@@ -33,7 +34,7 @@ class StadiumCubit extends Cubit<StadiumState> {
     try {
       _size += 2;
       final List<StadiumDetail> fetchedStadiums =
-          await ApiService().getAllStadiumsWithSize(size: _size);
+          await apiService.getAllStadiumsWithSize(size: _size);
 
       stadiums.clear();
       stadiums.addAll(fetchedStadiums);
@@ -82,7 +83,7 @@ class StadiumCubit extends Cubit<StadiumState> {
   void filterStadiums(String query) async {
     if (state is StadiumLoaded) {
       final currentState = state as StadiumLoaded;
-      final allStadiums = await ApiService().getAllStadiums();
+      final allStadiums = await apiService.getAllStadiums();
 
       filteredStadiums = allStadiums
           .where((stadium) =>

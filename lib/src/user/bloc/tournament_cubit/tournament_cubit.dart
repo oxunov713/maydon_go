@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logger/logger.dart';
 import '../../../common/model/tournament_model.dart';
-import '../../../common/service/api_service.dart';
+import '../../../common/service/api/api_client.dart';
+import '../../../common/service/api/common_service.dart';
 import '../../../common/service/shared_preference_service.dart';
 import 'tournament_state.dart';
 
@@ -16,7 +16,7 @@ class TournamentCubit extends Cubit<TournamentState> {
   Future<void> loadTournaments() async {
     emit(TournamentLoading());
     try {
-      _tournaments = await ApiService().getTournaments();
+      _tournaments = await CommonService(ApiClient().dio).getTournaments();
       _votedList = await ShPService.getVotedTournaments();
       emit(TournamentLoaded(
           _tournaments, _votedList)); // _votedList ham uzatiladi
@@ -38,7 +38,7 @@ class TournamentCubit extends Cubit<TournamentState> {
       );
 
       // API va SharedPreferences'ga saqlash
-      await ApiService().voteForTournaments(tournamentId);
+      await CommonService(ApiClient().dio).voteForTournaments(tournamentId);
       await ShPService.saveVotedTournament(tournamentId);
       _votedList = await ShPService.getVotedTournaments();
 

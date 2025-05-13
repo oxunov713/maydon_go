@@ -1,27 +1,43 @@
-class TeamModel {
-  final String id;
-  final String name;
-  final String logoUrl;
-  final List<TeamMember> members;
+import 'main_model.dart';
 
-  TeamModel({
+class ClubModel {
+  final int id;
+  final String name;
+  final String? imageUrl;
+  final int chatId;
+  final int ownerId;
+  final List<UserModel> members;
+
+  ClubModel({
     required this.id,
     required this.name,
-    required this.logoUrl,
+    this.imageUrl,
+    required this.chatId,
+    required this.ownerId,
     required this.members,
   });
-}
 
-class TeamMember {
-  final String id;
-  final String name;
-  final String photoUrl;
-  final String position;
+  factory ClubModel.fromJson(Map<String, dynamic> json) {
+    return ClubModel(
+      id: json['id'],
+      name: json['name'],
+      imageUrl: json['imageUrl'],
+      chatId: json['chatId'],
+      ownerId: json['ownerId'],
+      members: (json['members'] as List<dynamic>)
+          .map((e) => UserModel.fromJson(e))
+          .toList(),
+    );
+  }
 
-  TeamMember({
-    required this.id,
-    required this.name,
-    required this.photoUrl,
-    required this.position,
-  });
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'imageUrl': imageUrl,
+      'chatId': chatId,
+      'owner': ownerId,
+      'members': members.map((e) => e.toJson()).toList(),
+    };
+  }
 }
