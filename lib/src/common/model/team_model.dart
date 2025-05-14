@@ -6,7 +6,7 @@ class ClubModel {
   final String? imageUrl;
   final int chatId;
   final int ownerId;
-  final List<UserModel> members;
+  final List<MemberModel> members;
 
   ClubModel({
     required this.id,
@@ -25,19 +25,51 @@ class ClubModel {
       chatId: json['chatId'],
       ownerId: json['ownerId'],
       members: (json['members'] as List<dynamic>)
-          .map((e) => UserModel.fromJson(e))
+          .map((e) => MemberModel.fromJson(e))
           .toList(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'imageUrl': imageUrl,
-      'chatId': chatId,
-      'owner': ownerId,
-      'members': members.map((e) => e.toJson()).toList(),
-    };
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'imageUrl': imageUrl,
+    'chatId': chatId,
+    'ownerId': ownerId,
+    'members': members.map((e) => e.toJson()).toList(),
+  };
+}
+
+class MemberModel {
+  final int userId;
+  final String username;
+  final String? userImage;
+  final String position;
+  final DateTime joinedAt;
+
+  MemberModel({
+    required this.userId,
+    required this.username,
+    this.userImage,
+    required this.position,
+    required this.joinedAt,
+  });
+
+  factory MemberModel.fromJson(Map<String, dynamic> json) {
+    return MemberModel(
+      userId: json['userId'],
+      username: json['username'],
+      userImage: json['userImage'],
+      position: json['position'],
+      joinedAt: DateTime.parse(json['joinedAt']),
+    );
   }
+
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
+    'username': username,
+    'userImage': userImage,
+    'position': position,
+    'joinedAt': joinedAt.toIso8601String(),
+  };
 }

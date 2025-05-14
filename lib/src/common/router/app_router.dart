@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/model/quiz_model.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
+import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
 import 'package:maydon_go/src/owner/screens/home/substadium_screen.dart';
 import 'package:maydon_go/src/user/ui/home/profile_screen/donation_page.dart';
@@ -183,9 +184,9 @@ final GoRouter _router = GoRouter(
                               path: "teamChat",
                               name: AppRoutes.teamChat,
                               builder: (context, state) {
+                                final teamId = state.extra as int;
                                 return TeamChatScreen(
-                                  teamLogo: "",
-                                  teamName: "Real Madrid",
+                                  teamId: teamId,
                                 );
                               },
                             ),
@@ -197,14 +198,20 @@ final GoRouter _router = GoRouter(
                             GoRoute(
                               path: "clubDetail",
                               name: AppRoutes.clubDetail,
-                              builder: (context, state) =>
-                                  const ClubDetailScreen(),
+                              builder: (context, state) {
+                                final club = state.extra as ClubModel;
+                                return ClubDetailScreen(
+                                  club: club,
+                                );
+                              },
                             ),
                             GoRoute(
                               path: "clubTeammates",
                               name: AppRoutes.clubTeammates,
-                              builder: (context, state) =>
-                                  const ClubTeammates(),
+                              builder: (context, state) {
+                                final club = state.extra as ClubModel;
+                                return ClubTeammates(club: club);
+                              },
                             ),
                             GoRoute(
                                 path: "profile",

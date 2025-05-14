@@ -23,6 +23,7 @@ class MyClubCubit extends Cubit<MyClubState> {
   List<Friendship> connections = [];
   List<UserPoints> _liderBoard = [];
   List<ClubModel> _clubs = [];
+
   Timer? _debounce;
   int limit = 10;
   final apiService = UserService(ApiClient().dio);
@@ -43,11 +44,6 @@ class MyClubCubit extends Cubit<MyClubState> {
       connections = List<Friendship>.from(results[1]);
       _liderBoard = List<UserPoints>.from(results[2]);
       _clubs = List<ClubModel>.from(results[3]);
-      print("USER: $user");
-      print("CLUBS: $_clubs");
-      print("LEADERBOARD: $_liderBoard");
-      print("CONNECTIONS: $connections");
-      print("ALL USERS: $allUsers");
 
       emit(MyClubLoaded(
         user: user,
@@ -176,12 +172,19 @@ class MyClubCubit extends Cubit<MyClubState> {
     emit(MyClubLoading());
     try {
       await clubService.createClub(clubName: name, position: position);
-      await loadData(); // 👈 To‘liq ma’lumotni yangilaydi
+      final newClubs = await clubService.getClubs();
+      emit(
+        MyClubLoaded(
+            user: user,
+            liderBoard: _liderBoard,
+            connections: connections,
+            searchResults: allUsers,
+            clubs: newClubs),
+      );
     } catch (e) {
       emit(MyClubError("Klub yaratishda xatolik: ${e.toString()}"));
     }
   }
-
 
   @override
   Future<void> close() {

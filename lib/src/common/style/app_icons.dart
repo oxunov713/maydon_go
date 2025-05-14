@@ -6,6 +6,7 @@ class AppIcons {
   static const menuIcon = "assets/icons/menu_icon.svg";
   static const homeIcon = "assets/icons/home_icon.svg";
   static const uzbIcon = "assets/images/uzb_maydon.png";
+  static const clubN1 = "assets/images/club_n1.jfif";
 
   static const instagram = "assets/images/instagram-1_svgrepo.com.png";
   static const gmail = "assets/images/gmail_svgrepo.com.png";
@@ -25,6 +26,7 @@ class AppIcons {
   static const notificationIcon = "assets/icons/notification.svg";
   static const settingsIcon = "assets/icons/settings_icon.svg";
   static const faqIcon = "assets/icons/faq_icon.svg";
+  static const clubImage = "assets/images/club_logo.jfif";
   static const chatIcon = "assets/icons/chat_icon.svg";
   static const saveIcon = Icons.bookmark_border;
   static const savedIcon = Icons.bookmark;

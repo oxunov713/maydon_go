@@ -6,9 +6,14 @@ import 'package:maydon_go/src/common/tools/language_extension.dart';
 import 'package:maydon_go/src/common/tools/position_enum.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_cubit.dart';
+import 'package:maydon_go/src/user/bloc/team_cubit/team_state.dart';
+
+import '../../../../common/model/team_model.dart';
 
 class ClubTeammates extends StatefulWidget {
-  const ClubTeammates({super.key});
+  const ClubTeammates({super.key, required this.club});
+
+  final ClubModel club;
 
   @override
   State<ClubTeammates> createState() => _ClubTeammatesState();
@@ -17,8 +22,7 @@ class ClubTeammates extends StatefulWidget {
 class _ClubTeammatesState extends State<ClubTeammates> {
   @override
   void initState() {
-    context.read<MyClubCubit>().loadData();
-    super.initState();
+
   }
 
   @override
@@ -31,38 +35,16 @@ class _ClubTeammatesState extends State<ClubTeammates> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: BlocBuilder<MyClubCubit, MyClubState>(
+        child: BlocBuilder<TeamCubit, TeamState>(
           builder: (context, state) {
-            if (state is MyClubLoaded) {
-              return _buildMembersList(state.connections);
-            } else if (state is MyClubLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is MyClubError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Xatolik yuz berdi, iltimos qayta urinib ko'ring.",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => context.read<MyClubCubit>().loadData(),
-                      child: const Text("Qayta yuklash"),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return Center(child: Text(context.lan.noData));
+            return _buildMembersList(state.club.members);
           },
         ),
       ),
     );
   }
 
-  Widget _buildMembersList(List<Friendship> members) {
+  Widget _buildMembersList(List<MemberModel> members) {
     if (members.isEmpty) {
       return Center(
         child: Text(
@@ -80,8 +62,8 @@ class _ClubTeammatesState extends State<ClubTeammates> {
       separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final member = members[index];
-        final initials = _getInitials(member.friend.fullName ?? "N N");
-        final imageUrl = member.friend.imageUrl;
+        final initials = _getInitials(member.username);
+        final imageUrl = member.userImage;
 
         return Card(
           elevation: 1,
@@ -89,26 +71,27 @@ class _ClubTeammatesState extends State<ClubTeammates> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: AppColors.green.withOpacity(0.2),
               backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
               child: imageUrl == null
                   ? Text(
-                initials,
-                style: const TextStyle(
-                  color: AppColors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
+                      initials,
+                      style: const TextStyle(
+                        color: AppColors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
                   : null,
             ),
             title: Text(
-              member.friend.fullName ?? "Noma'lum",
+              member.username,
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-            subtitle: Text(member.friend.phoneNumber ?? "Telefon raqami mavjud emas"),
+            subtitle: Text("Telefon raqami mavjud emas"),
             trailing: IconButton(
               icon: const Icon(Icons.remove_circle, color: AppColors.red),
               onPressed: () => _showRemoveConfirmation(context, member),
@@ -120,16 +103,20 @@ class _ClubTeammatesState extends State<ClubTeammates> {
   }
 
   String _getInitials(String name) {
-    return name.split(' ').map((part) => part.isNotEmpty ? part[0] : '').take(2).join();
+    return name
+        .split(' ')
+        .map((part) => part.isNotEmpty ? part[0] : '')
+        .take(2)
+        .join();
   }
 
-  void _showRemoveConfirmation(BuildContext context, Friendship member) {
+  void _showRemoveConfirmation(BuildContext context, MemberModel member) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("A'zoni o'chirish"),
         content: Text(
-          "Haqiqatan ham ${member.friend.fullName ?? 'bu a\'zoni'} jamoangizdan o'chirmoqchimisiz?",
+          "Haqiqatan ham ${member.username ?? 'bu a\'zoni'} jamoangizdan o'chirmoqchimisiz?",
         ),
         actions: [
           TextButton(
@@ -138,8 +125,7 @@ class _ClubTeammatesState extends State<ClubTeammates> {
           ),
           TextButton(
             onPressed: () {
-              context.read<TeamCubit>().removeFromPosition(FootballPosition.centerBack);
-              Navigator.pop(context);
+
             },
             child: const Text(
               "O'chirish",

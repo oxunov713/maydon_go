@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
 
 import '../router/app_routes.dart';
@@ -13,13 +14,15 @@ class ClubCard extends StatelessWidget {
     required this.visibleFriends,
     required this.remainingFriends,
     required this.index,
+    required this.clubId,
     required this.state,
     required this.isOwnedByUser,
   });
 
-  final List visibleFriends;
+  final List<MemberModel> visibleFriends;
   final int remainingFriends;
   final int index;
+  final int clubId;
   final MyClubLoaded state;
   final bool isOwnedByUser;
 
@@ -77,13 +80,14 @@ class ClubCard extends StatelessWidget {
 
             // Klub logotipi
             Center(
-              child: CircleAvatar(
-                radius: MediaQuery.of(context).size.width * 0.12,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                child: CircleAvatar(
-                  radius: MediaQuery.of(context).size.width * 0.11,
-                  backgroundImage: const NetworkImage(
-                    "https://brandlogos.net/wp-content/uploads/2020/08/real-madrid-logo.png",
+              child: Container(
+                width: 200,
+                height: 100,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  image: DecorationImage(
+                    fit: BoxFit.cover,
+                    image: AssetImage(AppIcons.clubImage),
                   ),
                 ),
               ),
@@ -138,45 +142,28 @@ class ClubCard extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 18,
                             backgroundColor:
-                                visibleFriends[index].friend.imageUrl != null &&
-                                        visibleFriends[index]
-                                            .friend
-                                            .imageUrl!
-                                            .isNotEmpty
+                                visibleFriends[i].userImage != null &&
+                                        visibleFriends[i].userImage!.isNotEmpty
                                     ? AppColors.white
                                     : Colors.blue,
-                            // Rasm bo'lmasa, fon rangi (Telegram uslubi)
                             backgroundImage:
-                                visibleFriends[index].friend.imageUrl != null &&
-                                        visibleFriends[index]
-                                            .friend
-                                            .imageUrl!
-                                            .isNotEmpty
-                                    ? NetworkImage(visibleFriends[index]
-                                        .friend
-                                        .imageUrl!) as ImageProvider
+                                visibleFriends[i].userImage != null &&
+                                        visibleFriends[i].userImage!.isNotEmpty
+                                    ? NetworkImage(visibleFriends[i].userImage!)
+                                        as ImageProvider
                                     : null,
-                            child: (visibleFriends[index].friend.imageUrl ==
-                                        null ||
-                                    visibleFriends[index]
-                                        .friend
-                                        .imageUrl!
-                                        .isEmpty)
+                            child: (visibleFriends[i].userImage == null ||
+                                    visibleFriends[i].userImage!.isEmpty)
                                 ? Text(
-                                    visibleFriends[index]
-                                            .friend
-                                            .fullName!
-                                            .isNotEmpty
-                                        ? visibleFriends[index]
-                                            .friend
-                                            .fullName![0]
+                                    visibleFriends[i].username.isNotEmpty
+                                        ? visibleFriends[i]
+                                            .username[0]
                                             .toUpperCase()
                                         : '?',
                                     style: const TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors
-                                          .white, // Oq rangda harf (aniq ko'rinishi uchun)
+                                      color: Colors.white,
                                     ),
                                   )
                                 : null,
@@ -184,6 +171,7 @@ class ClubCard extends StatelessWidget {
                         ),
                       ),
                     ),
+
                     // Qolgan do'stlar soni
                     if (remainingFriends > 0)
                       Positioned(
@@ -241,7 +229,8 @@ class ClubCard extends StatelessWidget {
                           'Chat',
                           style: TextStyle(color: AppColors.white),
                         ),
-                        onPressed: () => context.pushNamed(AppRoutes.teamChat),
+                        onPressed: () => context.pushNamed(AppRoutes.teamChat,
+                            extra: clubId),
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.1),
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -264,8 +253,8 @@ class ClubCard extends StatelessWidget {
                           'Batafsil',
                           style: TextStyle(color: AppColors.white),
                         ),
-                        onPressed: () =>
-                            context.pushNamed(AppRoutes.clubDetail),
+                        onPressed: () => context.pushNamed(AppRoutes.clubDetail,
+                            extra: state.clubs[index]),
                         style: TextButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),
                           padding: const EdgeInsets.symmetric(vertical: 12),

@@ -38,14 +38,31 @@ class ClubService {
     }
   }
 
-  //getClubInfo
-  Future<void> getClubInfo(
-      {required String name, required int memberId}) async {
+  Future<void> addMembers(
+      {required int clubId,
+      required String position,
+      required int userId}) async {
     try {
-      await dio.post("/club/2/info", data: {
-        "name": name,
-        "membersId": [memberId]
-      });
+      await dio.post("/club/$clubId/members/add", data: [
+        {
+          "userId": userId,
+          "position": position,
+        }
+      ]);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+
+      throw Exception('fav davomida xatolik yuz berdi.');
+    }
+  }
+
+  //getClubInfo
+  Future<ClubModel> getClubInfo({required int clubId}) async {
+    try {
+      final response = await dio.get("/club/$clubId/info");
+      return ClubModel.fromJson(response.data);
     } on DioException catch (e) {
       if (e.response != null) {
         return e.response?.data;

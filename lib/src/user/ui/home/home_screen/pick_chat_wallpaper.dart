@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/user/bloc/chat_cubit/chat_cubit.dart';
 
 import '../../../../common/service/shared_preference_service.dart';
@@ -12,6 +13,7 @@ class WallpaperPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wallpapers = [
+      AppIcons.clubN1,
       AppIcons.chatWall1,
       AppIcons.chatWall2,
       AppIcons.chatWall3,
@@ -23,6 +25,7 @@ class WallpaperPage extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: AppColors.white2,
       appBar: AppBar(title: const Text("Select Wallpaper")),
       body: GridView.builder(
         padding: const EdgeInsets.all(12),

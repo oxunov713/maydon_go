@@ -1,53 +1,85 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/team_model.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/user_service.dart';
+import 'package:maydon_go/src/common/tools/position_enum.dart';
 
 import '../../../common/model/main_model.dart';
-import '../../../common/service/api/api_client.dart';
-import '../../../common/service/api/user_service.dart';
-import '../../../common/tools/position_enum.dart';
+import '../../../common/service/api/club_service.dart';
 import 'team_state.dart';
 
 class TeamCubit extends Cubit<TeamState> {
-  TeamCubit() : super(TeamState.initial());
+  final ClubService _clubService;
 
-  final log = Logger();
+  TeamCubit(this._clubService) : super(TeamState.initial());
 
-  Future<void> loadFriends() async {
-    emit(state.copyWith(isLoading: true, error: null));
+  // Initialize the cubit with club data and fetch available players
+  Future<void> initialize(int clubId) async {
+    emit(state.copyWith(isLoading: true));
     try {
-      final response = await UserService(ApiClient().dio).getFriends();
-
-      print('API Response Count: ${response.length}');
-      print('API Response Data: $response');
-
+      final club = await _clubService.getClubInfo(clubId: clubId);
+      final availablePlayers = await _fetchAvailablePlayers();
       emit(state.copyWith(
-        availablePlayers: response.map((f) => f.friend).toList(),
         isLoading: false,
+        club: club,
+        availablePlayers: availablePlayers,
+        players: club.members,
       ));
-
-      print('Updated State Players Count: ${state.availablePlayers.length}');
     } catch (e) {
-      print('Error loading friends: $e');
-      emit(state.copyWith(
-        error: 'Error loading friends: $e',
-        isLoading: false,
-      ));
+      emit(state.copyWith(isLoading: false, error: e.toString()));
     }
   }
 
+  // Mock method to fetch available players (replace with actual API call if needed)
+  Future<List<UserModel>> _fetchAvailablePlayers() async {
+    final response = await UserService(ApiClient().dio).getFriends();
+    return response.map((friendship) => friendship.friend).toList();
+  }
+
+  // Toggle visibility of position labels
   void togglePositionVisibility() {
     emit(state.copyWith(showPositions: !state.showPositions));
   }
 
-  void addFriendToPosition(FootballPosition position, UserModel friend) {
-    final newPlayers = Map<FootballPosition, UserModel?>.from(state.players);
-    newPlayers[position] = friend;
-    emit(state.copyWith(players: newPlayers));
+  // Add a player to a specific position in the club
+  Future<void> addFriendToPosition(
+      FootballPosition position, UserModel player) async {
+    emit(state.copyWith(isLoading: true));
+    try {
+      await _clubService.addMembers(
+        clubId: state.club.id,
+        position: position.abbreviation,
+        userId: player.id!,
+      );
+      // Refresh club info after adding a member
+      final updatedClub = await _clubService.getClubInfo(clubId: state.club.id);
+      emit(state.copyWith(
+        isLoading: false,
+        club: updatedClub,
+        players: updatedClub.members,
+        error: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, error: e.toString()));
+    }
   }
 
-  void removeFromPosition(FootballPosition position) {
-    final newPlayers = Map<FootballPosition, UserModel?>.from(state.players);
-    newPlayers[position] = null;
-    emit(state.copyWith(players: newPlayers));
+  // Remove a player from a position
+  Future<void> removePlayerFromPosition(
+      FootballPosition position, int memberId) async {
+    emit(state.copyWith(isLoading: true));
+    try {
+      await _clubService.removeFromClub(
+          clubId: state.club.id, memberId: memberId);
+      final updatedClub = await _clubService.getClubInfo(clubId: state.club.id);
+      emit(state.copyWith(
+        isLoading: false,
+        club: updatedClub,
+        players: updatedClub.members,
+        error: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, error: e.toString()));
+    }
   }
 }

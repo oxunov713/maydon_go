@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:maydon_go/src/common/model/time_slot_model.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
+import 'package:maydon_go/src/common/service/api/api_client.dart';
+import 'package:maydon_go/src/common/service/api/club_service.dart';
 import 'package:maydon_go/src/common/service/booking_service.dart';
 import 'package:maydon_go/src/common/service/location_service.dart';
 import 'package:maydon_go/src/common/service/marker_service.dart';
@@ -22,6 +24,7 @@ import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
 import 'package:maydon_go/src/user/bloc/quizzes_cubit/quizzes_cubit.dart';
 import 'package:maydon_go/src/user/bloc/saved_stadium_cubit/saved_stadium_cubit.dart';
 import 'package:maydon_go/src/user/bloc/subscription_cubit/subscription_cubit.dart';
+import 'package:maydon_go/src/user/bloc/team_cubit/team_chat_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_cubit.dart';
 import 'package:maydon_go/src/user/bloc/tournament_cubit/tournament_cubit.dart';
 import 'package:provider/provider.dart';
@@ -67,7 +70,8 @@ Widget _buildApp() {
       BlocProvider(create: (_) => AuthCubit()),
       BlocProvider(create: (_) => ChatCubit()),
       BlocProvider(create: (_) => TournamentCubit()),
-      BlocProvider(create: (_) => TeamCubit()..loadFriends()),
+      BlocProvider(create: (_) => TeamCubit(ClubService(ApiClient().dio))),
+      BlocProvider(create: (_) => TeamChatCubit()),
       BlocProvider(create: (_) => BookingCubit()),
       BlocProvider(create: (_) => SubscriptionCubit()),
       BlocProvider(create: (_) => FabVisibilityCubit()),

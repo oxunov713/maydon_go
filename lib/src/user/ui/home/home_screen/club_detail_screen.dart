@@ -2,43 +2,78 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
+import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
+import 'package:maydon_go/src/common/style/app_icons.dart';
 import 'package:maydon_go/src/common/tools/position_enum.dart';
-
+import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
+import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
 import '../../../bloc/team_cubit/team_cubit.dart';
 import '../../../bloc/team_cubit/team_state.dart';
 
-class ClubDetailScreen extends StatelessWidget {
-  const ClubDetailScreen({super.key});
+class ClubDetailScreen extends StatefulWidget {
+  const ClubDetailScreen({super.key, required this.club});
+
+  final ClubModel club;
+
+  @override
+  State<ClubDetailScreen> createState() => _ClubDetailScreenState();
+}
+
+class _ClubDetailScreenState extends State<ClubDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<TeamCubit>().initialize(widget.club.id);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = context.read<TeamCubit>().state.club.ownerId ==
+        context.read<MyClubCubit>().user.id;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tashkent Bulls"),
+        title: Text(widget.club.name),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => context.pushNamed(AppRoutes.clubTeammates),
+          BlocBuilder<TeamCubit, TeamState>(
+            builder: (context, state) {
+              final isAdmin = state.club.ownerId == context.read<MyClubCubit>().user.id;
+              return (isAdmin)
+                  ? IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => context.pushNamed(AppRoutes.clubTeammates),
+              )
+                  : SizedBox.shrink();
+            },
           ),
         ],
-      ),
+      )
+,
       body: Container(
-        decoration: const BoxDecoration(
+        height: double.infinity,
+        decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage("assets/images/club_background.webp"),
+            image: AssetImage(AppIcons.clubN1),
             fit: BoxFit.cover,
           ),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.05),
+            horizontal: MediaQuery.of(context).size.width * 0.05,
+          ),
           child: BlocBuilder<TeamCubit, TeamState>(
             builder: (context, state) {
+              if (state.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state.error != null) {
+                return Center(child: Text('Error: ${state.error}'));
+              }
+              final players = _mapMembersToPositions(state.players);
               return Center(
-                child: _buildFootballField(context, state.players),
+                child: _buildFootballField(context, players),
               );
             },
           ),
@@ -59,173 +94,225 @@ class ClubDetailScreen extends StatelessWidget {
     );
   }
 
+  Map<FootballPosition, MemberModel?> _mapMembersToPositions(
+      List<MemberModel> members) {
+    final Map<FootballPosition, MemberModel?> players = {
+      for (var pos in FootballPosition.values) pos: null,
+    };
+    for (var member in members) {
+      final position = FootballPosition.values.firstWhere(
+        (pos) => pos.abbreviation == member.position,
+        orElse: () => FootballPosition.goalkeeper,
+      );
+      players[position] = member;
+    }
+    return players;
+  }
+
   Widget _buildFootballField(
-      BuildContext context, Map<FootballPosition, UserModel?> players) {
+    BuildContext context,
+    Map<FootballPosition, MemberModel?> players,
+  ) {
     final size = MediaQuery.of(context).size;
+    final isAdmin = context.read<TeamCubit>().state.club.ownerId ==
+        context.read<MyClubCubit>().user.id;
 
-    return BlocBuilder<TeamCubit, TeamState>(
-      builder: (context, state) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Attackers (3)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.leftWingForward,
-                  player: players[FootballPosition.leftWingForward],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.centerForward,
-                  player: players[FootballPosition.centerForward],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.rightWingForward,
-                  player: players[FootballPosition.rightWingForward],
-                ),
-              ],
-            ),
-            SizedBox(height: size.height * 0.07),
-
-            // Midfielders (3)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.centerMidfielder,
-                  player: players[FootballPosition.centerMidfielder],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.defensiveMidfielder,
-                  player: players[FootballPosition.defensiveMidfielder],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.centerMidfielder2,
-                  player: players[FootballPosition.centerMidfielder2],
-                ),
-              ],
-            ),
-            SizedBox(height: size.height * 0.07),
-
-            // Defenders (4)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.leftBack,
-                  player: players[FootballPosition.leftBack],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.centerBack,
-                  player: players[FootballPosition.centerBack],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.centerBack2,
-                  player: players[FootballPosition.centerBack2],
-                ),
-                _buildPlayerAvatar(
-                  context,
-                  position: FootballPosition.rightBack,
-                  player: players[FootballPosition.rightBack],
-                ),
-              ],
-            ),
-            SizedBox(height: size.height * 0.07),
-
-            // Goalkeeper
-            _buildPlayerAvatar(
-              context,
-              position: FootballPosition.goalkeeper,
-              player: players[FootballPosition.goalkeeper],
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Attackers (3)
+        _buildPositionRow(context,
+            positions: [
+              FootballPosition.leftWingForward,
+              FootballPosition.centerForward,
+              FootballPosition.rightWingForward,
+            ],
+            players: players,
+            isAdmin: isAdmin),
+        SizedBox(height: size.height * 0.05),
+        // Midfielders (3)
+        _buildPositionRow(context,
+            positions: [
+              FootballPosition.centerMidfielder,
+              FootballPosition.defensiveMidfielder,
+              FootballPosition.centerMidfielder2,
+            ],
+            players: players,
+            isAdmin: isAdmin),
+        SizedBox(height: size.height * 0.05),
+        // Defenders (4)
+        _buildPositionRow(
+          context,
+          positions: [
+            FootballPosition.leftBack,
+            FootballPosition.centerBack,
+            FootballPosition.centerBack2,
+            FootballPosition.rightBack,
           ],
+          isAdmin: isAdmin,
+          players: players,
+        ),
+        SizedBox(height: size.height * 0.05),
+        // Goalkeeper
+        _buildPlayerContainer(
+          context,
+          position: FootballPosition.goalkeeper,
+          player: players[FootballPosition.goalkeeper],
+          isAdmin: isAdmin,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPositionRow(
+    BuildContext context, {
+    required List<FootballPosition> positions,
+    required Map<FootballPosition, MemberModel?> players,
+    required bool isAdmin,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: positions.map((position) {
+        return _buildPlayerContainer(
+          context,
+          position: position,
+          player: players[position],
+          isAdmin: isAdmin,
         );
-      },
+      }).toList(),
+    );
+  }
+
+  Widget _buildPlayerContainer(
+    BuildContext context, {
+    required FootballPosition position,
+    MemberModel? player,
+    required bool isAdmin,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildPlayerAvatar(
+          context,
+          position: position,
+          player: player,
+          isAdmin: isAdmin,
+        ),
+        const SizedBox(height: 4),
+        (player != null)
+            ? SizedBox(
+                width: 70,
+                child: Text(
+                  player.username.split(' ').last,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            : SizedBox(
+                width: 70,
+                child: Text(""),
+              ),
+      ],
     );
   }
 
   Widget _buildPlayerAvatar(
     BuildContext context, {
     required FootballPosition position,
-    UserModel? player,
+    MemberModel? player,
+    required bool isAdmin,
   }) {
     final size = MediaQuery.of(context).size;
+    final cubit = context.read<TeamCubit>();
+    final showPositions = cubit.state.showPositions;
 
     return GestureDetector(
-      onTap: () => _showPlayerSelectionDialog(context, position),
-      child: BlocBuilder<TeamCubit, TeamState>(
-        builder: (context, state) {
-          return Column(
-            children: [
-              CircleAvatar(
-                radius: size.height * 0.04,
-                backgroundColor: Colors.white,
-                backgroundImage: player?.imageUrl != null
-                    ? NetworkImage(player!.imageUrl!)
-                    : null,
-                child: player == null
+      onTap: isAdmin && player == null
+          ? () => _showPlayerSelectionDialog(context, position, player)
+          : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: size.height * 0.08,
+            height: size.height * 0.08,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: player == null
+                    ? Colors.grey.withOpacity(0.5)
+                    : AppColors.green,
+                width: 2,
+              ),
+              color:
+                  player == null ? Colors.grey.withOpacity(0.2) : Colors.white,
+            ),
+            child: player != null
+                ? CircleAvatar(
+                    radius: size.height * 0.04,
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: player.userImage != null
+                        ? NetworkImage(player.userImage!)
+                        : null,
+                    child: player.userImage == null
+                        ? Text(
+                            player.username.isNotEmpty
+                                ? player.username[0].toUpperCase()
+                                : '',
+                            style: TextStyle(
+                              color: AppColors.green,
+                              fontSize: size.height * 0.03,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  )
+                : isAdmin
                     ? Icon(
                         Icons.person_add,
-                        color: AppColors.green,
+                        color: Colors.grey.withOpacity(0.7),
                         size: size.height * 0.03,
                       )
-                    : null,
+                    : Icon(
+                        Icons.person_outline,
+                        color: Colors.grey.withOpacity(0.7),
+                        size: size.height * 0.03,
+                      ),
+          ),
+          if (showPositions) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.green,
+                borderRadius: BorderRadius.circular(10),
               ),
-              if (state.showPositions) ...[
-                SizedBox(height: size.height * 0.005),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.green,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    position.abbreviation,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              child: Text(
+                position.abbreviation,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
-              if (player != null) ...[
-                SizedBox(height: size.height * 0.005),
-                SizedBox(
-                  width: size.width * 0.15,
-                  child: Text(
-                    player.fullName?.split(' ').last ?? "No name",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
-          );
-        },
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
   void _showPlayerSelectionDialog(
-      BuildContext context, FootballPosition position) {
+    BuildContext context,
+    FootballPosition position,
+    MemberModel? currentPlayer,
+  ) {
     final cubit = context.read<TeamCubit>();
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 600;

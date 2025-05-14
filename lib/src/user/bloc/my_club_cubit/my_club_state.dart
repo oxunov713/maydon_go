@@ -23,15 +23,12 @@ class MyClubLoaded extends MyClubState {
     required this.connections,
     required this.searchResults,
     required this.clubs,
+
   });
 
   @override
-  List<Object?> get props => [
-        user,
-        liderBoard,
-        connections,
-        searchResults,
-      ];
+  List<Object?> get props =>
+      [user, liderBoard, connections, searchResults, clubs];
 }
 
 class MyClubError extends MyClubState {

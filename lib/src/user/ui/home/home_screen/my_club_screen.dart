@@ -390,19 +390,25 @@ class _MyClubScreenState extends State<MyClubScreen> {
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           separatorBuilder: (context, index) => const SizedBox(width: 16),
-                          itemCount: state.clubs.length + 1,
+                          itemCount: state.clubs.length+1,
                           itemBuilder: (context, index) {
                             if (index < state.clubs.length) {
-                              final visibleFriends = state.connections.take(3).toList();
-                              final remainingFriends = state.connections.length - 3;
+                              final club = state.clubs[index]; // ✅ Bu joy endi faqat mavjud clublar uchun ishlaydi
+                              final isOwnedByUser = club.ownerId == state.user.id;
+                              final visibleFriends = club.members.take(3).toList();
+
+                              final remainingFriends = club.members.length > 3 ? club.members.length - 3 : 0;
+
                               return ClubCard(
                                 visibleFriends: visibleFriends,
                                 remainingFriends: remainingFriends,
                                 index: index,
                                 state: state,
-                                isOwnedByUser: true,
+                                isOwnedByUser: isOwnedByUser,
+                                clubId: club.chatId,
                               );
                             } else {
+                              // Bu holatda index == state.clubs.length, ya'ni oxirgi "Create Club" item
                               return GestureDetector(
                                 onTap: () => showCreateClubDialog(context),
                                 child: DottedBorder(
@@ -428,6 +434,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
                               );
                             }
                           },
+
                         ),
                       ),
                     ),
