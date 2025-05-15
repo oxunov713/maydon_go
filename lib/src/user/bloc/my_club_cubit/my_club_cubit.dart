@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -61,7 +62,7 @@ class MyClubCubit extends Cubit<MyClubState> {
     if (!isConnected(friend.id!)) {
       try {
         final newFriendshipsJson =
-            await apiService.addToFriends(userId: friend.id!);
+        await apiService.addToFriends(userId: friend.id!);
         final newFriendships = List<Friendship>.from(
             newFriendshipsJson.map((json) => Friendship.fromJson(json)));
 
@@ -93,7 +94,7 @@ class MyClubCubit extends Cubit<MyClubState> {
 
         // Create a NEW filtered list instead of modifying in-place
         final updatedConnections =
-            connections.where((f) => f.friend.id != friend.id).toList();
+        connections.where((f) => f.friend.id != friend.id).toList();
 
         connections = updatedConnections;
 
@@ -186,10 +187,93 @@ class MyClubCubit extends Cubit<MyClubState> {
     }
   }
 
-  @override
-  Future<void> close() {
-    _debounce?.cancel();
-
-    return super.close();
+  Future<void> deleteClub(int clubId) async {
+    emit(MyClubLoading());
+    try {
+      await clubService.deleteClub(clubId: clubId);
+      final newClubs = await clubService.getClubs();
+      emit(
+        MyClubLoaded(
+            user: user,
+            liderBoard: _liderBoard,
+            connections: connections,
+            searchResults: allUsers,
+            clubs: newClubs),
+      );
+    } catch (e) {
+      throw Exception("Klub o'chirishda xatolik: ${e.toString()}");
+    }
   }
-}
+
+  Future<void> updateClub(int clubId, String clubName) async {
+    emit(MyClubLoading());
+    try {
+      await clubService.updateClub(clubId: clubId, clubName: clubName);
+      final newClubs = await clubService.getClubs();
+      emit(
+        MyClubLoaded(
+            user: user,
+            liderBoard: _liderBoard,
+            connections: connections,
+            searchResults: allUsers,
+            clubs: newClubs),
+      );
+    } catch (e) {
+      throw Exception("update club error: ${e.toString()}");
+    }
+  }
+
+  Future<void> removeMember(
+      {required int clubId, required int memberId}) async {
+    emit(MyClubLoading());
+    try {
+      await clubService.removeMember(clubId: clubId, memberId: memberId);
+      final newClubs = await clubService.getClubs();
+      emit(
+        MyClubLoaded(
+            user: user,
+            liderBoard: _liderBoard,
+            connections: connections,
+            searchResults: allUsers,
+            clubs: newClubs),
+      );
+    } catch (e) {}}
+    Future<void> updateClubImage(int clubId, String imagePath) async {
+      emit(MyClubLoading());
+
+      try {
+        final imageFile = File(imagePath);
+
+        if (!await imageFile.exists()) {
+          emit(MyClubError("Rasm fayli topilmadi."));
+          return;
+        }
+
+        await clubService.updateClubImage(
+          clubId: clubId,
+          imageFile: imageFile,
+        );
+
+        final updatedClubs = await clubService.getClubs();
+
+        emit(
+          MyClubLoaded(
+            user: user,
+            liderBoard: _liderBoard,
+            connections: connections,
+            searchResults: allUsers,
+            clubs: updatedClubs,
+          ),
+        );
+      } catch (e) {
+        emit(MyClubError("Rasm yuklashda xatolik: ${e.toString()}"));
+      }
+    }
+
+    @override
+    Future<void> close() {
+      _debounce?.cancel();
+
+      return super.close();
+    }
+  }

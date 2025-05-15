@@ -1,0 +1,2 @@
+D:/my_apps/maydon_go/android/app/.cxx/RelWithDebInfo/4g6c4o4o/x86_64/CMakeFiles/edit_cache.dir
+D:/my_apps/maydon_go/android/app/.cxx/RelWithDebInfo/4g6c4o4o/x86_64/CMakeFiles/rebuild_cache.dir

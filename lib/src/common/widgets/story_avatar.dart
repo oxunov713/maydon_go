@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:maydon_go/src/common/style/app_icons.dart';
 
@@ -111,7 +112,7 @@ Future<void> showAddStoryDialog(BuildContext context) async {
                   print('Video path: ${video.path}');
                   // TODO: Upload video to story
                 }
-                Navigator.pop(context);
+                context.pop();
               },
             ),
             ListTile(

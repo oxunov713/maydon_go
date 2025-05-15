@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:maydon_go/src/common/model/team_model.dart';
-import 'package:maydon_go/src/common/service/api/api_client.dart';
-import 'package:maydon_go/src/common/service/api/user_service.dart';
-import 'package:maydon_go/src/common/tools/position_enum.dart';
+
 
 import '../../../common/model/main_model.dart';
+import '../../../common/service/api/api_client.dart';
 import '../../../common/service/api/club_service.dart';
+import '../../../common/service/api/user_service.dart';
+import '../../../common/tools/position_enum.dart';
 import 'team_state.dart';
 
 class TeamCubit extends Cubit<TeamState> {
@@ -13,7 +13,6 @@ class TeamCubit extends Cubit<TeamState> {
 
   TeamCubit(this._clubService) : super(TeamState.initial());
 
-  // Initialize the cubit with club data and fetch available players
   Future<void> initialize(int clubId) async {
     emit(state.copyWith(isLoading: true));
     try {

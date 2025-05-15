@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
@@ -9,6 +10,7 @@ import 'package:maydon_go/src/common/style/app_icons.dart';
 import 'package:maydon_go/src/common/tools/position_enum.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
+import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
 import '../../../bloc/team_cubit/team_cubit.dart';
 import '../../../bloc/team_cubit/team_state.dart';
 
@@ -39,18 +41,128 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         actions: [
           BlocBuilder<TeamCubit, TeamState>(
             builder: (context, state) {
-              final isAdmin = state.club.ownerId == context.read<MyClubCubit>().user.id;
-              return (isAdmin)
-                  ? IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => context.pushNamed(AppRoutes.clubTeammates),
-              )
-                  : SizedBox.shrink();
+              final isAdmin =
+                  state.club.ownerId == context.read<MyClubCubit>().user.id;
+
+              if (isAdmin) {
+                return IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    context.pushNamed(AppRoutes.clubTeammates, extra: widget.club);
+                  },
+                );
+              } else {
+                return IconButton(
+                  icon: const Icon(Icons.logout, color: AppColors.red),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (dialogContext) => Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.logout,
+                                  size: 48, color: AppColors.red),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'Klubdan chiqishni istaysizmi?',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Bu amalni bekor qilib bo‘lmaydi.',
+                                style:
+                                    TextStyle(fontSize: 14, color: Colors.grey),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () {
+                                        // ❗️Navigator emas, dialog context!
+                                        dialogContext.pop(false);
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.grey4,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          side: const BorderSide(
+                                              color: Colors.grey),
+                                        ),
+                                      ),
+                                      child: const Text('Bekor qilish'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () {
+                                        dialogContext.pop(true);
+                                      },
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: AppColors.red,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Chiqish',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+
+                    if (confirmed == true) {
+                      final userId = context.read<MyClubCubit>().user.id;
+
+                      // ✅ 1. ChatMemberni topish
+                      final chatMember = state.club.members.firstWhere(
+                        (member) => member.userId == userId,
+                        orElse: () => throw Exception('ChatMember topilmadi'),
+                      );
+
+                      // ✅ 2. memberId sifatida ChatMember.id uzatish
+                      context.read<MyClubCubit>().removeMember(
+                            clubId: state.club.id,
+                            memberId: chatMember.id, // << to‘g‘ri ID
+                          );
+
+                      if (context.mounted) {
+                        context.goNamed(AppRoutes.home);
+                      }
+                    }
+                  },
+                );
+              }
             },
           ),
         ],
-      )
-,
+      ),
       body: Container(
         height: double.infinity,
         decoration: BoxDecoration(

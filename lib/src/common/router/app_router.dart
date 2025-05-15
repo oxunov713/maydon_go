@@ -184,9 +184,9 @@ final GoRouter _router = GoRouter(
                               path: "teamChat",
                               name: AppRoutes.teamChat,
                               builder: (context, state) {
-                                final teamId = state.extra as int;
+                                final id = state.extra as int;
                                 return TeamChatScreen(
-                                  teamId: teamId,
+                                  chatId: id,
                                 );
                               },
                             ),

@@ -41,6 +41,7 @@ class ClubModel {
 }
 
 class MemberModel {
+  final int id;
   final int userId;
   final String username;
   final String? userImage;
@@ -48,6 +49,7 @@ class MemberModel {
   final DateTime joinedAt;
 
   MemberModel({
+    required this.id,
     required this.userId,
     required this.username,
     this.userImage,
@@ -57,6 +59,7 @@ class MemberModel {
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
     return MemberModel(
+      id: json['id'],
       userId: json['userId'],
       username: json['username'],
       userImage: json['userImage'],
@@ -67,6 +70,7 @@ class MemberModel {
 
   Map<String, dynamic> toJson() => {
     'userId': userId,
+    'id': id,
     'username': username,
     'userImage': userImage,
     'position': position,

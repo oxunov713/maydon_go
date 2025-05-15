@@ -20,10 +20,11 @@ class ChatModel {
       id: json['id'],
       name: json['name'],
       type: json['type'],
-      createdDate: json['createdDate'] != null ? DateTime.tryParse(json['createdDate']) : null,
-      members: (json['members'] as List)
-          .map((e) => ChatMember.fromJson(e))
-          .toList(),
+      createdDate: json['createdDate'] != null
+          ? DateTime.tryParse(json['createdDate'])
+          : null,
+      members:
+          (json['members'] as List).map((e) => ChatMember.fromJson(e)).toList(),
       messages: (json['messages'] as List)
           .map((e) => ChatMessage.fromJson(e))
           .toList(),
@@ -45,7 +46,10 @@ class ChatModel {
 class ChatMember {
   final int id;
   final int userId;
-  final String role;
+  final String? userFullName;
+  final String? userPhoneNumber;
+  final String? userImage;
+  final String? role;
   final DateTime joinedAt;
 
   ChatMember({
@@ -53,12 +57,18 @@ class ChatMember {
     required this.userId,
     required this.role,
     required this.joinedAt,
+     this.userFullName,
+     this.userPhoneNumber,
+     this.userImage,
   });
 
   factory ChatMember.fromJson(Map<String, dynamic> json) {
     return ChatMember(
       id: json['id'],
       userId: json['userId'],
+      userFullName: json['userFullName'],
+      userPhoneNumber: json['userPhoneNumber'],
+      userImage: json['userImage'],
       role: json['role'],
       joinedAt: DateTime.parse(json['joinedAt']),
     );
@@ -69,6 +79,9 @@ class ChatMember {
       'id': id,
       'userId': userId,
       'role': role,
+      'userFullName': userFullName,
+      'userPhoneNumber': userPhoneNumber,
+      'userImage': userImage,
       'joinedAt': joinedAt.toIso8601String(),
     };
   }

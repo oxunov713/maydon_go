@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/widgets/create_club.dart';
 
 import '../../../../common/tools/language_extension.dart';
@@ -335,20 +336,10 @@ class _MyClubScreenState extends State<MyClubScreen> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.only(bottom: 15, right: 5),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Your clubs",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 20),
-                            ),
-                            Text(
-                              "${state.clubs.length}/$clubMaxLength",
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.bold),
-                            ),
-                          ],
+                        child: Text(
+                          "Your clubs",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
                         ),
                       ),
                     ),
@@ -357,85 +348,107 @@ class _MyClubScreenState extends State<MyClubScreen> {
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: state.clubs.isEmpty
                             ? Center(
-                          child: GestureDetector(
-                            onTap: () => showCreateClubDialog(context),
-                            child: DottedBorder(
-                              borderType: BorderType.RRect,
-                              radius: Radius.circular(16),
-                              color: Colors.grey,
-                              dashPattern: [6, 3],
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.6, // Kattaroq qilish
-                                height: MediaQuery.of(context).size.height * 0.2,
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.add, size: 40, color: Colors.grey),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        "Sizda hali klublar yo'q\nYangi klub yarating",
-                                        style: TextStyle(fontSize: 14),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                            : ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          separatorBuilder: (context, index) => const SizedBox(width: 16),
-                          itemCount: state.clubs.length+1,
-                          itemBuilder: (context, index) {
-                            if (index < state.clubs.length) {
-                              final club = state.clubs[index]; // ✅ Bu joy endi faqat mavjud clublar uchun ishlaydi
-                              final isOwnedByUser = club.ownerId == state.user.id;
-                              final visibleFriends = club.members.take(3).toList();
-
-                              final remainingFriends = club.members.length > 3 ? club.members.length - 3 : 0;
-
-                              return ClubCard(
-                                visibleFriends: visibleFriends,
-                                remainingFriends: remainingFriends,
-                                index: index,
-                                state: state,
-                                isOwnedByUser: isOwnedByUser,
-                                clubId: club.chatId,
-                              );
-                            } else {
-                              // Bu holatda index == state.clubs.length, ya'ni oxirgi "Create Club" item
-                              return GestureDetector(
-                                onTap: () => showCreateClubDialog(context),
-                                child: DottedBorder(
-                                  borderType: BorderType.RRect,
-                                  radius: Radius.circular(16),
-                                  color: Colors.grey,
-                                  dashPattern: [6, 3],
-                                  child: Container(
-                                    width: MediaQuery.of(context).size.width * 0.3,
-                                    padding: EdgeInsets.all(16),
-                                    child: Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          Icon(Icons.add, size: 40, color: Colors.grey),
-                                          SizedBox(height: 8),
-                                          Text("Create Club", style: TextStyle(fontSize: 12)),
-                                        ],
+                                child: GestureDetector(
+                                  onTap: () => showCreateClubDialog(context),
+                                  child: DottedBorder(
+                                    borderType: BorderType.RRect,
+                                    radius: Radius.circular(16),
+                                    color: Colors.grey,
+                                    dashPattern: [6, 3],
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.6, // Kattaroq qilish
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.2,
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: const [
+                                            Icon(Icons.add,
+                                                size: 40, color: Colors.grey),
+                                            SizedBox(height: 12),
+                                            Text(
+                                              "Sizda hali klublar yo'q\nYangi klub yarating",
+                                              style: TextStyle(fontSize: 14),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              );
-                            }
-                          },
+                              )
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 16),
+                                itemCount: state.clubs.length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index < state.clubs.length) {
+                                    final club = state.clubs[index];
+                                    final isOwnedByUser =
+                                        club.ownerId == state.user.id;
+                                    final visibleFriends =
+                                        club.members.take(3).toList();
 
-                        ),
+                                    final remainingFriends =
+                                        club.members.length > 3
+                                            ? club.members.length - 3
+                                            : 0;
+                                    Logger().d(club.chatId);
+                                    return ClubCard(
+                                      visibleFriends: visibleFriends,
+                                      remainingFriends: remainingFriends,
+                                      index: index,
+                                      state: state,
+                                      imageUrl: club.imageUrl,
+                                      isOwnedByUser: isOwnedByUser,
+                                      clubId: club.id,
+                                      chatId: club.chatId,
+                                    );
+                                  } else {
+                                    // Bu holatda index == state.clubs.length, ya'ni oxirgi "Create Club" item
+                                    return GestureDetector(
+                                      onTap: () =>
+                                          showCreateClubDialog(context),
+                                      child: DottedBorder(
+                                        borderType: BorderType.RRect,
+                                        radius: Radius.circular(16),
+                                        color: Colors.grey,
+                                        dashPattern: [6, 3],
+                                        child: Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.3,
+                                          padding: EdgeInsets.all(16),
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: const [
+                                                Icon(Icons.add,
+                                                    size: 40,
+                                                    color: Colors.grey),
+                                                SizedBox(height: 8),
+                                                Text("Create Club",
+                                                    style: TextStyle(
+                                                        fontSize: 12)),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
                       ),
                     ),
                     //LiderBoard

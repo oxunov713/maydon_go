@@ -146,6 +146,7 @@ class ChatCubit extends Cubit<ChatSState> {
               orElse: () => ChatMember(
                 id: msg.id,
                 userId: msg.senderId,
+
                 role: 'unknown',
                 joinedAt: DateTime.now(),
               ),

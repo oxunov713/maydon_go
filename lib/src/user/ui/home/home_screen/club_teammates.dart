@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/model/friend_model.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
@@ -22,7 +23,8 @@ class ClubTeammates extends StatefulWidget {
 class _ClubTeammatesState extends State<ClubTeammates> {
   @override
   void initState() {
-
+    super.initState();
+    context.read<TeamCubit>().initialize(widget.club.id);
   }
 
   @override
@@ -89,9 +91,9 @@ class _ClubTeammatesState extends State<ClubTeammates> {
             ),
             title: Text(
               member.username,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            subtitle: Text("Telefon raqami mavjud emas"),
+            subtitle: Text(member.position),
             trailing: IconButton(
               icon: const Icon(Icons.remove_circle, color: AppColors.red),
               onPressed: () => _showRemoveConfirmation(context, member),
@@ -113,19 +115,26 @@ class _ClubTeammatesState extends State<ClubTeammates> {
   void _showRemoveConfirmation(BuildContext context, MemberModel member) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text("A'zoni o'chirish"),
         content: Text(
-          "Haqiqatan ham ${member.username ?? 'bu a\'zoni'} jamoangizdan o'chirmoqchimisiz?",
+          "Haqiqatan ham ${member.username} jamoangizdan o'chirmoqchimisiz?",
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => dialogContext.pop(), // ✅ GoRouter usuli
             child: const Text("Bekor qilish"),
           ),
           TextButton(
-            onPressed: () {
-
+            onPressed: () async {
+              await context.read<MyClubCubit>().removeMember(
+                    clubId: widget.club.id,
+                    memberId: member.id, // ✅ Bu `ChatMember.id` bo‘lishi kerak
+                  );
+              context.read<TeamCubit>().initialize(widget.club.id);
+              if (context.mounted) {
+                dialogContext.pop(); // ✅ Dialogni yopish
+              }
             },
             child: const Text(
               "O'chirish",

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
-import 'package:maydon_go/src/common/style/app_icons.dart';
+import 'package:maydon_go/src/user/bloc/chat_cubit/chat_cubit.dart';
 
 import '../../../../common/router/app_routes.dart';
-import '../../../bloc/my_club_cubit/my_club_cubit.dart';
 import '../../../bloc/team_cubit/team_chat_cubit.dart';
 
 class TeamChatScreen extends StatefulWidget {
-  final int teamId;
+  final int chatId;
 
   const TeamChatScreen({
     super.key,
-    required this.teamId,
+    required this.chatId,
   });
 
   @override
@@ -24,10 +24,18 @@ class TeamChatScreen extends StatefulWidget {
 }
 
 class _TeamChatScreenState extends State<TeamChatScreen> {
+
   @override
   void initState() {
     super.initState();
-    context.read<TeamChatCubit>().joinGroupChat(widget.teamId);
+    context.read<TeamChatCubit>().joinGroupChat(widget.chatId);
+  }
+
+  @override
+  void dispose() {
+    context.read<TeamChatCubit>().resetState();
+
+    super.dispose();
   }
 
   @override
@@ -64,7 +72,7 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
             onSelected: (value) {
               if (value == 'wallpaper') {
                 context.pushNamed(AppRoutes.wallpaper);
-              }  else if (value == 'delete_chat') {
+              } else if (value == 'delete_chat') {
                 //context.read<ChatCubit>().deleteChat();
               }
             },
@@ -83,7 +91,6 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                   ),
                 ),
               ),
-
               PopupMenuItem(
                 value: 'delete_chat',
                 child: ListTile(
@@ -108,47 +115,53 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
       ),
       body: BlocBuilder<TeamChatCubit, TeamChatState>(
         builder: (context, state) {
-          if (state.status == TeamChatStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state.status == TeamChatStatus.error) {
-            return Center(
-                child: Text(state.errorMessage ?? 'Error loading chat'));
-          }
+          final currentState = context.watch<ChatCubit>().state;
 
           return Stack(
             children: [
-              BlocBuilder<TeamChatCubit, TeamChatState>(
-                  builder: (context, state) {
-                return Positioned.fill(
-                    child: Image.asset(
-                  state.wallpaper != null
-                      ? state.wallpaper!
-                      : AppIcons.chatWall1,
-                  fit: BoxFit.cover,
-                ));
-              }),
-              Expanded(
-                child: Chat(
+              if (state.status == TeamChatStatus.loading)
+                const Center(child: CircularProgressIndicator()),
+              if (currentState.wallpaper != null)
+                Positioned.fill(
+                  child: Image.asset(
+                    currentState.wallpaper!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              if (state.status == TeamChatStatus.error)
+                Center(child: Text(state.errorMessage ?? 'Error loading chat'))
+              else
+                Chat(
                   messages: state.messages,
+                  textMessageOptions: TextMessageOptions(
+                    isTextSelectable: false,
+                  ),
                   onSendPressed: (types.PartialText message) {
                     context.read<TeamChatCubit>().sendMessage(message.text);
                   },
-                  user: state.currentUser!,
+                  onMessageTap: (context, p1) {
+                    final renderBox = context.findRenderObject() as RenderBox;
+                    final offset = renderBox.localToGlobal(Offset.zero);
+
+                    _showTelegramStyleMenu(context, p1, offset);
+                  },
+                  user: state.currentUser ?? types.User(id: '0'),
                   showUserAvatars: true,
                   showUserNames: true,
-                  inputOptions: const InputOptions(
+                  inputOptions: InputOptions(
+                    autofocus: false,
+                    usesSafeArea: true,
                     sendButtonVisibilityMode: SendButtonVisibilityMode.always,
                   ),
                   theme: DefaultChatTheme(
+
                     dateDividerTextStyle: TextStyle(
                         color: AppColors.white2, fontWeight: FontWeight.bold),
-                    messageInsetsVertical: 8,
-                    messageBorderRadius: 15,
+                    messageInsetsVertical: 10,
+                    messageBorderRadius: 12,
                     messageInsetsHorizontal: 10,
                     inputPadding: EdgeInsets.zero,
-                    backgroundColor: state.wallpaper != null
+                    backgroundColor: currentState.wallpaper != null
                         ? AppColors.transparent
                         : AppColors.white2,
                     primaryColor: AppColors.green,
@@ -166,7 +179,6 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
                     userAvatarNameColors: [AppColors.green],
                   ),
                 ),
-              ),
             ],
           );
         },
@@ -281,5 +293,97 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
         );
       },
     );
+  }
+}
+
+void _showTelegramStyleMenu(
+    BuildContext context, types.Message message, Offset offset) async {
+  final isOwnMessage =
+      message.author.id == context.read<TeamChatCubit>().currentUser.id;
+
+  final selected = await showMenu<String>(
+    context: context,
+    position: RelativeRect.fromLTRB(
+      offset.dx + 50,
+      offset.dy,
+      offset.dx + 100,
+      offset.dy,
+    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    color: Colors.white,
+    elevation: 8,
+    items: [
+      PopupMenuItem<String>(
+        value: 'pin',
+        child: Row(
+          children: const [
+            Icon(Icons.push_pin, size: 20),
+            SizedBox(width: 10),
+            Text("Pin qilish"),
+          ],
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: 'reply',
+        child: Row(
+          children: const [
+            Icon(Icons.reply, size: 20),
+            SizedBox(width: 10),
+            Text("Javob yozish"),
+          ],
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: 'copy',
+        child: Row(
+          children: const [
+            Icon(Icons.copy, size: 20),
+            SizedBox(width: 10),
+            Text("Nusxa olish"),
+          ],
+        ),
+      ),
+      PopupMenuItem<String>(
+        value: 'forward',
+        child: Row(
+          children: const [
+            Icon(Icons.forward, size: 20),
+            SizedBox(width: 10),
+            Text("Ulashish"),
+          ],
+        ),
+      ),
+      if (isOwnMessage)
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: const [
+              Icon(Icons.delete, size: 20, color: Colors.red),
+              SizedBox(width: 10),
+              Text("O‘chirish", style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+    ],
+  );
+
+  switch (selected) {
+    case 'pin':
+      // TODO: Pin qilish logikasi
+      break;
+    case 'reply':
+      // TODO: Reply logikasi
+      break;
+    case 'copy':
+      Clipboard.setData(
+          ClipboardData(text: (message as types.TextMessage).text));
+      break;
+    case 'forward':
+      // TODO: Forward qilish
+      break;
+    case 'delete':
+      // TODO: Delete qilish
+      break;
+
   }
 }
