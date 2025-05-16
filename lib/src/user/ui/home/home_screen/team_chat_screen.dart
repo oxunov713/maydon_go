@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,18 +25,10 @@ class TeamChatScreen extends StatefulWidget {
 }
 
 class _TeamChatScreenState extends State<TeamChatScreen> {
-
   @override
   void initState() {
     super.initState();
     context.read<TeamChatCubit>().joinGroupChat(widget.chatId);
-  }
-
-  @override
-  void dispose() {
-    context.read<TeamChatCubit>().resetState();
-
-    super.dispose();
   }
 
   @override
@@ -131,53 +124,70 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
               if (state.status == TeamChatStatus.error)
                 Center(child: Text(state.errorMessage ?? 'Error loading chat'))
               else
-                Chat(
-                  messages: state.messages,
-                  textMessageOptions: TextMessageOptions(
-                    isTextSelectable: false,
-                  ),
-                  onSendPressed: (types.PartialText message) {
-                    context.read<TeamChatCubit>().sendMessage(message.text);
-                  },
-                  onMessageTap: (context, p1) {
-                    final renderBox = context.findRenderObject() as RenderBox;
-                    final offset = renderBox.localToGlobal(Offset.zero);
-
-                    _showTelegramStyleMenu(context, p1, offset);
-                  },
-                  user: state.currentUser ?? types.User(id: '0'),
-                  showUserAvatars: true,
-                  showUserNames: true,
-                  inputOptions: InputOptions(
-                    autofocus: false,
-                    usesSafeArea: true,
-                    sendButtonVisibilityMode: SendButtonVisibilityMode.always,
-                  ),
-                  theme: DefaultChatTheme(
-
-                    dateDividerTextStyle: TextStyle(
-                        color: AppColors.white2, fontWeight: FontWeight.bold),
-                    messageInsetsVertical: 10,
-                    messageBorderRadius: 12,
-                    messageInsetsHorizontal: 10,
-                    inputPadding: EdgeInsets.zero,
-                    backgroundColor: currentState.wallpaper != null
-                        ? AppColors.transparent
-                        : AppColors.white2,
-                    primaryColor: AppColors.green,
-                    secondaryColor: AppColors.white,
-                    sentMessageBodyTextStyle:
-                        const TextStyle(color: Colors.white),
-                    receivedMessageBodyTextStyle:
-                        const TextStyle(color: Colors.black),
-                    inputMargin:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    inputBorderRadius:
-                        const BorderRadius.all(Radius.circular(30)),
-                    inputTextColor: Colors.black,
-                    inputBackgroundColor: Colors.white,
-                    userAvatarNameColors: [AppColors.green],
-                  ),
+                Column(
+                  children: [
+                    if (state.pinnedMessages.isNotEmpty)
+                      buildPinnedMessage(
+                        context,
+                        state.pinnedMessages.whereType<types.TextMessage>().toList(),
+                        () {},
+                        () {},
+                      ),
+                    Expanded(
+                      child: Chat(
+                        messages: state.messages,
+                        textMessageOptions: const TextMessageOptions(
+                          isTextSelectable: false,
+                        ),
+                        onSendPressed: (types.PartialText message) {
+                          context
+                              .read<TeamChatCubit>()
+                              .sendMessage(message.text);
+                        },
+                        onMessageTap: (context, p1) {
+                          final renderBox =
+                              context.findRenderObject() as RenderBox;
+                          final offset = renderBox.localToGlobal(Offset.zero);
+                          showTelegramStyleMenu(context, p1, offset);
+                        },
+                        user: state.currentUser ?? const types.User(id: '0'),
+                        showUserAvatars: true,
+                        showUserNames: true,
+                        inputOptions: const InputOptions(
+                          autofocus: false,
+                          usesSafeArea: true,
+                          sendButtonVisibilityMode:
+                              SendButtonVisibilityMode.always,
+                        ),
+                        theme: DefaultChatTheme(
+                          dateDividerTextStyle: TextStyle(
+                            color: AppColors.white2,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          messageInsetsVertical: 10,
+                          messageBorderRadius: 12,
+                          messageInsetsHorizontal: 10,
+                          inputPadding: EdgeInsets.zero,
+                          backgroundColor: currentState.wallpaper != null
+                              ? AppColors.transparent
+                              : AppColors.white2,
+                          primaryColor: AppColors.green,
+                          secondaryColor: AppColors.white,
+                          sentMessageBodyTextStyle:
+                              const TextStyle(color: Colors.white),
+                          receivedMessageBodyTextStyle:
+                              const TextStyle(color: Colors.black),
+                          inputMargin: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 5),
+                          inputBorderRadius:
+                              const BorderRadius.all(Radius.circular(30)),
+                          inputTextColor: Colors.black,
+                          inputBackgroundColor: Colors.white,
+                          userAvatarNameColors: [AppColors.green],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
             ],
           );
@@ -296,8 +306,11 @@ class _TeamChatScreenState extends State<TeamChatScreen> {
   }
 }
 
-void _showTelegramStyleMenu(
+void showTelegramStyleMenu(
     BuildContext context, types.Message message, Offset offset) async {
+  // 1. Klaviaturani yopish
+  FocusScope.of(context).unfocus();
+
   final isOwnMessage =
       message.author.id == context.read<TeamChatCubit>().currentUser.id;
 
@@ -313,51 +326,41 @@ void _showTelegramStyleMenu(
     color: Colors.white,
     elevation: 8,
     items: [
-      PopupMenuItem<String>(
+      const PopupMenuItem<String>(
         value: 'pin',
         child: Row(
-          children: const [
+          children: [
             Icon(Icons.push_pin, size: 20),
             SizedBox(width: 10),
             Text("Pin qilish"),
           ],
         ),
       ),
-      PopupMenuItem<String>(
-        value: 'reply',
-        child: Row(
-          children: const [
-            Icon(Icons.reply, size: 20),
-            SizedBox(width: 10),
-            Text("Javob yozish"),
-          ],
-        ),
-      ),
-      PopupMenuItem<String>(
+      const PopupMenuItem<String>(
         value: 'copy',
         child: Row(
-          children: const [
+          children: [
             Icon(Icons.copy, size: 20),
             SizedBox(width: 10),
             Text("Nusxa olish"),
           ],
         ),
       ),
-      PopupMenuItem<String>(
+      const PopupMenuItem<String>(
         value: 'forward',
         child: Row(
-          children: const [
-            Icon(Icons.forward, size: 20),
+          children: [
+            Icon(Icons.send, size: 20),
             SizedBox(width: 10),
             Text("Ulashish"),
           ],
         ),
       ),
       if (isOwnMessage)
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'delete',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.delete, size: 20, color: Colors.red),
               SizedBox(width: 10),
               Text("O‘chirish", style: TextStyle(color: Colors.red)),
@@ -367,13 +370,17 @@ void _showTelegramStyleMenu(
     ],
   );
 
+  if (!context.mounted || selected == null) return;
+
+  FocusScope.of(context).unfocus();
+
   switch (selected) {
     case 'pin':
-      // TODO: Pin qilish logikasi
+      await context
+          .read<TeamChatCubit>()
+          .pinMessageToChat(int.parse(message.id));
       break;
-    case 'reply':
-      // TODO: Reply logikasi
-      break;
+
     case 'copy':
       Clipboard.setData(
           ClipboardData(text: (message as types.TextMessage).text));
@@ -382,8 +389,83 @@ void _showTelegramStyleMenu(
       // TODO: Forward qilish
       break;
     case 'delete':
-      // TODO: Delete qilish
+      await context
+          .read<TeamChatCubit>()
+          .deleteMessageFromChat(int.parse(message.id));
       break;
-
   }
 }
+
+Widget buildPinnedMessage(
+    BuildContext context,
+    List<types.TextMessage> texts,
+    VoidCallback onClose,
+    VoidCallback onTap, // scrollToMessage chaqirilsin
+    ) {
+  return Material(
+    color: AppColors.green40,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            // 🔹 Left side - vertical bars for each pinned message
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                texts.length,
+                    (index) => Container(
+                  width: 4,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // 🔸 Title + subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Pinned messages",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    texts.map((e) => e.text).join(" • "),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ❌ Close icon
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: onClose,
+              tooltip: "Unpin all",
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+

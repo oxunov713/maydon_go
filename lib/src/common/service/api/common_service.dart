@@ -107,4 +107,27 @@ class CommonService {
       throw Exception('fav davomida xatolik yuz berdi.');
     }
   }
+
+  Future<void> pinMessage({required int chatId, required int messageId}) async {
+    try {
+      await dio.post("/chat/$chatId/messages/pinned/add", data: {
+        "messageId": messageId,
+      });
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+    }
+  }
+
+  Future<void> deleteMessage(
+      {required int chatId, required int messageId}) async {
+    try {
+      await dio.delete("/chat/$chatId/message/$messageId/delete");
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+    }
+  }
 }

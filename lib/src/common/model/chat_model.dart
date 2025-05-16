@@ -5,6 +5,7 @@ class ChatModel {
   final DateTime? createdDate;
   final List<ChatMember> members;
   final List<ChatMessage> messages;
+  final List<ChatMessage> pinnedMessages;
 
   ChatModel({
     required this.id,
@@ -13,6 +14,7 @@ class ChatModel {
     this.createdDate,
     required this.members,
     required this.messages,
+    required this.pinnedMessages,
   });
 
   factory ChatModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,9 @@ class ChatModel {
       messages: (json['messages'] as List)
           .map((e) => ChatMessage.fromJson(e))
           .toList(),
+      pinnedMessages: (json['pinnedMessages'] as List)
+          .map((e) => ChatMessage.fromJson(e))
+          .toList(),
     );
   }
 
@@ -39,6 +44,7 @@ class ChatModel {
       'createdDate': createdDate?.toIso8601String(),
       'members': members.map((e) => e.toJson()).toList(),
       'messages': messages.map((e) => e.toJson()).toList(),
+      'pinnedMessages': pinnedMessages.map((e) => e.toJson()).toList(),
     };
   }
 }
@@ -57,9 +63,9 @@ class ChatMember {
     required this.userId,
     required this.role,
     required this.joinedAt,
-     this.userFullName,
-     this.userPhoneNumber,
-     this.userImage,
+    this.userFullName,
+    this.userPhoneNumber,
+    this.userImage,
   });
 
   factory ChatMember.fromJson(Map<String, dynamic> json) {

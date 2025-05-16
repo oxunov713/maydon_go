@@ -8,6 +8,7 @@ class TeamChatState {
   final String? groupName;
   final List<types.User> members;
   final List<types.Message> messages;
+  final List<types.Message> pinnedMessages;
   final types.User? currentUser;
   final DateTime? lastUpdate;
 
@@ -17,6 +18,7 @@ class TeamChatState {
     this.groupName,
     this.members = const [],
     this.messages = const [],
+    this.pinnedMessages = const [],
     this.currentUser,
     this.lastUpdate,
   });
@@ -29,6 +31,7 @@ class TeamChatState {
     String? groupName,
     List<types.User>? members,
     List<types.Message>? messages,
+    List<types.Message>? pinnedMessages,
     types.User? currentUser,
     DateTime? lastUpdate,
   }) {
@@ -38,6 +41,7 @@ class TeamChatState {
       groupName: groupName ?? this.groupName,
       members: members ?? this.members,
       messages: messages ?? this.messages,
+      pinnedMessages: pinnedMessages ?? this.pinnedMessages,
       currentUser: currentUser ?? this.currentUser,
       lastUpdate: lastUpdate ?? this.lastUpdate,
     );

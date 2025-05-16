@@ -6,7 +6,6 @@ import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/service/api/api_client.dart';
 import 'package:maydon_go/src/common/service/api/common_service.dart';
 import 'package:maydon_go/src/common/service/api/user_service.dart';
-import 'package:maydon_go/src/common/service/shared_preference_service.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../../common/constants/config.dart';
@@ -120,10 +119,26 @@ class TeamChatCubit extends Cubit<TeamChatState> {
           .toList()
           .reversed
           .toList();
+      final pinnedMessages = groupChatModel.pinnedMessages.map((msg) {
+        final sender = members.firstWhere(
+              (m) => m.id == msg.senderId.toString(),
+          orElse: () => types.User(
+            id: msg.senderId.toString(),
+            firstName: 'User ${msg.senderId}',
+          ),
+        );
 
+        return types.TextMessage(
+          id: msg.id.toString(),
+          text: msg.content,
+          createdAt: msg.sentAt.millisecondsSinceEpoch,
+          author: sender,
+        );
+      }).toList();
       emit(state.copyWith(
         messages: messages,
         members: members,
+        pinnedMessages: pinnedMessages,
         groupName: groupChatModel.name,
         status: TeamChatStatus.loaded,
       ));
@@ -242,6 +257,62 @@ class TeamChatCubit extends Cubit<TeamChatState> {
           status: TeamChatStatus.error, errorMessage: e.toString()));
     }
   }
+  Future<void> pinMessageToChat(int messageId) async {
+    final chatId = _activeGroupId;
+    if (chatId == null) return;
+
+    try {
+      _logger.i("📌 Pinning message $messageId in chat $chatId");
+      await apiService.pinMessage(chatId: chatId, messageId: messageId);
+
+      // ⚠️ Backend pinlangan xabarni darhol qaytarmasa, uni yangilaymiz
+      final updatedChat = await apiService.getChatFromApi(chatId);
+      final members = updatedChat.members.map((m) => types.User(
+        id: m.userId.toString(),
+        firstName: m.userFullName ?? 'Unknown',
+        imageUrl: m.userImage,
+      )).toList();
+
+      final pinnedMessages = updatedChat.pinnedMessages.map((msg) {
+        final sender = members.firstWhere(
+              (u) => u.id == msg.senderId.toString(),
+          orElse: () => types.User(id: msg.senderId.toString()),
+        );
+
+        return types.TextMessage(
+          id: msg.id.toString(),
+          text: msg.content,
+          createdAt: msg.sentAt.millisecondsSinceEpoch,
+          author: sender,
+        );
+      }).toList();
+
+      _logger.i("✅ ${pinnedMessages.length} xabar pinlangan");
+
+      emit(state.copyWith(pinnedMessages: pinnedMessages));
+    } catch (e) {
+      _logger.e("❌ Pin message failed: $e");
+    }
+  }
+  Future<void> deleteMessageFromChat(int messageId) async {
+    final chatId = _activeGroupId;
+    if (chatId == null) return;
+
+    try {
+      _logger.i("🗑️ Deleting message $messageId in chat $chatId");
+      await apiService.deleteMessage(chatId: chatId, messageId: messageId);
+
+      // Local holatda xabarni olib tashlaymiz
+      final updatedMessages = state.messages
+          .where((msg) => msg.id != messageId.toString())
+          .toList();
+
+      emit(state.copyWith(messages: updatedMessages));
+    } catch (e) {
+      _logger.e("❌ Failed to delete message: $e");
+    }
+  }
+
 
   void _addMessageToState(types.Message message) {
     if (_messageIds.contains(message.id)) return;
@@ -295,6 +366,7 @@ class TeamChatCubit extends Cubit<TeamChatState> {
       messages: [],
       status: TeamChatStatus.initial,
       members: [],
+      pinnedMessages: [],
       groupName: null,
       currentUser: currentUser,
     ));
