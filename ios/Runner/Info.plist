@@ -47,5 +47,63 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- Location permissions for google_maps_flutter, location, geolocator, geocoding -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs location access to show your position on the map and provide location-based services.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs location access to show your position on the map and provide location-based services.</string>
+	
+	<!-- Camera permission for image_picker -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take photos.</string>
+	
+	<!-- Photo Library permission for image_picker -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access to select images.</string>
+	
+	<!-- Microphone permission (if needed for video recording with image_picker) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access to record videos with audio.</string>
+	
+	<!-- Background modes for location and notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+		<string>background-fetch</string>
+	</array>
+	
+	<!-- Network usage for API calls, maps, etc. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	
+	<!-- URL schemes for url_launcher and maps_launcher -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>http</string>
+		<string>https</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>maps</string>
+		<string>comgooglemaps</string>
+		<string>waze</string>
+		<string>citymapper</string>
+	</array>
+	
+	<!-- File sharing for potential file operations -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	
+	<!-- Status bar configuration -->
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

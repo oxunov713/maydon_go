@@ -284,10 +284,10 @@ Future<void> showNotification() async {
   const NotificationDetails notificationDetails =
       NotificationDetails(android: androidDetails);
 
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    'Salom!',
-    'Bu lokal bildirishnoma',
-    notificationDetails,
-  );
+  // await flutterLocalNotificationsPlugin.show(
+  //   0,
+  //   'Salom!',
+  //   'Bu lokal bildirishnoma',
+  //   notificationDetails,
+  // );
 }

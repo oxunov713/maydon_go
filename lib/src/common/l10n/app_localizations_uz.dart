@@ -63,10 +63,12 @@ class AppLocalizationsUz extends AppLocalizations {
   String get signupSuccess => 'Ro\'yxatdan o\'tish muvaffaqiyatli!';
 
   @override
-  String get phoneFormatError => 'Iltimos, telefon raqamining to\'g\'ri formatini kiriting.';
+  String get phoneFormatError =>
+      'Iltimos, telefon raqamining to\'g\'ri formatini kiriting.';
 
   @override
-  String get passwordMinLengthError => 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak!';
+  String get passwordMinLengthError =>
+      'Parol kamida 6 ta belgidan iborat bo\'lishi kerak!';
 
   @override
   String get passwordMatchError => 'Parollar mos kelishi kerak!';

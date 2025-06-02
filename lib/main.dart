@@ -27,7 +27,7 @@ import 'package:maydon_go/src/user/bloc/tournament_cubit/tournament_cubit.dart';
 import 'src/user/bloc/my_club_cubit/fab_visibility_cubit.dart';
 
 // Notifications pluginni global o‘zgaruvchi sifatida ishlatamiz
-final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+// final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   // Flutter bindingni ishga tushirish
@@ -51,7 +51,7 @@ Future<void> initNotifications() async {
   const androidInitSettings =
       AndroidInitializationSettings('@mipmap/ic_launcher');
   const initSettings = InitializationSettings(android: androidInitSettings);
-  await flutterLocalNotificationsPlugin.initialize(initSettings);
+  // await flutterLocalNotificationsPlugin.initialize(initSettings);
 }
 
 // MultiBlocProvider bilan ilova qurilmasi

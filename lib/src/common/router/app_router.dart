@@ -66,7 +66,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
         path: '/',
         name: AppRoutes.splash,
-        builder: (context, state) => SplashScreen(),
+        builder: (context, state) => ChooseLanguageScreens(),
         routes: [
           GoRoute(
             path: "lan",
