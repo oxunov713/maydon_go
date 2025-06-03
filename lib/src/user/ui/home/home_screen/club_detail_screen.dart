@@ -11,6 +11,7 @@ import 'package:maydon_go/src/common/tools/position_enum.dart';
 import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
 import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
+import 'package:maydon_go/src/user/bloc/profile_cubit/profile_state.dart';
 import '../../../bloc/team_cubit/team_cubit.dart';
 import '../../../bloc/team_cubit/team_state.dart';
 
@@ -32,8 +33,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = context.read<TeamCubit>().state.club.ownerId ==
-        context.read<MyClubCubit>().user.id;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.club.name),
@@ -41,14 +41,17 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
         actions: [
           BlocBuilder<TeamCubit, TeamState>(
             builder: (context, state) {
-              final isAdmin =
-                  state.club.ownerId == context.read<MyClubCubit>().user.id;
+              final profile = context.read<ProfileCubit>().state as ProfileLoaded;
+              final isAdmin = state.club.ownerId == profile.user.id;
+
+
 
               if (isAdmin) {
                 return IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
-                    context.pushNamed(AppRoutes.clubTeammates, extra: widget.club);
+                    context.pushNamed(AppRoutes.clubTeammates,
+                        extra: widget.club);
                   },
                 );
               } else {
@@ -472,61 +475,74 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                     }
 
                     return ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: size.height * 0.6,
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: state.availablePlayers.length,
-                        itemBuilder: (context, index) {
-                          final friend = state.availablePlayers[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 4,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
-                            child: ListTile(
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: isSmallScreen ? 12 : 16,
-                                vertical: 8,
-                              ),
-                              leading: CircleAvatar(
-                                radius: isSmallScreen ? 22 : 28,
-                                backgroundImage: friend.imageUrl != null
-                                    ? NetworkImage(friend.imageUrl!)
-                                    : null,
-                                child: friend.imageUrl == null
-                                    ? const Icon(Icons.person)
-                                    : null,
-                              ),
-                              title: Text(
-                                friend.fullName ?? 'No name',
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 16 : 18,
+                        constraints: BoxConstraints(
+                          maxHeight: size.height * 0.6,
+                        ),
+                        child: (state.availablePlayers.isNotEmpty)
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: state.availablePlayers.length,
+                                itemBuilder: (context, index) {
+                                  final friend = state.availablePlayers[index];
+                                  return Card(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 4,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 0,
+                                    child: ListTile(
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: isSmallScreen ? 12 : 16,
+                                        vertical: 8,
+                                      ),
+                                      leading: CircleAvatar(
+                                        radius: isSmallScreen ? 22 : 28,
+                                        backgroundImage: friend.imageUrl != null
+                                            ? NetworkImage(friend.imageUrl!)
+                                            : null,
+                                        child: friend.imageUrl == null
+                                            ? const Icon(Icons.person)
+                                            : null,
+                                      ),
+                                      title: Text(
+                                        friend.fullName ?? 'No name',
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 16 : 18,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        position.abbreviation,
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 12 : 14,
+                                          color: AppColors.green,
+                                        ),
+                                      ),
+                                      trailing: const Icon(
+                                          Icons.arrow_forward_ios,
+                                          size: 16),
+                                      onTap: () {
+                                        cubit.addFriendToPosition(
+                                            position, friend);
+                                        context.pop();
+                                      },
+                                    ),
+                                  );
+                                },
+                              )
+                            : SizedBox(
+                                height: 60,
+                                child: Center(
+                                  child: Text(
+                                      "Jamoaga qo'shish uchun do'stlaringiz qolmadi",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
+                                      )),
                                 ),
-                              ),
-                              subtitle: Text(
-                                position.abbreviation,
-                                style: TextStyle(
-                                  fontSize: isSmallScreen ? 12 : 14,
-                                  color: AppColors.green,
-                                ),
-                              ),
-                              trailing:
-                                  const Icon(Icons.arrow_forward_ios, size: 16),
-                              onTap: () {
-                                cubit.addFriendToPosition(position, friend);
-                                context.pop();
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    );
+                              ));
                   },
                 ),
                 Padding(
@@ -541,7 +557,7 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => context.pop(),
                       child: const Text(
                         'Close',
                         style: TextStyle(color: Colors.white),

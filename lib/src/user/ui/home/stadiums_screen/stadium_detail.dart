@@ -141,17 +141,21 @@ class _StadiumDetailScreenState extends State<StadiumDetailScreen> {
                               bool isSaved = false;
 
                               if (savedState is SavedStadiumsLoaded) {
-                                isSaved = savedState.savedStadiums
-                                    .any((stadium) => stadium.id == widget.stadiumId);
+                                isSaved = savedState.savedStadiums.any(
+                                    (stadium) =>
+                                        stadium.id == widget.stadiumId);
                               }
 
                               return IconButton(
                                 icon: Icon(
-                                  isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                  isSaved
+                                      ? Icons.bookmark
+                                      : Icons.bookmark_border,
                                   color: AppColors.white,
                                 ),
                                 onPressed: () {
-                                  final cubit = context.read<SavedStadiumsCubit>();
+                                  final cubit =
+                                      context.read<SavedStadiumsCubit>();
                                   if (isSaved) {
                                     cubit.removeStadiumFromSaved(stadium);
                                   } else {
@@ -930,6 +934,8 @@ void _showConfirmationDialog(BuildContext context) {
                     if (context.mounted) {
                       context.pop();
                     }
+                    showSuccessModalSheet(context);
+                    (context);
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -1086,6 +1092,59 @@ void showRatingDialog(BuildContext context) {
 
         return SizedBox();
       });
+    },
+  );
+}
+
+void showSuccessModalSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    isScrollControlled: true,
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 60,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Successfully Booked!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'You have successfully booked the stadium.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.pop(),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: AppColors.main,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     },
   );
 }

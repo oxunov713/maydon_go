@@ -185,22 +185,34 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
-  void moveCamera(LatLng target) {
-    if (_mapController != null) {
+  void moveCamera(LatLng target, {int? stadiumId, BuildContext? context}) {
 
+    if (_mapController != null) {
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
-            CameraPosition(target: target, zoom: 15)),
+          CameraPosition(
+            target: target,
+            zoom: 16,
+          ),
+        ),
       );
+    } else {
+
     }
-    _searchStreamController.add(_searchResults);
+
+    if (stadiumId != null && context != null) {
+
+      onMarkerTap(stadiumId, context);
+    }
+
     emit(HomeLoadedState(
       stadiums: _stadiums,
       markers: _markers,
       currentLocation: _currentLocation,
-      searchResults: [],
+      searchResults: _searchResults,
     ));
   }
+
 
   void searchStadiums(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();

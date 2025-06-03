@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bloc/bloc.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/service/api/api_client.dart';
 import 'package:maydon_go/src/common/service/api/common_service.dart';
 import 'package:maydon_go/src/common/service/api/user_service.dart';
@@ -16,69 +16,100 @@ part 'chat_state.dart';
 
 class ChatCubit extends Cubit<ChatSState> {
   final String serverUrl = Config.wsServerUrl;
-  late types.User currentUser;
+  late ChatMember currentUser;
   final Logger _logger = Logger();
-  final Set<String> _messageIds = {};
+  final Set<String> _processedMessageIds = {};
   late final StompClient _stompClient;
   int? _activeChatId;
   StompUnsubscribe? _unsubscribeCallback;
-  final apiService = CommonService(ApiClient().dio);
+  final CommonService _apiService;
   bool _isConnected = false;
+  Timer? _reconnectTimer;
 
-  ChatCubit() : super(ChatSState(messages: [], status: ChatStatus.initial)) {
-    _initStomp();
+  ChatCubit()
+      : _apiService = CommonService(ApiClient().dio),
+        super(ChatSState(status: ChatStatus.initial, messages: [])) {
+    _initialize();
   }
 
-  void _initStomp() async {
-    final wallpaper = await ShPService.getWallpaper();
-    emit(ChatSState(messages: [], wallpaper: wallpaper));
-    final user = await UserService(ApiClient().dio).getUser();
-    currentUser = types.User(
-      id: user.id.toString(),
-      imageUrl: user.imageUrl,
-      firstName: user.fullName,
-    );
+  Future<void> _initialize() async {
+    try {
+      // Load wallpaper preference
+      final wallpaper = await ShPService.getWallpaper();
+      emit(state.copyWith(wallpaper: wallpaper));
+
+      // Load current user data
+      final user = await UserService(ApiClient().dio).getUser();
+      currentUser = ChatMember(
+        id: user.id!,
+        userId: user.id!,
+        role: user.role,
+        userFullName: user.fullName,
+        joinedAt: DateTime.now(),
+      );
+
+      _setupStompClient();
+    } catch (e) {
+      _logger.e("Initialization error: $e");
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to initialize chat"));
+    }
+  }
+
+  void _setupStompClient() {
     _stompClient = StompClient(
       config: StompConfig(
         url: serverUrl,
         onConnect: _onConnect,
-        onWebSocketError: (error) {
-          _logger.e("WebSocket error: $error");
-          _isConnected = false;
-        },
-        onStompError: (frame) {
-          _logger.e("STOMP protocol error: ${frame.body}");
-          _isConnected = false;
-        },
-        onDisconnect: (_) {
-          _logger.w("STOMP disconnected");
-          _isConnected = false;
-        },
+        onWebSocketError: (error) =>
+            _handleConnectionError("WebSocket error: $error"),
+        onStompError: (frame) =>
+            _handleConnectionError("STOMP error: ${frame.body}"),
+        onDisconnect: (_) => _handleDisconnection(),
         beforeConnect: () async {
           _logger.i("Connecting to STOMP...");
           await Future.delayed(const Duration(milliseconds: 200));
         },
         reconnectDelay: const Duration(seconds: 5),
         connectionTimeout: const Duration(seconds: 10),
+        stompConnectHeaders: {'userId': currentUser.id.toString()},
       ),
     );
+
     _stompClient.activate();
   }
 
-  void changeWallpaper(String path) async {
-    await ShPService.setWallpaper(path);
-    final wallpaper = await ShPService.getWallpaper();
-
-    emit(state.copyWith(wallpaper: wallpaper));
-  }
-
-  void _onConnect(StompFrame frame) async {
-    _logger.i("Connected to STOMP");
+  void _onConnect(StompFrame frame) {
+    _logger.i("Connected to STOMP server");
     _isConnected = true;
+    _reconnectTimer?.cancel();
 
     if (_activeChatId != null) {
-      await _subscribeToChat(_activeChatId!);
+      _subscribeToChat(_activeChatId!);
     }
+  }
+
+  void _handleConnectionError(String error) {
+    _logger.e(error);
+    _isConnected = false;
+    _scheduleReconnect();
+  }
+
+  void _handleDisconnection() {
+    _logger.w("Disconnected from STOMP server");
+    _isConnected = false;
+    _scheduleReconnect();
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 10), () {
+      if (!_isConnected) {
+        _logger.i("Attempting to reconnect...");
+        _stompClient.deactivate();
+        _stompClient.activate();
+      }
+    });
   }
 
   Future<void> joinChat(int chatId) async {
@@ -87,46 +118,56 @@ class ChatCubit extends Cubit<ChatSState> {
     _unsubscribePrevious();
     _activeChatId = chatId;
 
-    await _loadMessages(chatId);
-
-    if (_isConnected) {
-      await _subscribeToChat(chatId);
+    try {
+      await _loadMessages(chatId);
+      if (_isConnected) {
+        _subscribeToChat(chatId);
+      }
+    } catch (e) {
+      _logger.e("Failed to join chat: $e");
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to join chat"));
     }
   }
 
   void _unsubscribePrevious() {
     _unsubscribeCallback?.call();
     _unsubscribeCallback = null;
+    _processedMessageIds.clear();
   }
 
-  Future<void> _subscribeToChat(int chatId) async {
+  void _subscribeToChat(int chatId) {
     final destination = '/topic/chat.$chatId';
 
     _unsubscribeCallback = _stompClient.subscribe(
       destination: destination,
       headers: {'id': 'chat-$chatId'},
       callback: (frame) {
-        if (frame.body != null) {
-          try {
-            final data = jsonDecode(frame.body!);
+        if (frame.body == null) return;
 
-            if (data['senderId'].toString() == currentUser.id) return;
+        try {
+          final data = jsonDecode(frame.body!);
+          final messageId = data['id'].toString();
 
-            final message = types.TextMessage(
-              id: data['id'].toString(),
-              text: data['content'] ?? '',
-              createdAt:
-                  data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
-              author: types.User(
-                id: data['senderId'].toString(),
-                firstName: data['senderName'] ?? 'Unknown',
-              ),
-            );
+          // Skip if message already processed or is from current user
+          if (_processedMessageIds.contains(messageId)) return;
+          if (data['senderId'].toString() == currentUser.id.toString()) return;
 
-            _addMessageToState(message);
-          } catch (e) {
-            _logger.e("Error parsing STOMP message: $e");
-          }
+          _processedMessageIds.add(messageId);
+
+          final message = ChatMessage(
+            id: int.parse(messageId),
+            senderId: int.parse(data['senderId'].toString()),
+            type: 'text',
+            content: data['content'] ?? '',
+            sentAt: DateTime.fromMillisecondsSinceEpoch(
+              data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+
+          _addMessageToState(message);
+        } catch (e) {
+          _logger.e("Error processing message: $e");
         }
       },
     );
@@ -136,97 +177,183 @@ class ChatCubit extends Cubit<ChatSState> {
 
   Future<void> _loadMessages(int chatId) async {
     emit(state.copyWith(status: ChatStatus.loading));
+
     try {
-      final chatModel = await apiService.getChatFromApi(chatId);
+      final chatModel = await _apiService.getChatFromApi(chatId);
 
-      final messages = chatModel.messages
-          .map((msg) {
-            final sender = chatModel.members.firstWhere(
-              (m) => m.userId == msg.senderId,
-              orElse: () => ChatMember(
-                id: msg.id,
-                userId: msg.senderId,
+      // Process pinned messages
+      final pinnedMessages = chatModel.pinnedMessages;
 
-                role: 'unknown',
-                joinedAt: DateTime.now(),
-              ),
-            );
-
-            return types.TextMessage(
-              id: msg.id.toString(),
-              text: msg.content,
-              createdAt: msg.sentAt.millisecondsSinceEpoch,
-              author: types.User(
-                id: sender.userId.toString(),
-                firstName: sender.role,
-              ),
-            );
-          })
-          .toList()
-          .reversed
-          .toList();
-
-      emit(state.copyWith(messages: messages, status: ChatStatus.loaded));
+      emit(state.copyWith(
+        status: ChatStatus.loaded,
+        messages: chatModel.messages!.reversed.toList(),
+        pinnedMessages: pinnedMessages,
+      ));
     } catch (e) {
       _logger.e("Failed to load messages: $e");
-      emit(
-          state.copyWith(status: ChatStatus.error, errorMessage: e.toString()));
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to load messages"));
+      rethrow;
     }
   }
 
-  void _addMessageToState(types.TextMessage message) {
-    if (_messageIds.contains(message.id)) return;
+  void _addMessageToState(ChatMessage message) {
+    final updatedMessages = [
+      message,
+      ...state.messages,
+    ];
 
-    _messageIds.add(message.id);
-    final newMessages = [message, ...state.messages];
-    emit(state.copyWith(messages: newMessages));
+    emit(state.copyWith(messages: updatedMessages));
   }
 
-  void sendMessage(String text) {
+  Future<void> sendMessage(String text) async {
     if (!_isConnected || _activeChatId == null) {
-      _logger.w("Not connected or no active chat");
+      _logger.w("Cannot send message - not connected or no active chat");
       return;
     }
 
-    final messageId = DateTime.now().millisecondsSinceEpoch.toString();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    if (text.trim().isEmpty) return;
 
-    final message = types.TextMessage(
+    final messageId = DateTime.now().millisecondsSinceEpoch;
+    final timestamp = DateTime.now();
+
+    // Create optimistic message
+    final optimisticMessage = ChatMessage(
       id: messageId,
-      text: text,
-      createdAt: timestamp,
-      author: currentUser,
+      senderId: currentUser.id,
+      type: 'text',
+      content: text,
+      sentAt: timestamp,
     );
 
-    emit(state.copyWith(messages: [message, ...state.messages]));
-
-    final data = {
-      'id': messageId,
-      'senderId': currentUser.id,
-      'senderName': currentUser.firstName,
-      'content': text,
-      'createdAt': timestamp,
-    };
+    // Update state immediately
+    _addMessageToState(optimisticMessage);
 
     try {
+      // Prepare message data
+      final data = {
+        'id': messageId.toString(),
+        'senderId': currentUser.id.toString(),
+        'senderName': currentUser.userFullName,
+        'content': text,
+        'createdAt': timestamp.millisecondsSinceEpoch,
+      };
+
+      // Send via STOMP
       _stompClient.send(
         destination: '/app/chat.send/$_activeChatId',
         body: jsonEncode(data),
+        headers: {'userId': currentUser.id.toString()},
       );
+
+      _logger.i("Message sent successfully");
     } catch (e) {
       _logger.e("Failed to send message: $e");
 
-// Revert optimistic update
-      final filtered = state.messages.where((m) => m.id != messageId).toList();
-      emit(state.copyWith(messages: filtered));
+      // Remove optimistic message on failure
+      final filteredMessages =
+          state.messages.where((msg) => msg.id != messageId).toList();
+      emit(state.copyWith(messages: filteredMessages));
+    }
+  }
+
+  Future<void> deleteMessage(int messageId) async {
+    if (_activeChatId == null) return;
+
+    try {
+      // Optimistic update
+      final updatedMessages =
+          state.messages.where((msg) => msg.id != messageId).toList();
+      emit(state.copyWith(messages: updatedMessages));
+
+      // API call
+      await _apiService.deleteMessage(
+        chatId: _activeChatId!,
+        messageId: messageId,
+      );
+
+      _logger.i("Message deleted successfully");
+    } catch (e) {
+      _logger.e("Failed to delete message: $e");
+      // Reload messages to revert state
+      await _loadMessages(_activeChatId!);
+    }
+  }
+
+  Future<void> deleteChat() async {
+    if (_activeChatId == null) return;
+
+    try {
+      await _apiService.deleteChat(chatId: _activeChatId ?? -1);
+      emit(state.copyWith(
+        status: ChatStatus.initial,
+        messages: [],
+        pinnedMessages: [],
+      ));
+      _activeChatId = null;
+      _unsubscribePrevious();
+    } catch (e) {
+      _logger.e("Failed to delete chat: $e");
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to delete chat"));
+    }
+  }
+
+  Future<void> pinMessage(int messageId) async {
+    if (_activeChatId == null) return;
+
+    try {
+      await _apiService.pinMessage(
+        chatId: _activeChatId!,
+        messageId: messageId,
+      );
+
+      // Reload chat to get updated pinned messages
+      await _loadMessages(_activeChatId!);
+    } catch (e) {
+      _logger.e("Failed to pin message: $e");
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to pin message"));
+    }
+  }
+
+  Future<void> unpinMessage(int messageId) async {
+    if (_activeChatId == null) return;
+    try {
+      await _apiService.unpinMessage(
+        chatId: _activeChatId ?? -1,
+        messageId: messageId,
+      );
+
+      await _loadMessages(_activeChatId!);
+    } catch (e) {
+      _logger.e("Failed to unpin message: $e");
+      emit(state.copyWith(
+          status: ChatStatus.error, errorMessage: "Failed to unpin message"));
+    }
+  }
+
+  Future<void> changeWallpaper(String path) async {
+    try {
+      await ShPService.setWallpaper(path);
+      final wallpaper = await ShPService.getWallpaper();
+      emit(state.copyWith(wallpaper: wallpaper));
+    } catch (e) {
+      _logger.e("Failed to change wallpaper: $e");
     }
   }
 
   @override
   Future<void> close() async {
-    _logger.i("Closing ChatCubit and STOMP connection");
+    _logger.i("Disposing ChatCubit");
+
     _unsubscribePrevious();
-    _stompClient.deactivate();
+    _reconnectTimer?.cancel();
+
+    if (_stompClient.connected) {
+      _stompClient.deactivate();
+    }
+
     return super.close();
   }
 }

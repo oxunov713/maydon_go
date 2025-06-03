@@ -15,7 +15,7 @@ class AboutApp extends StatelessWidget {
     return Scaffold(
       backgroundColor: Color(0xffF2F3F5),
       appBar: AppBar(
-        title: Text("Ilova haqida"),
+        title: Text("Biz bilan bog'lanish"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),

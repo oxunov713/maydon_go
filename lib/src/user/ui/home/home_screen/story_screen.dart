@@ -1,7 +1,13 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:maydon_go/src/common/model/main_model.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:story_view/story_view.dart';
 
 import '../../../../common/style/app_colors.dart';
@@ -10,12 +16,14 @@ class StoryScreen extends StatefulWidget {
   final List<String> mediaUrls;
   final List<String> mediaTypes;
   final UserModel user;
+  final int chatId;
 
   const StoryScreen({
     super.key,
     required this.mediaUrls,
     required this.mediaTypes,
     required this.user,
+    required this.chatId,
   });
 
   @override
@@ -25,27 +33,10 @@ class StoryScreen extends StatefulWidget {
 class _StoryScreenState extends State<StoryScreen> {
   late StoryController _storyController;
 
-  List<String> _viewedUsers = []; // List to track who viewed the story
-  Map<int, List<String>> _storyComments =
-      {}; // To store comments for each story
-
   @override
   void initState() {
     super.initState();
     _storyController = StoryController();
-  }
-
-
-
-  void _addViewedUser(int index, String userName) {
-    if (!_viewedUsers.contains(userName)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          // O'zgartirishlar bu yerda bo'ladi, masalan:
-          _viewedUsers.add(userName);
-        });
-      });
-    }
   }
 
   @override
@@ -82,16 +73,13 @@ class _StoryScreenState extends State<StoryScreen> {
           children: [
             // StoryView - Make sure it has constraints
             Positioned.fill(
-              // This ensures the StoryView takes up the full screen
               child: StoryView(
                 storyItems: storyItems,
                 controller: _storyController,
                 indicatorOuterPadding:
                     EdgeInsets.symmetric(vertical: 10, horizontal: 5),
                 indicatorHeight: IndicatorHeight.medium,
-                onStoryShow: (storyItem, index) {
-                  _addViewedUser(index, widget.user.fullName ?? "Unknown User");
-                },
+                onStoryShow: (storyItem, index) {},
                 onComplete: () {
                   context.goNamed(
                       AppRoutes.home); // Close when the story is complete
@@ -103,128 +91,110 @@ class _StoryScreenState extends State<StoryScreen> {
             Positioned(
               top: 20, // Adjust top position as needed
               left: 10,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Avatar
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppColors.green2,
-                    backgroundImage: widget.user.imageUrl != null &&
-                            widget.user.imageUrl!.isNotEmpty
-                        ? NetworkImage(widget.user.imageUrl!)
-                        : null,
-                    child: (widget.user.imageUrl == null ||
-                            widget.user.imageUrl!.isEmpty)
-                        ? Text(
-                            widget.user.fullName != null &&
-                                    widget.user.fullName!.isNotEmpty
-                                ? widget.user.fullName![0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.white,
+              right: 0,
+              child: InkWell(
+                onTap: () {
+                  context.pop(context);
+                  context.pushNamed(
+                    AppRoutes.profileChat,
+                    extra: {
+                      'receivedUser': widget.user,
+                      'chatId': widget.chatId,
+                    },
+                  );
+                },
+                child: Row(
+                  spacing: 10,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Avatar
+                    Row(
+                      spacing: 10,
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.green2,
+                          backgroundImage: widget.user.imageUrl != null &&
+                                  widget.user.imageUrl!.isNotEmpty
+                              ? NetworkImage(widget.user.imageUrl!)
+                              : null,
+                          child: (widget.user.imageUrl == null ||
+                                  widget.user.imageUrl!.isEmpty)
+                              ? Text(
+                                  widget.user.fullName != null &&
+                                          widget.user.fullName!.isNotEmpty
+                                      ? widget.user.fullName![0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.white,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.user.fullName ?? "No name",
+                              // Display full name
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : null,
-                  ),
-                  SizedBox(width: 8),
-                  // Full Name and Subtitle
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.user.fullName ?? "No name", // Display full name
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                            Text(
+                              "bugun 19:01 da",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors
+                                    .white70, // Lighter color for subtitle
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      Text(
-                        widget.user.phoneNumber ?? "",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70, // Lighter color for subtitle
+                      ],
+                    ),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert, color: Colors.white),
+                      color: Colors.white,
+                      onSelected: (value) {
+                        if (value == 'download') {
+                          downloadAndSaveMedia(context, widget.mediaUrls[2]);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'download',
+                          child: Row(
+                            children: [
+                              Icon(Icons.download, color: Colors.black),
+                              SizedBox(width: 8),
+                              Text('Download'),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            // Chat Button at the bottom
+
             Positioned(
               bottom: 20,
               right: 20,
               child: GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    isScrollControlled: true,
-                    builder: (context) {
-                      return Padding(
-                        padding: MediaQuery.of(context).viewInsets,
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * 0.5,
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title
-                              Center(
-                                child: Container(
-                                  width: 40,
-                                  height: 4,
-                                  margin: EdgeInsets.only(bottom: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[400],
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                'Viewed by',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              SizedBox(height: 8),
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: _viewedUsers.length,
-                                  itemBuilder: (context, index) {
-                                    return ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundColor: Colors.green,
-                                        child: Text(_viewedUsers[index][0]
-                                            .toUpperCase()),
-                                      ),
-                                      title: Text(_viewedUsers[index]),
-                                    );
-                                  },
-                                ),
-                              ),
-
-
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
                 child: Row(
                   children: [
                     Icon(Icons.remove_red_eye, color: Colors.white),
                     SizedBox(width: 4),
                     Text(
-                      _viewedUsers.length.toString(),
+                      "713",
                       style: TextStyle(color: Colors.white),
                     ),
                   ],
@@ -235,5 +205,115 @@ class _StoryScreenState extends State<StoryScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<void> downloadAndSaveMedia(
+  BuildContext context,
+  String mediaUrl,
+) async {
+  // Validate URL first
+  if (mediaUrl.isEmpty || !Uri.parse(mediaUrl).isAbsolute) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Noto'g'ri media manzili")),
+    );
+    return;
+  }
+
+  // Request permissions
+
+  // Create temporary file
+  final tempDir = await getTemporaryDirectory();
+  final filePath =
+      "${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}${_getFileExtension(mediaUrl)}";
+
+  final dio = Dio();
+  final progressNotifier = ValueNotifier<double>(0);
+  late OverlayEntry progressOverlay;
+
+  // Show progress dialog
+  if (context.mounted) {
+    progressOverlay = OverlayEntry(
+      builder: (context) => AlertDialog(
+        title: const Text("Yuklanmoqda..."),
+        content: ValueListenableBuilder<double>(
+          valueListenable: progressNotifier,
+          builder: (context, value, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: value),
+              const SizedBox(height: 10),
+              Text("${(value * 100).toStringAsFixed(0)}%"),
+            ],
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(progressOverlay);
+  }
+
+  try {
+    // Download file
+    await dio.download(
+      mediaUrl,
+      filePath,
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          progressNotifier.value = received / total;
+        }
+      },
+      deleteOnError: true,
+    );
+
+    // Verify file exists
+    final file = File(filePath);
+    if (!await file.exists()) {
+      throw Exception("Yuklab olingan fayl topilmadi");
+    }
+
+    // Save to gallery
+    final result = await ImageGallerySaverPlus.saveFile(filePath);
+
+    if (context.mounted) {
+      progressOverlay.remove();
+
+      if (result['isSuccess'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Muvaffaqiyatli saqlandi!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Galereyaga saqlashda xatolik")),
+        );
+      }
+    }
+  } catch (e) {
+    if (context.mounted) {
+      progressOverlay.remove();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Xatolik: ${e.toString()}")),
+      );
+    }
+
+    // Clean up failed download
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {}
+  } finally {
+    progressNotifier.dispose();
+  }
+}
+
+String _getFileExtension(String url) {
+  try {
+    final uri = Uri.parse(url);
+    final path = uri.path;
+    final extension = path.substring(path.lastIndexOf('.'));
+    return extension.isNotEmpty ? extension : '.jpg';
+  } catch (_) {
+    return '.jpg';
   }
 }

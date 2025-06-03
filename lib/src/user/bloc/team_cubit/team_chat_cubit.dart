@@ -1,168 +1,158 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:bloc/bloc.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:maydon_go/src/common/model/main_model.dart';
+import 'package:maydon_go/src/common/model/team_model.dart'; // Assuming MemberModel is in team_model.dart
 import 'package:maydon_go/src/common/service/api/api_client.dart';
 import 'package:maydon_go/src/common/service/api/common_service.dart';
 import 'package:maydon_go/src/common/service/api/user_service.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../../common/constants/config.dart';
-import '../../../common/model/chat_model.dart';
+import '../../../common/model/chat_model.dart'; // Assuming ChatMessage is in chat_model.dart
 
 part 'team_chat_state.dart';
 
 class TeamChatCubit extends Cubit<TeamChatState> {
   final String serverUrl = Config.wsServerUrl;
-  late types.User currentUser;
+  late ChatMember currentUser; // ChatCubit'dan olingan
   final Logger _logger = Logger();
-  final Set<String> _messageIds = {};
+  final Set<String> _processedMessageIds =
+      {}; // Qayta ishlov berilgan xabarlar IDsi
   late final StompClient _stompClient;
   int? _activeGroupId;
   StompUnsubscribe? _unsubscribeCallback;
-  final apiService = CommonService(ApiClient().dio);
+  final CommonService _apiService; // _apiService deb nomlandi
   bool _isConnected = false;
-  final StreamController<List<types.Message>> _messagesStreamController =
-      StreamController.broadcast();
+  Timer? _reconnectTimer; // Qayta ulanish taymeri
 
   TeamChatCubit()
-      : super(TeamChatState(messages: [], status: TeamChatStatus.initial)) {
-    _initStomp();
+      : _apiService = CommonService(ApiClient().dio),
+        super(TeamChatState(
+            messages: [],
+            status: TeamChatStatus.initial,
+            members: [],
+            pinnedMessages: [],
+            groupName: '',
+            activePinnedIndex: 0,
+            isPinnedExpanded: false,
+            currentUser: null,
+            chatModel: null)) {
+    _initialize(); // _initStomp o'rniga _initialize ishlatildi
   }
 
-  void _initStomp() async {
-    final user = await UserService(ApiClient().dio).getUser();
-    currentUser = types.User(
-      id: user.id.toString(),
-      imageUrl: user.imageUrl,
-      firstName: user.fullName,
-    );
-    emit(TeamChatState(
-        messages: [], status: TeamChatStatus.loaded, currentUser: currentUser));
+  Future<void> _initialize() async {
+    try {
+      // Joriy foydalanuvchi ma'lumotlarini yuklash
+      final user = await UserService(ApiClient().dio).getUser();
+      currentUser = ChatMember(
+        id: user.id!,
+        userId: user.id!,
+        role: user.role,
+        userFullName: user.fullName,
+        joinedAt: DateTime.now(),
+      );
 
+      // Holatni yangilash
+      emit(state.copyWith(
+        currentUser: user, // `User` ob'ektini `currentUser`ga o'rnatish
+        status:
+            TeamChatStatus.loaded, // Dastlabki holatni `loaded` qilib o'rnatish
+      ));
+
+      _setupStompClient(); // Stomp mijozini sozlash
+    } catch (e) {
+      _logger.e("Initialization error: $e");
+      emit(state.copyWith(
+          status: TeamChatStatus.error,
+          errorMessage: "Failed to initialize chat"));
+    }
+  }
+
+  void _setupStompClient() {
     _stompClient = StompClient(
       config: StompConfig(
         url: serverUrl,
         onConnect: _onConnect,
-        onWebSocketError: (error) {
-          _logger.e("WebSocket error: $error");
-          _isConnected = false;
-        },
-        onStompError: (frame) {
-          _logger.e("STOMP protocol error: ${frame.body}");
-          _isConnected = false;
-        },
-        onDisconnect: (_) {
-          _logger.w("STOMP disconnected");
-          _isConnected = false;
-        },
+        onWebSocketError: (error) =>
+            _handleConnectionError("WebSocket error: $error"),
+        onStompError: (frame) =>
+            _handleConnectionError("STOMP error: ${frame.body}"),
+        onDisconnect: (_) => _handleDisconnection(),
         beforeConnect: () async {
           _logger.i("Connecting to STOMP...");
           await Future.delayed(const Duration(milliseconds: 200));
         },
         reconnectDelay: const Duration(seconds: 5),
         connectionTimeout: const Duration(seconds: 10),
+        stompConnectHeaders: {
+          'userId': currentUser.id.toString()
+        }, // `ChatCubit` dagi kabi
       ),
     );
+
     _stompClient.activate();
   }
 
-  void _onConnect(StompFrame frame) async {
-    _logger.i("Connected to STOMP");
+  void _onConnect(StompFrame frame) {
+    _logger.i("Connected to STOMP server");
     _isConnected = true;
+    _reconnectTimer?.cancel(); // Qayta ulanish taymerini bekor qilish
 
     if (_activeGroupId != null) {
-      await _subscribeToGroupChat(_activeGroupId!);
-    } else {
-      _logger.w("No active group to subscribe to");
+      _subscribeToGroupChat(
+          _activeGroupId!); // Agar faol guruh bo'lsa, obuna bo'lish
     }
   }
 
+  void _handleConnectionError(String error) {
+    _logger.e(error);
+    _isConnected = false;
+    _scheduleReconnect();
+  }
+
+  void _handleDisconnection() {
+    _logger.w("Disconnected from STOMP server");
+    _isConnected = false;
+    _scheduleReconnect();
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 10), () {
+      if (!_isConnected) {
+        _logger.i("Attempting to reconnect...");
+        _stompClient.deactivate();
+        _stompClient.activate();
+      }
+    });
+  }
+
   Future<void> joinGroupChat(int groupId) async {
-    if (_activeGroupId == groupId && _isConnected) return;
+    if (_activeGroupId == groupId && _isConnected)
+      return; // Ulanish holatini ham tekshirish
 
     _unsubscribePrevious();
     _activeGroupId = groupId;
-    resetState();
+
     try {
-      // Guruh ma'lumotlarini yuklash
-      final groupChatModel = await apiService.getChatFromApi(groupId);
-
-      // Memberlarni types.User formatiga o'tkazib state ga saqlash
-      final members = groupChatModel.members
-          .map((member) => types.User(
-                id: member.userId.toString(),
-                firstName: member.userFullName ?? 'User ${member.userId}',
-                imageUrl: member.userImage,
-              ))
-          .toList();
-
-      // Xabarlarni yukash va member ma'lumotlarini ulash
-      final messages = groupChatModel.messages
-          .map((msg) {
-            final sender = members.firstWhere(
-              (m) => m.id == msg.senderId.toString(),
-              orElse: () => types.User(
-                id: msg.senderId.toString(),
-                firstName: 'User ${msg.senderId}',
-              ),
-            );
-
-            return types.TextMessage(
-              id: msg.id.toString(),
-              text: msg.content,
-              createdAt: msg.sentAt.millisecondsSinceEpoch,
-              author: sender,
-            );
-          })
-          .toList()
-          .reversed
-          .toList();
-      final pinnedMessages = groupChatModel.pinnedMessages.map((msg) {
-        final sender = members.firstWhere(
-              (m) => m.id == msg.senderId.toString(),
-          orElse: () => types.User(
-            id: msg.senderId.toString(),
-            firstName: 'User ${msg.senderId}',
-          ),
-        );
-
-        return types.TextMessage(
-          id: msg.id.toString(),
-          text: msg.content,
-          createdAt: msg.sentAt.millisecondsSinceEpoch,
-          author: sender,
-        );
-      }).toList();
-      emit(state.copyWith(
-        messages: messages,
-        members: members,
-        pinnedMessages: pinnedMessages,
-        groupName: groupChatModel.name,
-        status: TeamChatStatus.loaded,
-      ));
-
+      await _loadMessages(groupId); // Xabarlarni yuklash
       if (_isConnected) {
-        await _subscribeToGroupChat(groupId);
-      } else {
-        _stompClient.activate();
+        _subscribeToGroupChat(groupId);
       }
     } catch (e) {
       _logger.e("Failed to join group chat: $e");
       emit(state.copyWith(
-        status: TeamChatStatus.error,
-        errorMessage: "Failed to load chat data",
-      ));
+          status: TeamChatStatus.error,
+          errorMessage: "Failed to join group chat"));
     }
   }
 
   void _unsubscribePrevious() {
-    if (_unsubscribeCallback != null) {
-      _logger.i("Unsubscribing from previous chat");
-      _unsubscribeCallback!();
-      _unsubscribeCallback = null;
-    }
+    _unsubscribeCallback?.call();
+    _unsubscribeCallback = null;
+    _processedMessageIds.clear(); // Oldingi xabarlar IDlarini tozalash
   }
 
   Future<void> _subscribeToGroupChat(int groupId) async {
@@ -170,214 +160,286 @@ class TeamChatCubit extends Cubit<TeamChatState> {
 
     _unsubscribeCallback = _stompClient.subscribe(
       destination: destination,
-      headers: {'id': 'groupchat-$groupId', 'persistent': 'true'},
+      headers: {'id': 'groupchat-$groupId'},
+      // `persistent` header olib tashlandi, chunki u hamma serverlar uchun ham to'g'ri bo'lmasligi mumkin
       callback: (frame) {
-        if (frame.body != null) {
-          try {
-            final data = jsonDecode(frame.body!);
-            if (data['senderId'].toString() == currentUser.id) return;
+        if (frame.body == null) return;
 
-            // State.dagi memberlardan yuboruvchini topish
-            final sender = state.members.firstWhere(
-              (m) => m.id == data['senderId'].toString(),
-              orElse: () => types.User(
-                id: data['senderId'].toString(),
-                firstName: data['senderName'] ?? 'User ${data['senderId']}',
-                imageUrl: data['senderAvatarUrl'],
-              ),
-            );
+        try {
+          final data = jsonDecode(frame.body!);
+          final messageId = data['id'].toString();
 
-            final message = types.TextMessage(
-              id: data['id'].toString(),
-              text: data['content'] ?? '',
-              createdAt:
-                  data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
-              author: sender,
-            );
+          // Xabar allaqachon qayta ishlangan bo'lsa yoki joriy foydalanuvchidan bo'lsa o'tkazib yuborish
+          if (_processedMessageIds.contains(messageId)) return;
+          if (data['senderId'].toString() == currentUser.id.toString()) return;
 
-            _addMessageToState(message);
-          } catch (e) {
-            _logger.e("Error processing message: $e");
-          }
+          _processedMessageIds.add(messageId); // Xabar IDni qo'shish
+
+          final message = ChatMessage(
+            id: int.parse(messageId),
+            senderId: int.parse(data['senderId'].toString()),
+            type: 'text',
+            // `ChatCubit` dagi kabi
+            content: data['content'] ?? '',
+            sentAt: DateTime.fromMillisecondsSinceEpoch(
+              data['createdAt'] ?? DateTime.now().millisecondsSinceEpoch,
+            ),
+          );
+
+          _addMessageToState(message);
+        } catch (e) {
+          _logger.e("Error processing message: $e");
         }
       },
     );
+
+    _logger.i("Subscribed to $destination");
   }
 
-  Future<void> _loadGroupMessages(int groupId) async {
+  Future<void> _loadMessages(int groupId) async {
     emit(state.copyWith(status: TeamChatStatus.loading));
+
     try {
-      final groupChatModel = await apiService.getChatFromApi(groupId);
+      final groupChatModel = await _apiService.getChatFromApi(groupId);
 
-      final messages = groupChatModel.messages.map((msg) {
-        // Find the member who sent this message
-        final sender = groupChatModel.members.firstWhere(
-          (member) => member.userId == msg.senderId,
-          orElse: () => ChatMember(
-            id: -1,
-            userId: msg.senderId,
-            role: 'unknown',
-            joinedAt: DateTime.now(),
-            userFullName: 'Unknown',
-            // Add default name
-            userPhoneNumber: '', // Add default phone
-          ),
-        );
+      // A'zolarni `MemberModel`ga o'tkazish
+      final members = groupChatModel.members
+          .map((member) => MemberModel(
+                id: member.id,
+                userId: member.userId,
+                username: member.userFullName ?? 'Unknown',
+                // Null bo'lmasligi uchun
+                joinedAt: member.joinedAt,
+                userImage: member.userImage,
+                position: '', // `ChatCubit`da bu maydon yo'q edi
+              ))
+          .toList();
 
-        return types.TextMessage(
-          id: msg.id.toString(),
-          text: msg.content,
-          createdAt: msg.sentAt.millisecondsSinceEpoch,
-          author: types.User(
-            id: sender.userId.toString(),
-            firstName: sender.userFullName ?? 'Unknown',
-            imageUrl: sender.userImage,
-          ),
-        );
-      }).toList();
+      // Xabarlarni sanasi bo'yicha saralash
+      final messages = groupChatModel.messages!
+        ..sort((a, b) => a.sentAt.compareTo(b.sentAt)); // Eskidan yangiga
 
-      // Reverse to show newest messages last (or first, depending on your UI)
-      final reversedMessages = messages.reversed.toList();
+      // Pinlangan xabarlarni qayta ishlash
+      final pinnedMessages = groupChatModel.pinnedMessages;
 
       emit(state.copyWith(
-        messages: reversedMessages,
         status: TeamChatStatus.loaded,
+        messages: messages,
+        // Yangi xabarlar
+        members: members,
+        pinnedMessages: pinnedMessages,
         groupName: groupChatModel.name,
-        members: groupChatModel.members
-            .map((member) => types.User(
-                  id: member.userId.toString(),
-                  firstName: member.userFullName,
-                  imageUrl: member.userImage,
-                ))
-            .toList(),
+        chatModel: groupChatModel,
       ));
     } catch (e) {
-      _logger.e("Failed to load group messages: $e");
+      _logger.e("Failed to load messages: $e");
       emit(state.copyWith(
-          status: TeamChatStatus.error, errorMessage: e.toString()));
+          status: TeamChatStatus.error,
+          errorMessage: "Failed to load messages"));
+      rethrow; // Xatolikni yuqoriga uzatish
     }
   }
+
+  void _addMessageToState(ChatMessage message) {
+    final updatedMessages = [...state.messages, message]; // Oxiriga qo'shish
+
+    emit(state.copyWith(messages: updatedMessages));
+  }
+
+  Future<void> sendMessage(String text) async {
+    if (!_isConnected || _activeGroupId == null) {
+      _logger.w("Cannot send message - not connected or no active group chat");
+      return;
+    }
+
+    if (text.trim().isEmpty) return;
+
+    final messageId = DateTime.now().millisecondsSinceEpoch; // long sifatida
+    final timestamp = DateTime.now();
+
+    // Optimistik xabar yaratish
+    final optimisticMessage = ChatMessage(
+      id: messageId,
+      senderId: currentUser.id,
+      type: 'text',
+      content: text,
+      sentAt: timestamp,
+    );
+
+    // Holatni darhol yangilash
+    _addMessageToState(optimisticMessage);
+
+    try {
+      // Xabar ma'lumotlarini tayyorlash
+      final data = {
+        'id': messageId.toString(),
+        'senderId': currentUser.id.toString(),
+        'senderName': currentUser.userFullName,
+        'content': text,
+        'createdAt': timestamp.millisecondsSinceEpoch,
+        'groupId': _activeGroupId,
+        // Guruh IDsi qo'shildi
+        'senderAvatarUrl': state.currentUser?.imageUrl,
+        // Foydalanuvchi avatar URLi
+      };
+
+      // STOMP orqali yuborish
+      _stompClient.send(
+        destination: '/app/chat.send/$_activeGroupId',
+        body: jsonEncode(data),
+        headers: {'userId': currentUser.id.toString()}, // `ChatCubit` dagi kabi
+      );
+
+      _logger.i("Message sent successfully");
+    } catch (e) {
+      _logger.e("Failed to send message: $e");
+
+      // Xatolik yuz berganda optimistik xabarni olib tashlash
+      final filteredMessages =
+          state.messages.where((msg) => msg.id != messageId).toList();
+      emit(state.copyWith(messages: filteredMessages));
+    }
+  }
+
+  Future<void> deleteMessageFromChat(int messageId) async {
+    if (_activeGroupId == null) return;
+
+    try {
+      // Optimistik yangilash
+      final updatedMessages =
+          state.messages.where((msg) => msg.id != messageId).toList();
+      emit(state.copyWith(messages: updatedMessages));
+
+      // API chaqiruvi
+      await _apiService.deleteMessage(
+        chatId: _activeGroupId!,
+        messageId: messageId,
+      );
+
+      _logger.i("Message deleted successfully");
+    } catch (e) {
+      _logger.e("Failed to delete message: $e");
+      // Holatni tiklash uchun xabarlarni qayta yuklash
+      await _loadMessages(_activeGroupId!);
+    }
+  }
+
+  Future<void> deleteChat() async {
+    if (_activeGroupId == null) return;
+
+    try {
+      await _apiService.deleteChat(chatId: _activeGroupId ?? -1);
+      emit(state.copyWith(
+        status: TeamChatStatus.initial,
+        messages: [],
+        pinnedMessages: [],
+        members: [],
+        groupName: '',
+        activePinnedIndex: 0,
+        isPinnedExpanded: false,
+        currentUser: state.currentUser,
+        chatModel: null,
+      ));
+      _activeGroupId = null;
+      _unsubscribePrevious();
+    } catch (e) {
+      _logger.e("Failed to delete chat: $e");
+      emit(state.copyWith(
+          status: TeamChatStatus.error, errorMessage: "Failed to delete chat"));
+    }
+  }
+
+  // TeamChatCubit ichida
+
+// ... (boshqa kodlar)
+
   Future<void> pinMessageToChat(int messageId) async {
     final chatId = _activeGroupId;
     if (chatId == null) return;
 
     try {
       _logger.i("📌 Pinning message $messageId in chat $chatId");
-      await apiService.pinMessage(chatId: chatId, messageId: messageId);
+      // _apiService dan foydalanamiz
+      await _apiService.pinMessage(chatId: chatId, messageId: messageId);
 
-      // ⚠️ Backend pinlangan xabarni darhol qaytarmasa, uni yangilaymiz
-      final updatedChat = await apiService.getChatFromApi(chatId);
-      final members = updatedChat.members.map((m) => types.User(
-        id: m.userId.toString(),
-        firstName: m.userFullName ?? 'Unknown',
-        imageUrl: m.userImage,
-      )).toList();
+      // Pinlangan xabarlarni yangilash uchun chatni qayta yuklash
+      // ChatCubit'dagidek _loadMessages ni chaqiramiz
+      await _loadMessages(chatId); // _activeGroupId ham chatId bilan bir xil
 
-      final pinnedMessages = updatedChat.pinnedMessages.map((msg) {
-        final sender = members.firstWhere(
-              (u) => u.id == msg.senderId.toString(),
-          orElse: () => types.User(id: msg.senderId.toString()),
-        );
-
-        return types.TextMessage(
-          id: msg.id.toString(),
-          text: msg.content,
-          createdAt: msg.sentAt.millisecondsSinceEpoch,
-          author: sender,
-        );
-      }).toList();
-
-      _logger.i("✅ ${pinnedMessages.length} xabar pinlangan");
-
-      emit(state.copyWith(pinnedMessages: pinnedMessages));
+      _logger.i("📌 Message $messageId pinned successfully.");
     } catch (e) {
       _logger.e("❌ Pin message failed: $e");
+      emit(state.copyWith(
+          status: TeamChatStatus.error, errorMessage: "Failed to pin message"));
     }
   }
-  Future<void> deleteMessageFromChat(int messageId) async {
+
+  Future<void> unpinMessageFromChat(int messageId) async {
     final chatId = _activeGroupId;
     if (chatId == null) return;
-
     try {
-      _logger.i("🗑️ Deleting message $messageId in chat $chatId");
-      await apiService.deleteMessage(chatId: chatId, messageId: messageId);
-
-      // Local holatda xabarni olib tashlaymiz
-      final updatedMessages = state.messages
-          .where((msg) => msg.id != messageId.toString())
-          .toList();
-
-      emit(state.copyWith(messages: updatedMessages));
-    } catch (e) {
-      _logger.e("❌ Failed to delete message: $e");
-    }
-  }
-
-
-  void _addMessageToState(types.Message message) {
-    if (_messageIds.contains(message.id)) return;
-
-    // Agar author ma'lumotlari yetarli bo'lmasa, state.dagi memberlardan to'ldirish
-    if (message.author.firstName == null || message.author.imageUrl == null) {
-      final existingMember = state.members.firstWhere(
-        (m) => m.id == message.author.id,
-        orElse: () => message.author,
+      _logger.i("📌 Unpinning message $messageId in chat $chatId");
+      // _apiService dan foydalanamiz
+      await _apiService.unpinMessage(
+        chatId: chatId,
+        // _activeGroupId ?? -1 o'rniga to'g'ridan-to'g'ri chatId
+        messageId: messageId,
       );
-      message = message.copyWith(author: existingMember);
-    }
 
-    _messageIds.add(message.id);
-    final newMessages = [message, ...state.messages];
-    emit(state.copyWith(messages: newMessages));
+      // Pinlangan xabarlarni yangilash uchun chatni qayta yuklash
+      // ChatCubit'dagidek _loadMessages ni chaqiramiz
+      await _loadMessages(chatId); // _activeGroupId ham chatId bilan bir xil
+
+      _logger.i("📌 Message $messageId unpinned successfully.");
+    } catch (e) {
+      _logger.e("❌ Unpin message failed: $e");
+      emit(state.copyWith(
+          status: TeamChatStatus.error,
+          errorMessage: "Failed to unpin message"));
+    }
   }
 
-  void sendMessage(String text) {
-    if (!_isConnected || _activeGroupId == null) return;
+// ... (boshqa kodlar)
 
-    final messageId = DateTime.now().millisecondsSinceEpoch.toString();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
+  void changePinnedMessageIndex(int newIndex) {
+    if (newIndex >= 0 && newIndex < state.pinnedMessages.length) {
+      emit(state.copyWith(activePinnedIndex: newIndex));
+    }
+  }
 
-    final data = {
-      'id': messageId,
-      'senderId': currentUser.id,
-      'content': text,
-      'createdAt': timestamp,
-      'groupId': _activeGroupId,
-    };
-
-    // Optimistik ravishda xabarni state ga qo'shamiz
-    final message = types.TextMessage(
-      id: messageId,
-      text: text,
-      createdAt: timestamp,
-      author: currentUser,
-    );
-
-    _addMessageToState(message);
-
-    _stompClient.send(
-      destination: '/app/chat.send/$_activeGroupId',
-      body: jsonEncode(data),
-    );
+  void togglePinnedMessagesExpanded() {
+    emit(state.copyWith(isPinnedExpanded: !state.isPinnedExpanded));
   }
 
   void resetState() {
+    _unsubscribePrevious();
+    _activeGroupId = null;
+    _processedMessageIds.clear(); // _messageIds o'rniga _processedMessageIds
+
     emit(TeamChatState(
       messages: [],
       status: TeamChatStatus.initial,
       members: [],
       pinnedMessages: [],
-      groupName: null,
-      currentUser: currentUser,
+      groupName: '',
+      activePinnedIndex: 0,
+      isPinnedExpanded: false,
+      currentUser: state.currentUser,
+      chatModel: state.chatModel,
     ));
   }
 
   @override
   Future<void> close() async {
-    _logger.i("Closing TeamChatCubit and cleaning up");
-    await _messagesStreamController.close();
+    _logger.i("Disposing TeamChatCubit");
+
     _unsubscribePrevious();
-    _stompClient.deactivate();
+    _reconnectTimer?.cancel(); // Taymerni bekor qilish
+
+    if (_stompClient.connected) {
+      _stompClient.deactivate();
+    }
+
     return super.close();
   }
 }

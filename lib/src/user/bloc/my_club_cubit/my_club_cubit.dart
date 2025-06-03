@@ -38,14 +38,14 @@ class MyClubCubit extends Cubit<MyClubState> {
         apiService.getFriends(),
         CommonService(ApiClient().dio).getLiderBoard(limit: limit),
         clubService.getClubs(),
+        apiService.getUser(),
       ]);
 
-      user = await apiService.getUser();
-      allUsers = List<UserModel>.from(results[0]);
-      connections = List<Friendship>.from(results[1]);
-      _liderBoard = List<UserPoints>.from(results[2]);
-      _clubs = List<ClubModel>.from(results[3]);
-
+      allUsers = List<UserModel>.from(results[0] as List);
+      connections = List<Friendship>.from(results[1] as List);
+      _liderBoard = List<UserPoints>.from(results[2] as List);
+      _clubs = List<ClubModel>.from(results[3] as List);
+      user = results[4] as UserModel;
       emit(MyClubLoaded(
         user: user,
         clubs: _clubs,
@@ -62,7 +62,7 @@ class MyClubCubit extends Cubit<MyClubState> {
     if (!isConnected(friend.id!)) {
       try {
         final newFriendshipsJson =
-        await apiService.addToFriends(userId: friend.id!);
+            await apiService.addToFriends(userId: friend.id!);
         final newFriendships = List<Friendship>.from(
             newFriendshipsJson.map((json) => Friendship.fromJson(json)));
 
@@ -94,7 +94,7 @@ class MyClubCubit extends Cubit<MyClubState> {
 
         // Create a NEW filtered list instead of modifying in-place
         final updatedConnections =
-        connections.where((f) => f.friend.id != friend.id).toList();
+            connections.where((f) => f.friend.id != friend.id).toList();
 
         connections = updatedConnections;
 
@@ -237,43 +237,45 @@ class MyClubCubit extends Cubit<MyClubState> {
             searchResults: allUsers,
             clubs: newClubs),
       );
-    } catch (e) {}}
-    Future<void> updateClubImage(int clubId, String imagePath) async {
-      emit(MyClubLoading());
+    } catch (e) {}
+  }
 
-      try {
-        final imageFile = File(imagePath);
+  Future<void> updateClubImage(int clubId, String imagePath) async {
+    emit(MyClubLoading());
 
-        if (!await imageFile.exists()) {
-          emit(MyClubError("Rasm fayli topilmadi."));
-          return;
-        }
+    try {
+      final imageFile = File(imagePath);
 
-        await clubService.updateClubImage(
-          clubId: clubId,
-          imageFile: imageFile,
-        );
-
-        final updatedClubs = await clubService.getClubs();
-
-        emit(
-          MyClubLoaded(
-            user: user,
-            liderBoard: _liderBoard,
-            connections: connections,
-            searchResults: allUsers,
-            clubs: updatedClubs,
-          ),
-        );
-      } catch (e) {
-        emit(MyClubError("Rasm yuklashda xatolik: ${e.toString()}"));
+      if (!await imageFile.exists()) {
+        emit(MyClubError("Rasm fayli topilmadi."));
+        return;
       }
-    }
 
-    @override
-    Future<void> close() {
-      _debounce?.cancel();
+      await clubService.updateClubImage(
+        clubId: clubId,
+        imageFile: imageFile,
+      );
 
-      return super.close();
+      final updatedClubs = await clubService.getClubs();
+
+      emit(
+        MyClubLoaded(
+          user: user,
+          liderBoard: _liderBoard,
+          connections: connections,
+          searchResults: allUsers,
+          clubs: updatedClubs,
+        ),
+      );
+    } catch (e) {
+      emit(MyClubError("Rasm yuklashda xatolik: ${e.toString()}"));
     }
   }
+
+  @override
+  Future<void> close() {
+    _debounce?.cancel();
+
+    return super.close();
+  }
+}

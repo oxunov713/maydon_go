@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 
+import '../../../common/model/stadium_model.dart';
+
 class AddStadiumState extends Equatable {
+  final StadiumDetail stadium;
   final String name;
   final String description;
   final String price;
@@ -24,6 +27,7 @@ class AddStadiumState extends Equatable {
   final bool hasError;
 
   AddStadiumState({
+    required this.stadium,
     required this.name,
     required this.description,
     required this.price,
@@ -47,6 +51,7 @@ class AddStadiumState extends Equatable {
 
   factory AddStadiumState.initial() {
     return AddStadiumState(
+      stadium: StadiumDetail(name: "No name", id: -1),
       name: '',
       description: '',
       price: '',
@@ -71,6 +76,7 @@ class AddStadiumState extends Equatable {
   }
 
   AddStadiumState copyWith({
+    StadiumDetail? stadium,
     String? name,
     String? description,
     String? price,
@@ -92,6 +98,7 @@ class AddStadiumState extends Equatable {
     bool? hasError,
   }) {
     return AddStadiumState(
+      stadium: stadium ?? this.stadium,
       name: name ?? this.name,
       description: description ?? this.description,
       price: price ?? this.price,
@@ -116,6 +123,7 @@ class AddStadiumState extends Equatable {
 
   @override
   List<Object?> get props => [
+
         name,
         description,
         price,

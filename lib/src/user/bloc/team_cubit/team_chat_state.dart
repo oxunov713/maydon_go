@@ -6,34 +6,40 @@ class TeamChatState {
   final TeamChatStatus status;
   final String? errorMessage;
   final String? groupName;
-  final List<types.User> members;
-  final List<types.Message> messages;
-  final List<types.Message> pinnedMessages;
-  final types.User? currentUser;
+  final List<MemberModel> members;
+  final List<ChatMessage> messages;
+  final List<ChatMessage> pinnedMessages;
+  final UserModel? currentUser;
   final DateTime? lastUpdate;
+  final int activePinnedIndex;
+  final bool isPinnedExpanded;
+  final ChatModel? chatModel;
 
-  const TeamChatState({
-    required this.status,
-    this.errorMessage,
-    this.groupName,
-    this.members = const [],
-    this.messages = const [],
-    this.pinnedMessages = const [],
-    this.currentUser,
-    this.lastUpdate,
-  });
-
-  factory TeamChatState.initial() => const TeamChatState(status: TeamChatStatus.initial);
+  const TeamChatState(
+      {required this.status,
+      this.errorMessage,
+      this.groupName,
+      this.members = const [],
+      this.messages = const [],
+      this.pinnedMessages = const [],
+      this.currentUser,
+      this.lastUpdate,
+      this.activePinnedIndex = 0,
+      this.isPinnedExpanded = false,
+      required this.chatModel});
 
   TeamChatState copyWith({
     TeamChatStatus? status,
     String? errorMessage,
     String? groupName,
-    List<types.User>? members,
-    List<types.Message>? messages,
-    List<types.Message>? pinnedMessages,
-    types.User? currentUser,
+    List<MemberModel>? members,
+    List<ChatMessage>? messages,
+    List<ChatMessage>? pinnedMessages,
+    UserModel? currentUser,
     DateTime? lastUpdate,
+    int? activePinnedIndex,
+    bool? isPinnedExpanded,
+    ChatModel? chatModel,
   }) {
     return TeamChatState(
       status: status ?? this.status,
@@ -44,6 +50,9 @@ class TeamChatState {
       pinnedMessages: pinnedMessages ?? this.pinnedMessages,
       currentUser: currentUser ?? this.currentUser,
       lastUpdate: lastUpdate ?? this.lastUpdate,
+      activePinnedIndex: activePinnedIndex ?? this.activePinnedIndex,
+      isPinnedExpanded: isPinnedExpanded ?? this.isPinnedExpanded,
+      chatModel: chatModel ?? this.chatModel,
     );
   }
 }

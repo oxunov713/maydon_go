@@ -136,7 +136,8 @@ class StadiumService {
     } catch (e) {
       throw Exception('Error fetching stadium details: $e');
     }
-  } Future<List<Substadiums>> getBronList({required int size}) async {
+  }
+  Future<List<Substadiums>> getBronList({required int size}) async {
     try {
       final response = await dio.get('/stadium/bookings', queryParameters: {
         "page": size,

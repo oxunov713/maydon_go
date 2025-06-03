@@ -5,15 +5,15 @@ import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
 import 'package:maydon_go/src/owner/screens/home/substadium_screen.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/club_members_profile.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/friends_list_screen.dart';
 import 'package:maydon_go/src/user/ui/home/profile_screen/donation_page.dart';
 import 'package:maydon_go/src/user/ui/home/home_screen/messages_screen.dart';
 import 'package:maydon_go/src/user/ui/home/profile_screen/quiz_detail_page.dart';
 import 'package:maydon_go/src/user/ui/home/home_screen/story_screen.dart';
 import 'package:maydon_go/src/user/ui/home/home_screen/team_chat_screen.dart';
 import 'package:maydon_go/src/user/ui/home/profile_screen/tournament_page.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import '../../owner/bloc/add_stadium/add_stadium_cubit.dart';
 import '../../owner/bloc/home/owner_home_cubit.dart';
 import '../../owner/screens/home/add_stadium_screen.dart';
 import '../../owner/screens/home/location_picker_screen.dart';
@@ -139,10 +139,12 @@ final GoRouter _router = GoRouter(
                                 final mediaTypes =
                                     extra['types'] as List<String>;
                                 final user = extra['user'] as UserModel;
+                                final id = extra['chatId'] as int;
                                 return StoryScreen(
                                     mediaUrls: mediaUrls,
                                     mediaTypes: mediaTypes,
-                                    user: user);
+                                    user: user,
+                                    chatId: id);
                               },
                             ),
                             GoRoute(
@@ -177,6 +179,17 @@ final GoRouter _router = GoRouter(
                                   receivedUser: extra['receivedUser'],
                                   currentUser: context.read<MyClubCubit>().user,
                                   id: extra['chatId'],
+                                );
+                              },
+                            ),
+                            GoRoute(
+                              name: AppRoutes.clubProfile,
+                              path: 'club-profile',
+                              builder: (context, state) {
+                                final extra = state.extra as Map;
+                                return ClubProfilePage(
+                                  club: extra['club'],
+                                  currentUser: context.read<MyClubCubit>().user,
                                 );
                               },
                             ),

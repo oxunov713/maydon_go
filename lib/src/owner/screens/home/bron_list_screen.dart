@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/router/app_routes.dart';
 import 'package:maydon_go/src/common/service/url_launcher_service.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_cubit.dart';
 import 'package:maydon_go/src/owner/bloc/add_stadium/add_stadium_state.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_state.dart';
 import '../../../common/l10n/app_localizations.dart';
 import '../../../common/model/time_slot_model.dart';
 
@@ -56,17 +59,8 @@ class _BronListScreenState extends State<BronListScreen> {
       ),
       body: RefreshIndicator(
         color: AppColors.green,
-        onRefresh: () async {
-          context.read<AddStadiumCubit>().loadSubstadiums();
-        },
-        child: BlocConsumer<AddStadiumCubit, AddStadiumState>(
-          listener: (context, state) {
-            if (state.hasError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage ?? l10n.noData)),
-              );
-            }
-          },
+        onRefresh: () => context.read<AddStadiumCubit>().loadSubstadiums(),
+        child: BlocBuilder<AddStadiumCubit, AddStadiumState>(
           builder: (context, state) {
             if (state.isLoading) {
               return const Center(
@@ -78,11 +72,11 @@ class _BronListScreenState extends State<BronListScreen> {
               final substadiums = state.substadiums;
               final allBookings = substadiums
                   .expand((substadium) => (substadium.bookings ?? [])
-                  .map((bron) => _BookingWithStadium(
-                bron: bron,
-                stadiumName: substadium.name ?? l10n.unknownStadium,
-                startTime: bron.timeSlot.startTime!,
-              )))
+                      .map((bron) => _BookingWithStadium(
+                            bron: bron,
+                            stadiumName: substadium.name ?? l10n.unknownStadium,
+                            startTime: bron.timeSlot.startTime!,
+                          )))
                   .toList();
 
               allBookings.sort((a, b) => a.startTime.compareTo(b.startTime));
@@ -109,12 +103,13 @@ class _BronListScreenState extends State<BronListScreen> {
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 itemCount: allBookings.length,
+                physics: AlwaysScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   final booking = allBookings[index];
                   return _buildBronListItem(context, booking, width, l10n);
                 },
                 separatorBuilder: (context, index) =>
-                const SizedBox(height: 12),
+                    const SizedBox(height: 12),
               );
             }
 
@@ -124,17 +119,42 @@ class _BronListScreenState extends State<BronListScreen> {
                     ? state.errorMessage!
                     : l10n.errorOccurred,
                 style:
-                theme.textTheme.titleMedium?.copyWith(color: AppColors.red),
+                    theme.textTheme.titleMedium?.copyWith(color: AppColors.red),
               ),
             );
           },
         ),
       ),
+      floatingActionButton: BlocBuilder<AddStadiumCubit, AddStadiumState>(
+        builder: (context, state) {
+          final stadiumId = state.stadium.id;
+          if (stadiumId != -1 &&
+              stadiumId != null &&
+              stadiumId.toString().isNotEmpty) {
+            return FloatingActionButton(
+              backgroundColor: AppColors.green,
+              onPressed: () {
+                context.pushNamed(
+                  AppRoutes.detailStadium,
+                  extra: stadiumId,
+                );
+              },
+              child: const Icon(
+                Icons.add,
+                color: AppColors.white,
+              ),
+            );
+          }
+
+          // Agar stadion yo'q bo'lsa, FAB ko'rinmaydi
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
-  Widget _buildBronListItem(
-      BuildContext context, _BookingWithStadium booking, double width, AppLocalizations l10n) {
+  Widget _buildBronListItem(BuildContext context, _BookingWithStadium booking,
+      double width, AppLocalizations l10n) {
     final bron = booking.bron;
     return GestureDetector(
       onTap: () => _showBronDetails(context, booking, l10n),
@@ -192,7 +212,7 @@ class _BronListScreenState extends State<BronListScreen> {
                 children: [
                   Container(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.green3,
                       borderRadius: BorderRadius.circular(12),
@@ -224,7 +244,8 @@ class _BronListScreenState extends State<BronListScreen> {
     );
   }
 
-  void _showBronDetails(BuildContext context, _BookingWithStadium booking, AppLocalizations l10n) {
+  void _showBronDetails(BuildContext context, _BookingWithStadium booking,
+      AppLocalizations l10n) {
     final bron = booking.bron;
     showModalBottomSheet(
       context: context,

@@ -10,11 +10,7 @@ class UserModel {
   final String? fullName;
   final String? imageUrl;
 
-  // Yangi maydonlar
-  final String? lastMessage; // Oxirgi xabar
-  final String? time; // Oxirgi muloqot vaqti
-  final bool? isOnline; // Onlayn holati
-  final int? unreadCount; // O'qilmagan xabarlar soni
+
 
   UserModel({
     this.fullName,
@@ -25,10 +21,7 @@ class UserModel {
     this.subscriptionModel,
     this.point,
     this.active,
-    this.lastMessage,
-    this.time,
-    this.isOnline,
-    this.unreadCount,
+
   });
 
   UserModel copyWith({
@@ -40,10 +33,7 @@ class UserModel {
     bool? active,
     String? fullName,
     String? imageUrl,
-    String? lastMessage,
-    String? time,
-    bool? isOnline,
-    int? unreadCount,
+
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -54,10 +44,7 @@ class UserModel {
       active: active ?? this.active,
       fullName: fullName ?? this.fullName,
       imageUrl: imageUrl ?? this.imageUrl,
-      lastMessage: lastMessage ?? this.lastMessage,
-      time: time ?? this.time,
-      isOnline: isOnline ?? this.isOnline,
-      unreadCount: unreadCount ?? this.unreadCount,
+
     );
   }
 
@@ -73,10 +60,7 @@ class UserModel {
       active: json['active'] as bool?,
       fullName: json['fullName'] as String?,
       imageUrl: json['imageUrl'] as String?,
-      lastMessage: json['lastMessage'] as String?, // Yangi maydonni qo'shish
-      time: json['time'] as String?, // Yangi maydonni qo'shish
-      isOnline: json['isOnline'] as bool?, // Yangi maydonni qo'shish
-      unreadCount: json['unreadCount'] as int?, // Yangi maydonni qo'shish
+
     );
   }
 
@@ -90,10 +74,7 @@ class UserModel {
       'active': active,
       'fullName': fullName,
       'imageUrl': imageUrl,
-      'lastMessage': lastMessage, // Yangi maydonni qo'shish
-      'time': time, // Yangi maydonni qo'shish
-      'isOnline': isOnline, // Yangi maydonni qo'shish
-      'unreadCount': unreadCount, // Yangi maydonni qo'shish
+
     };
   }
 }

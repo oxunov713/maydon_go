@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/substadium_model.dart';
 import 'package:maydon_go/src/common/tools/average_rating_extension.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
+import 'package:vibration/vibration.dart';
 import '../../../../common/model/stadium_model.dart';
 import '../../../../common/model/time_slot_model.dart';
 import '../../../../common/tools/price_formatter_extension.dart';
@@ -89,6 +90,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           },
         ),
       ),
+
     );
   }
 
@@ -278,36 +280,35 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
             child: CarouselSlider(
               items: (stadium.images?.isNotEmpty ?? false)
                   ? stadium.images!.map((imageUrl) {
-                return Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                    const Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) =>
-                        Image.asset(
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const Center(child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) => Image.asset(
+                            AppIcons.defaultStadium, // Default image
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    }).toList()
+                  : [
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Image.asset(
                           AppIcons.defaultStadium, // Default image
                           fit: BoxFit.cover,
                         ),
-                  ),
-                );
-              }).toList()
-                  : [
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Image.asset(
-                    AppIcons.defaultStadium, // Default image
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
+                      ),
+                    ],
               options: CarouselOptions(
                 aspectRatio: 16 / 9,
                 viewportFraction: 1.0,
@@ -341,7 +342,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           stadium.images?.isNotEmpty ?? false
               ? stadium.images!.length
               : 1, // If no images, show indicator for the default one
-              (index) => AnimatedContainer(
+          (index) => AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             margin: const EdgeInsets.symmetric(horizontal: 5),
             width: state.currentIndexList[stadiumIndex] == index ? 12 : 8,
@@ -357,7 +358,6 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
       ),
     );
   }
-
 
   Widget _buildStadiumPriceAndSave(
       BuildContext context, StadiumDetail stadium, double deviceHeight) {
@@ -539,7 +539,8 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     );
   }
 
-  List<TimeSlot> _getAvailableTodaySlots(List<Substadiums> fields, DateTime today) {
+  List<TimeSlot> _getAvailableTodaySlots(
+      List<Substadiums> fields, DateTime today) {
     final now = DateTime.now();
     final availableSlots = <TimeSlot>[];
 
@@ -555,17 +556,18 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
       // Get booked slots from BronModel objects
       final bookedSlots = field.bookings
-          ?.where((booking) =>
-      booking.timeSlot.startTime?.year == today.year &&
-          booking.timeSlot.startTime?.month == today.month &&
-          booking.timeSlot.startTime?.day == today.day)
-          .map((booking) => booking.timeSlot)
-          .toList() ?? [];
+              ?.where((booking) =>
+                  booking.timeSlot.startTime?.year == today.year &&
+                  booking.timeSlot.startTime?.month == today.month &&
+                  booking.timeSlot.startTime?.day == today.day)
+              .map((booking) => booking.timeSlot)
+              .toList() ??
+          [];
 
       // Filter available slots
       final availableFieldSlots = allSlotsToday.where((slot) {
         final isBooked = bookedSlots.any((bookedSlot) =>
-        slot.startTime!.isBefore(bookedSlot.endTime!) &&
+            slot.startTime!.isBefore(bookedSlot.endTime!) &&
             slot.endTime!.isAfter(bookedSlot.startTime!));
 
         final isPastSlot = slot.endTime!.isBefore(now);

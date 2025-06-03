@@ -133,8 +133,9 @@ class _AddStadiumForm extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: BottomSignButton(
-                  function: () =>
-                      state.isSubmitting ? null : cubit.submitStadium(),
+                  function: () {
+                    state.isSubmitting ? null : (cubit.submitStadium(),);
+                  },
                   text: state.isSubmitting ? l10n.submitting : l10n.submit,
                   isdisabledBT: true,
                 ),

@@ -6,10 +6,12 @@ import 'package:maydon_go/src/common/style/app_colors.dart';
 import 'package:maydon_go/src/common/tools/language_extension.dart';
 import 'package:maydon_go/src/common/tools/position_enum.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
+import 'package:maydon_go/src/user/bloc/profile_cubit/profile_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_cubit.dart';
 import 'package:maydon_go/src/user/bloc/team_cubit/team_state.dart';
 
 import '../../../../common/model/team_model.dart';
+import '../../../bloc/profile_cubit/profile_state.dart';
 
 class ClubTeammates extends StatefulWidget {
   const ClubTeammates({super.key, required this.club});
@@ -32,7 +34,7 @@ class _ClubTeammatesState extends State<ClubTeammates> {
     return Scaffold(
       backgroundColor: AppColors.white2,
       appBar: AppBar(
-        title: const Text("Tashkent Bulls"),
+        title: Text("Club members"),
         centerTitle: true,
       ),
       body: Padding(
@@ -66,6 +68,8 @@ class _ClubTeammatesState extends State<ClubTeammates> {
         final member = members[index];
         final initials = _getInitials(member.username);
         final imageUrl = member.userImage;
+        final profile = context.read<ProfileCubit>().state as ProfileLoaded;
+        final isCurrentUser = member.userId == profile.user.id; // Current user tekshiruvi
 
         return Card(
           elevation: 1,
@@ -73,20 +77,19 @@ class _ClubTeammatesState extends State<ClubTeammates> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: AppColors.green.withOpacity(0.2),
               backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
               child: imageUrl == null
                   ? Text(
-                      initials,
-                      style: const TextStyle(
-                        color: AppColors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
+                initials,
+                style: const TextStyle(
+                  color: AppColors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
                   : null,
             ),
             title: Text(
@@ -94,7 +97,9 @@ class _ClubTeammatesState extends State<ClubTeammates> {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(member.position),
-            trailing: IconButton(
+            trailing: isCurrentUser
+                ? Text("You")
+                : IconButton(
               icon: const Icon(Icons.remove_circle, color: AppColors.red),
               onPressed: () => _showRemoveConfirmation(context, member),
             ),

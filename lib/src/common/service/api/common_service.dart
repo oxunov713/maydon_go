@@ -64,6 +64,26 @@ class CommonService {
     }
   }
 
+  Future<List<ChatModel>> getChatsFromApi() async {
+    try {
+      final response = await dio.get('/user/my/chats');
+      List data = response.data;
+      return data.map((json) => ChatModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<ChatModel>> getClubsChatsFromApi() async {
+    try {
+      final response = await dio.get('/user/my/clubs/chats');
+      List data = response.data;
+      return data.map((json) => ChatModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      return [];
+    }
+  }
+
   Future<List<UserPoints>> getLiderBoard({required int limit}) async {
     try {
       final response = await dio.get(
@@ -120,10 +140,36 @@ class CommonService {
     }
   }
 
+  Future<void> unpinMessage(
+      {required int chatId, required int messageId}) async {
+    try {
+      await dio.delete(
+        "/chat/$chatId/messages/pinned/remove",
+        queryParameters: {
+          "messageId": messageId,
+        },
+      );
+    } catch (e) {
+      if (e is DioException) {
+        return e.response?.data;
+      }
+    }
+  }
+
   Future<void> deleteMessage(
       {required int chatId, required int messageId}) async {
     try {
       await dio.delete("/chat/$chatId/message/$messageId/delete");
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return e.response?.data;
+      }
+    }
+  }
+
+  Future<void> deleteChat({required int chatId}) async {
+    try {
+      await dio.delete("/chat/$chatId/messages/delete");
     } on DioException catch (e) {
       if (e.response != null) {
         return e.response?.data;

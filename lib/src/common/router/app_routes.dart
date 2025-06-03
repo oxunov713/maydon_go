@@ -16,6 +16,7 @@ class AppRoutes {
   static const String clubDetail = 'clubDetail';
   static const String clubTeammates = 'clubTeammates';
   static const String messages = 'messages';
+  static const String myFriends = 'myFriends';
   static const String story = 'storyScreen';
   static const String wallpaper = 'wallpaper';
   static const String chat = 'chat';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String donation = 'donation';
   static const String profile = 'profile';
   static const String profileChat = '/user-profile';
+  static const String clubProfile = '/club-profile';
   static const String profileView = 'profileView';
   static const String notification = 'notification';
   static const String subscription = 'subscription';

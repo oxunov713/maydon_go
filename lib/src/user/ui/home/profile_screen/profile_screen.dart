@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -186,7 +188,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: "Quizzes",
                 isActive: false,
                 isSvg: false,
-                onTap: () => context.pushNamed(AppRoutes.quizzes),
+               onTap: () => showComingSoonDialog(context),
+               // onTap: () => context.pushNamed(AppRoutes.quizzes),
               ),
               SizedBox(height: 10),
               _listTile(
@@ -296,22 +299,39 @@ Widget _listTile({
 
 //TODO notificationni servicega olish kerak
 Future<void> showNotification() async {
-  const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-    'channel_id', // Unikal kanal ID
-    'General Notifications', // Kanal nomi
-    channelDescription: 'This channel is used for general notifications.',
+ 
+}
 
-    importance: Importance.max,
-    priority: Priority.high,
-  );
-
-  const NotificationDetails notificationDetails =
-      NotificationDetails(android: androidDetails);
-
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    'Salom!',
-    'Bu lokal bildirishnoma',
-    notificationDetails,
-  );
+Future<void> showComingSoonDialog(BuildContext context) async {
+  if (Platform.isIOS) {
+    // iOS uchun Cupertino style dialog
+    return showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text("Tez kunda"),
+        content: Text("Bu funksiya tez orada mavjud bo'ladi."),
+        actions: [
+          CupertinoDialogAction(
+            child: Text("OK"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  } else {
+    // Android (va boshqa) uchun Material style dialog
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Tez kunda"),
+        content: Text("Bu funksiya tez orada mavjud bo'ladi."),
+        actions: [
+          TextButton(
+            child: Text("OK"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -418,7 +419,7 @@ class ClubCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     image: imageUrl == null
                         ? AssetImage(AppIcons.clubImage) as ImageProvider
-                        : NetworkImage(imageUrl!),
+                        : CachedNetworkImageProvider(imageUrl!),
                   ),
                 ),
               ),
@@ -480,7 +481,10 @@ class ClubCard extends StatelessWidget {
                             backgroundImage:
                                 visibleFriends[i].userImage != null &&
                                         visibleFriends[i].userImage!.isNotEmpty
-                                    ? NetworkImage(visibleFriends[i].userImage!)
+                                    ? CachedNetworkImageProvider(
+
+                                visibleFriends[i].userImage!
+                                )
                                         as ImageProvider
                                     : null,
                             child: (visibleFriends[i].userImage == null ||

@@ -5,6 +5,7 @@ import 'package:maydon_go/src/common/tools/position_enum.dart';
 class TeamState {
   final bool isLoading;
   final String? error;
+
   final List<UserModel> availablePlayers; // Users available to be added to the club
   final List<MemberModel> players; // Current club members
   final bool showPositions; // Toggle for displaying position abbreviations

@@ -4,8 +4,10 @@ class ChatModel {
   final String type;
   final DateTime? createdDate;
   final List<ChatMember> members;
-  final List<ChatMessage> messages;
-  final List<ChatMessage> pinnedMessages;
+  final List<ChatMessage>? messages;
+  final List<ChatMessage>? pinnedMessages;
+  final ChatMessage? lastMessage;
+  final List<ChatMessage>? unreadMessages;
 
   ChatModel({
     required this.id,
@@ -13,8 +15,10 @@ class ChatModel {
     required this.type,
     this.createdDate,
     required this.members,
-    required this.messages,
-    required this.pinnedMessages,
+     this.messages,
+     this.pinnedMessages,
+    this.lastMessage,
+    this.unreadMessages,
   });
 
   factory ChatModel.fromJson(Map<String, dynamic> json) {
@@ -25,14 +29,27 @@ class ChatModel {
       createdDate: json['createdDate'] != null
           ? DateTime.tryParse(json['createdDate'])
           : null,
-      members:
-          (json['members'] as List).map((e) => ChatMember.fromJson(e)).toList(),
-      messages: (json['messages'] as List)
-          .map((e) => ChatMessage.fromJson(e))
+      members: (json['members'] as List)
+          .map((e) => ChatMember.fromJson(e))
           .toList(),
-      pinnedMessages: (json['pinnedMessages'] as List)
+      messages: json['messages'] != null
+          ? (json['messages'] as List)
           .map((e) => ChatMessage.fromJson(e))
-          .toList(),
+          .toList()
+          : null,
+      pinnedMessages: json['pinnedMessages'] != null
+          ? (json['pinnedMessages'] as List)
+          .map((e) => ChatMessage.fromJson(e))
+          .toList()
+          : null,
+      lastMessage: json['lastMessage'] != null
+          ? ChatMessage.fromJson(json['lastMessage'])
+          : null,
+      unreadMessages: json['unreadMessages'] != null
+          ? (json['unreadMessages'] as List)
+          .map((e) => ChatMessage.fromJson(e))
+          .toList()
+          : null,
     );
   }
 
@@ -43,11 +60,16 @@ class ChatModel {
       'type': type,
       'createdDate': createdDate?.toIso8601String(),
       'members': members.map((e) => e.toJson()).toList(),
-      'messages': messages.map((e) => e.toJson()).toList(),
-      'pinnedMessages': pinnedMessages.map((e) => e.toJson()).toList(),
+      'messages': messages?.map((e) => e.toJson()).toList(),
+      'pinnedMessages':
+      pinnedMessages?.map((e) => e.toJson()).toList(),
+      'lastMessage': lastMessage?.toJson(),
+      'unreadMessages':
+      unreadMessages?.map((e) => e.toJson()).toList(),
     };
   }
 }
+
 
 class ChatMember {
   final int id;

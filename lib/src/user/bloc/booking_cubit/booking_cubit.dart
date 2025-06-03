@@ -71,6 +71,8 @@ class BookingCubit extends Cubit<BookingState> {
     }
   }
 
+
+
   void setSelectedField(String fieldName) {
     final currentState = state;
     if (currentState is! BookingLoaded || currentState.stadium.fields == null) {
@@ -78,7 +80,6 @@ class BookingCubit extends Cubit<BookingState> {
     }
 
     selectedStadiumName = fieldName;
-
 
     final updatedFields = currentState.stadium.fields!.map((substadium) {
       if (substadium.name != fieldName) return substadium;
@@ -129,8 +130,6 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   void _updateSlots(StadiumDetail stadium, UserModel user) {
-
-
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final next30Days =
@@ -152,7 +151,6 @@ class BookingCubit extends Cubit<BookingState> {
       selectedDate: selectedDate ?? today.toIso8601String().split("T")[0],
       selectedStadiumName: selectedStadiumName,
     ));
-
   }
 
   List<TimeSlot> _generateSlotsForDateRange(List<DateTime> dates) {
@@ -236,4 +234,6 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> refreshStadium(int stadiumId) => fetchStadiumById(stadiumId);
+
+  void loadBookings() {}
 }

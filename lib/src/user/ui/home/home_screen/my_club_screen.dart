@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/widgets/create_club.dart';
+import 'package:maydon_go/src/user/ui/home/profile_screen/profile_screen.dart';
 
 import '../../../../common/tools/language_extension.dart';
 import '../../../../common/constants/config.dart';
@@ -32,7 +34,6 @@ class _MyClubScreenState extends State<MyClubScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<MyClubCubit>().loadData();
 
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
@@ -96,10 +97,6 @@ class _MyClubScreenState extends State<MyClubScreen> {
               if (state is MyClubLoaded) {
                 int maxLength = GoPlusSubscriptionFeatures.friendsLength;
 
-                final isPremium = state.user.subscriptionModel?.name == "Go+";
-                int clubMaxLength = isPremium
-                    ? GoPlusSubscriptionFeatures.clubLength
-                    : GoSubscriptionFeatures.clubLength;
                 return CustomScrollView(
                   controller: _scrollController,
                   slivers: [
@@ -124,7 +121,8 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                 children: [
                                   InkWell(
                                     onTap: () async {
-                                      await showAddStoryDialog(context);
+                                      showComingSoonDialog(context);
+                                      //await showAddStoryDialog(context);
                                     },
                                     child: Stack(
                                       alignment: Alignment.bottomRight,
@@ -133,10 +131,10 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                           radius: 35,
                                           backgroundColor: AppColors.green2,
                                           backgroundImage:
-                                              state.user.imageUrl != null &&
+                                              (state.user.imageUrl != null &&
                                                       state.user.imageUrl!
-                                                          .isNotEmpty
-                                                  ? NetworkImage(
+                                                          .isNotEmpty)
+                                                  ? CachedNetworkImageProvider(
                                                       state.user.imageUrl!)
                                                   : null,
                                           child: (state.user.imageUrl == null ||
@@ -187,22 +185,26 @@ class _MyClubScreenState extends State<MyClubScreen> {
                             return GestureDetector(
                               onTap: () {
                                 List<String> mediaUrls = [
-                                  "https://cdn.marvel.com/content/1x/avengersendgame_lob_crd_05.jpg",
+                                  "https://static.dw.com/image/52159051_702.jpg",
                                   "https://i.pinimg.com/736x/10/12/1c/10121c6ec2d43d330c894e58319d5bcf.jpg",
-                                  "https://maydon-go.s3.eu-north-1.amazonaws.com/%D0%97%D0%B0%D0%BF%D0%B8%D1%81%D1%8C+%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%D0%B0+%D0%BE%D1%82+21.03.2025+14%3A47%3A19.webm",
+                                  "https://maydon-go.s3.eu-north-1.amazonaws.com/test_video.mp4",
+                                  "https://www.film.ru/sites/default/files/people/_tmdb/Xx9eyFGi1BeQoROXhdxF2qWOfS.jpg"
                                 ];
 
                                 List<String> mediaTypes = [
                                   'image', // Image
                                   'image', // Image
-                                  'video', // Image
+                                  'video', // Image'
+                                  'image', // Image
                                 ];
 
-                                context.pushNamed(AppRoutes.story, extra: {
-                                  "url": mediaUrls,
-                                  "types": mediaTypes,
-                                  "user": friend,
-                                });
+                                // context.pushNamed(AppRoutes.story, extra: {
+                                //   "url": mediaUrls,
+                                //   "types": mediaTypes,
+                                //   "user": friend,
+                                //   'chatId': friendship.chatId
+                                // });
+                                showComingSoonDialog(context);
                               },
                               onLongPress: () {
                                 showModalBottomSheet(
@@ -252,6 +254,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                                     "url": mediaUrls,
                                                     "types": mediaTypes,
                                                     "user": friend,
+                                                    'chatId': friendship.chatId
                                                   });
                                             },
                                           ),
@@ -316,13 +319,17 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                     fullName: friend.fullName,
                                   ),
                                   const SizedBox(height: 5),
-                                  Text(
-                                    friend.fullName ?? "No Name",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                                  SizedBox(
+                                    width: 70,
+                                    child: Text(
+                                      friend.fullName ?? "No Name",
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
@@ -383,6 +390,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                 ),
                               )
                             : ListView.separated(
+
                                 scrollDirection: Axis.horizontal,
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
@@ -401,7 +409,7 @@ class _MyClubScreenState extends State<MyClubScreen> {
                                         club.members.length > 3
                                             ? club.members.length - 3
                                             : 0;
-                                    Logger().d(club.chatId);
+
                                     return ClubCard(
                                       visibleFriends: visibleFriends,
                                       remainingFriends: remainingFriends,
@@ -476,50 +484,48 @@ class _MyClubScreenState extends State<MyClubScreen> {
                         ),
                       ),
                     ),
-                    SliverToBoxAdapter(
-                      child: BlocBuilder<MyClubCubit, MyClubState>(
-                        builder: (context, state) {
-                          if (state is MyClubLoading) {
-                            return const Center(
+                    BlocBuilder<MyClubCubit, MyClubState>(
+                      builder: (context, state) {
+                        if (state is MyClubLoading) {
+                          return SliverToBoxAdapter(
+                            child: const Center(
                               child: CircularProgressIndicator(),
-                            );
-                          } else if (state is MyClubLoaded) {
-                            final liders = state.liderBoard;
-                            return ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxHeight:
-                                    MediaQuery.of(context).size.height * 0.75,
-                              ),
-                              child: ListView.builder(
-                                physics: NeverScrollableScrollPhysics(),
-                                padding: const EdgeInsets.only(bottom: 80),
-                                itemCount: liders.length,
-                                itemBuilder: (context, index) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 4, horizontal: 12),
-                                    child: UserCoinsDiagram(
-                                      userName:
-                                          liders[index].fullName ?? "No name",
-                                      index: index,
-                                      userAvatarUrl: liders[index].imageUrl,
-                                      coins: liders[index].points,
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          }
-                          return const Center(
-                            child: Text("No data"),
+                            ),
                           );
-                        },
-                      ),
+                        } else if (state is MyClubLoaded) {
+                          final liders = state.liderBoard;
+
+                          return SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 4, horizontal: 12),
+                                  child: UserCoinsDiagram(
+                                    userName:
+                                        liders[index].fullName ?? "No name",
+                                    index: index,
+                                    userAvatarUrl: liders[index].imageUrl,
+                                    coins: liders[index].points,
+                                  ),
+                                );
+                              },
+                              childCount: liders.length,
+                            ),
+                          );
+                        }
+
+                        return SliverToBoxAdapter(
+                          child: const Center(
+                            child: Text("No data"),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 );
               } else if (state is MyClubLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator(color: AppColors.green,));
               } else if (state is MyClubError) {
                 return ListView(
                     padding: EdgeInsets.only(top: 250),
@@ -606,7 +612,8 @@ class UserCoinsDiagram extends StatelessWidget {
               child: userAvatarUrl != null && userAvatarUrl!.isNotEmpty
                   ? CircleAvatar(
                       radius: size.width * 0.055,
-                      backgroundImage: NetworkImage(userAvatarUrl!),
+                      backgroundImage:
+                          CachedNetworkImageProvider(userAvatarUrl!),
                     )
                   : CircleAvatar(
                       radius: size.width * 0.055,
@@ -673,173 +680,5 @@ class UserCoinsDiagram extends StatelessWidget {
     } else {
       return number.toString();
     }
-  }
-}
-
-class UserSearchDelegate extends SearchDelegate<String> {
-  final MyClubCubit myClubCubit;
-  Timer? _debounce;
-
-  UserSearchDelegate(this.myClubCubit)
-      : super(keyboardType: TextInputType.number);
-
-  @override
-  ThemeData appBarTheme(BuildContext context) {
-    return Theme.of(context).copyWith(
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.green,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-        centerTitle: false,
-        shadowColor: Colors.transparent,
-      ),
-      textTheme: const TextTheme(titleLarge: TextStyle(color: Colors.white)),
-      textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Colors.white, selectionColor: AppColors.grey4),
-      inputDecorationTheme: const InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.green,
-        hintStyle: TextStyle(color: Colors.white70),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppColors.green,
-          ), // Aktiv chiziq
-        ),
-        enabledBorder: UnderlineInputBorder(
-          borderSide:
-              BorderSide(color: Colors.white70, width: 1), // Normal chiziq
-        ),
-      ),
-    );
-  }
-
-  @override
-  List<Widget> buildActions(BuildContext context) {
-    return [
-      IconButton(
-        icon: const Icon(Icons.close),
-        onPressed: () {
-          if (query.isEmpty) {
-            FocusScope.of(context).unfocus();
-          } else {
-            // Matnni tozalaydi
-            query = '';
-            showSuggestions(context); // Suggestion’ni qayta chizish
-          }
-        },
-      ),
-    ];
-  }
-
-  @override
-  Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, "");
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    return _buildUserList();
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      myClubCubit.searchUsers(query);
-    });
-
-    return ColoredBox(color: AppColors.white2, child: _buildUserList());
-  }
-
-  Widget _buildUserList() {
-    return BlocBuilder<MyClubCubit, MyClubState>(
-      bloc: myClubCubit,
-      builder: (context, state) {
-        if (state is MyClubLoaded) {
-          final results = state.searchResults;
-          if (results.isEmpty) {
-            return const Center(child: Text("No results found"));
-          }
-
-          final connectedUsers = results
-              .where((user) => myClubCubit.isConnected(user.id!))
-              .toList();
-          final notConnectedUsers = results
-              .where((user) => !myClubCubit.isConnected(user.id!))
-              .toList();
-
-          final sortedUsers = [...connectedUsers, ...notConnectedUsers];
-
-          return ListView.builder(
-            itemCount: sortedUsers.length,
-            itemBuilder: (context, index) {
-              final user = sortedUsers[index];
-              final isConnected = myClubCubit.isConnected(user.id!);
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.green2,
-
-                  backgroundImage:
-                      user.imageUrl != null && user.imageUrl!.isNotEmpty
-                          ? NetworkImage(user.imageUrl!)
-                          : null,
-
-                  child: user.imageUrl == null || user.imageUrl!.isEmpty
-                      ? Text(
-                          (user.fullName ?? "U").substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        )
-                      : null, // Rasm bor bo‘lsa, `child` ko‘rinmasligi kerak
-                ),
-                title: Text(user.fullName ?? "No Name"),
-                subtitle: Text(user.phoneNumber ?? ""),
-                trailing: IconButton(
-                  icon: Icon(
-                    isConnected ? Icons.person_remove : Icons.person_add,
-                    color: isConnected ? Colors.red : Colors.green,
-                  ),
-                  onPressed: () {
-                    final subName =
-                        state.user.subscriptionModel?.name ?? "Free";
-                    final maxAllowed = subName == "Go+"
-                        ? GoPlusSubscriptionFeatures.friendsLength
-                        : subName == "Go"
-                            ? GoSubscriptionFeatures.friendsLength
-                            : 1;
-                    final currentConnections = state.connections.length;
-
-                    if (!isConnected && currentConnections >= maxAllowed) {
-                      showBuyPremiumBottomSheet(context);
-                    } else {
-                      myClubCubit.toggleConnection(user);
-                    }
-                  },
-                ),
-              );
-            },
-          );
-        }
-        return const Center(
-            child: CircularProgressIndicator(
-          color: AppColors.green,
-        ));
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    super.dispose();
   }
 }

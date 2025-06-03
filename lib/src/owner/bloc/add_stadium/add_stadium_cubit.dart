@@ -10,7 +10,7 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
   bool hasMoreData = true;
   final apiService = StadiumService(ApiClient().dio);
 
-  AddStadiumCubit() : super(AddStadiumState.initial());
+  AddStadiumCubit() : super(AddStadiumState.initial()) ;
 
   void updateName(String name) => emit(
       state.copyWith(name: name, errorMessage: null, isFormSubmitted: false));
@@ -131,6 +131,7 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
       return; // Не загружать, если уже загружается и не обновление
 
     try {
+      final stadium = await getCurrentStadiumByToken();
       if (isRefresh) {
         size = 10;
         hasMoreData = true;
@@ -157,7 +158,7 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
 
       emit(state.copyWith(
         substadiums: substadiums,
-        // Заменяем список, если обновление, или добавляем, если нет
+        stadium: stadium,
         isLoading: false,
         isSuccess: false,
       ));
@@ -180,11 +181,11 @@ class AddStadiumCubit extends Cubit<AddStadiumState> {
     }
   }
 
-  Future<int> getCurrentStadium() async {
+  Future<StadiumDetail> getCurrentStadiumByToken() async {
     StadiumDetail stadium = StadiumDetail(name: "No name", id: -1);
     try {
       stadium = await apiService.getStadiumByToken();
     } catch (e) {}
-    return stadium.id ?? -1;
+    return stadium;
   }
 }

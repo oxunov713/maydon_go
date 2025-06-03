@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -39,8 +40,8 @@ Widget buildStoryAvatar({
           child: CircleAvatar(
             radius: 30,
             backgroundColor: AppColors.white,
-            backgroundImage: imageUrl != null && imageUrl.isNotEmpty
-                ? NetworkImage(imageUrl)
+            backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
+                ? CachedNetworkImageProvider(imageUrl)
                 : null,
             child: (imageUrl == null || imageUrl.isEmpty)
                 ? ClipOval(

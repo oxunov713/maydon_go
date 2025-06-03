@@ -117,6 +117,7 @@ class _LocationsScreenState extends State<LocationsScreen>
                         height: floatingButtonIconSize * 1.2,
                         child: SearchBar(
                           controller: _searchController,
+
                           hintText: "Maydonni qidirish...",
                           hintStyle: const WidgetStatePropertyAll(
                             TextStyle(
@@ -173,12 +174,12 @@ class _LocationsScreenState extends State<LocationsScreen>
                                           "Stadionlari soni  ${stadium.fields?.length} ta"),
                                       onTap: () {
                                         context.read<HomeCubit>().moveCamera(
-                                              LatLng(
-                                                stadium.location!.latitude ?? 0,
-                                                stadium.location!.longitude ??
-                                                    0,
-                                              ),
-                                            );
+                                            LatLng(
+                                              stadium.location!.latitude ?? 0,
+                                              stadium.location!.longitude ?? 0,
+                                            ),
+                                            context: context,
+                                            stadiumId: stadium.id);
                                         _searchController.clear();
                                         FocusScope.of(context).unfocus();
                                         context

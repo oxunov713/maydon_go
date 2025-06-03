@@ -66,7 +66,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneFormatError => 'Please enter a valid phone number format.';
 
   @override
-  String get passwordMinLengthError => 'Password must be at least 6 characters long!';
+  String get passwordMinLengthError =>
+      'Password must be at least 6 characters long!';
 
   @override
   String get passwordMatchError => 'Passwords must match!';

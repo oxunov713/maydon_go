@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/service/api/api_client.dart';
 import 'package:maydon_go/src/common/service/api/api_image_service.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
+import 'package:maydon_go/src/user/bloc/booking_cubit/booking_state.dart';
 import '../../../common/l10n/app_localizations.dart';
 import '../../../common/router/app_routes.dart';
 import '../../../common/style/app_colors.dart';
@@ -152,7 +154,7 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
                 ),
                 _listTile(
                   icon: AppIcons.faqIcon,
-                  title: l10n.aboutApp,
+                  title: "Biz bilan bog'lanish",
                   isActive: false,
                   onTap: () => context.pushNamed(AppRoutes.about),
                 ),
@@ -172,11 +174,11 @@ class _OwnerProfileScreenState extends State<OwnerProfileScreen> {
       maxWidth: 1024,
       maxHeight: 1024,
     );
-    final id = await context.read<AddStadiumCubit>().getCurrentStadium();
-    Logger().e(id);
+
     if (images.isNotEmpty) {
       try {
-        await ApiImageService(ApiClient().dio).addStadiumImages(id, images);
+        await ApiImageService(ApiClient().dio).addStadiumImages(
+            context.read<AddStadiumCubit>().state.stadium.id!, images);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.imagesUploadedSuccess)),
         );

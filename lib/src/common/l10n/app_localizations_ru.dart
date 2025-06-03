@@ -63,10 +63,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signupSuccess => 'Регистрация успешна!';
 
   @override
-  String get phoneFormatError => 'Пожалуйста, введите номер телефона в правильном формате.';
+  String get phoneFormatError =>
+      'Пожалуйста, введите номер телефона в правильном формате.';
 
   @override
-  String get passwordMinLengthError => 'Пароль должен содержать не менее 6 символов!';
+  String get passwordMinLengthError =>
+      'Пароль должен содержать не менее 6 символов!';
 
   @override
   String get passwordMatchError => 'Пароли должны совпадать!';

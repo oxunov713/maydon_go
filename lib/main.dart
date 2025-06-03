@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
 import 'package:maydon_go/src/common/model/time_slot_model.dart';
 import 'package:maydon_go/src/common/screens/app.dart';
 import 'package:maydon_go/src/common/service/api/api_client.dart';
@@ -17,6 +18,7 @@ import 'package:maydon_go/src/user/bloc/auth_cubit/auth_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_cubit/booking_cubit.dart';
 import 'package:maydon_go/src/user/bloc/booking_history/booking_history_cubit.dart';
 import 'package:maydon_go/src/user/bloc/chat_cubit/chat_cubit.dart';
+import 'package:maydon_go/src/user/bloc/chat_input_cubit/chat_input_cubit.dart';
 import 'package:maydon_go/src/user/bloc/home_cubit/home_cubit.dart';
 import 'package:maydon_go/src/user/bloc/locale_cubit/locale_cubit.dart';
 import 'package:maydon_go/src/user/bloc/my_club_cubit/my_club_cubit.dart';
@@ -31,6 +33,7 @@ import 'package:provider/provider.dart';
 
 import 'src/common/service/connectivity_service.dart';
 import 'src/user/bloc/my_club_cubit/fab_visibility_cubit.dart';
+import 'src/user/bloc/user_chats_cubit/user_chats_cubit.dart';
 
 // Notifications pluginni global o‘zgaruvchi sifatida ishlatamiz
 final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -44,7 +47,10 @@ Future<void> main() async {
 
   // Ilovani ishga tushirish
   runApp(_buildApp());
+
 }
+
+
 
 // Ilova uchun boshlang‘ich sozlamalarni amalga oshirish
 Future<void> _initializeApp() async {
@@ -64,9 +70,8 @@ Future<void> initNotifications() async {
 Widget _buildApp() {
   return MultiBlocProvider(
     providers: [
-      ChangeNotifierProvider(create: (_) => ConnectivityService()),
       BlocProvider(create: (_) => LocaleCubit()),
-      BlocProvider(create: (_) => ProfileCubit()),
+      BlocProvider(create: (_) => ProfileCubit()..loadUserData()),
       BlocProvider(create: (_) => AuthCubit()),
       BlocProvider(create: (_) => ChatCubit()),
       BlocProvider(create: (_) => TournamentCubit()),
@@ -84,12 +89,19 @@ Widget _buildApp() {
       ),
       BlocProvider(create: (_) => SavedStadiumsCubit()),
       BlocProvider(create: (_) => StadiumCubit()),
-      BlocProvider(create: (_) => MyClubCubit()),
+      BlocProvider(create: (_) => MyClubCubit()..loadData()),
       BlocProvider(create: (_) => QuizPackCubit()),
+      BlocProvider(create: (_) => UserChatsCubit()),
+      BlocProvider(
+          create: (_) => ChatInputCubit(
+                onSendTextMessage: (message) {},
+                onSendVoiceMessage: (audioPath) {},
+              )),
       BlocProvider(create: (_) => OwnerHomeCubit()),
       BlocProvider(create: (_) => AddStadiumCubit()..loadSubstadiums()),
-      BlocProvider(create: (_) => LocationPickerCubit()),
+      BlocProvider(create: (_) => LocationPickerCubit()..getCurrentLocation()),
+      // BlocProvider(create: (_) => UserChatsCubit(),),
     ],
-    child: const App(),
+    child: App(),
   );
 }

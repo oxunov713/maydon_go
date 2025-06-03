@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
 import '../../../common/model/main_model.dart';
 import '../../../common/service/api/api_client.dart';
 import '../../../common/service/api/club_service.dart';
@@ -17,10 +16,18 @@ class TeamCubit extends Cubit<TeamState> {
     emit(state.copyWith(isLoading: true));
     try {
       final club = await _clubService.getClubInfo(clubId: clubId);
-      final availablePlayers = await _fetchAvailablePlayers();
+      final allFriends = await _fetchAvailablePlayers();
+
+      final currentMemberIds = club.members.map((e) => e.userId).toSet();
+
+      final availablePlayers = allFriends
+          .where((friend) => !currentMemberIds.contains(friend.id))
+          .toList();
+
       emit(state.copyWith(
         isLoading: false,
         club: club,
+
         availablePlayers: availablePlayers,
         players: club.members,
       ));
@@ -50,12 +57,14 @@ class TeamCubit extends Cubit<TeamState> {
         position: position.abbreviation,
         userId: player.id!,
       );
-      // Refresh club info after adding a member
+      final newAvailablePlayers = List<UserModel>.from(state.availablePlayers)
+        ..removeWhere((user) => user.id == player.id);
       final updatedClub = await _clubService.getClubInfo(clubId: state.club.id);
       emit(state.copyWith(
         isLoading: false,
         club: updatedClub,
         players: updatedClub.members,
+        availablePlayers: newAvailablePlayers,
         error: null,
       ));
     } catch (e) {
@@ -64,8 +73,7 @@ class TeamCubit extends Cubit<TeamState> {
   }
 
   // Remove a player from a position
-  Future<void> removePlayerFromPosition(
-      FootballPosition position, int memberId) async {
+  Future<void> removePlayerFromPosition(int memberId) async {
     emit(state.copyWith(isLoading: true));
     try {
       await _clubService.removeFromClub(

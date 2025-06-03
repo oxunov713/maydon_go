@@ -2,15 +2,22 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:go_router/go_router.dart';
 import 'package:maydon_go/src/common/model/team_model.dart';
 import 'package:maydon_go/src/common/style/app_colors.dart';
+import 'package:maydon_go/src/common/widgets/chat_shimmer.dart';
+import 'package:maydon_go/src/common/widgets/message_option.dart';
 import 'package:maydon_go/src/user/bloc/chat_cubit/chat_cubit.dart';
+import 'package:maydon_go/src/user/ui/home/home_screen/club_members_profile.dart';
 
+import '../../../../common/model/chat_model.dart';
 import '../../../../common/router/app_routes.dart';
+import '../../../../common/style/app_icons.dart';
+import '../../../../common/widgets/chat_text_field.dart';
+import '../../../../common/widgets/pinned_messages.dart';
+import '../../../bloc/pinned_messages/pinned_messages_cubit.dart';
 import '../../../bloc/team_cubit/team_chat_cubit.dart';
+import '../../../bloc/user_chats_cubit/user_chats_cubit.dart';
 
 class TeamChatScreen extends StatefulWidget {
   final int chatId;
@@ -25,447 +32,375 @@ class TeamChatScreen extends StatefulWidget {
 }
 
 class _TeamChatScreenState extends State<TeamChatScreen> {
+  late final ScrollController _scrollController;
+  late final TextEditingController _textController;
+  late final FocusNode _messageFocusNode;
+  final Map<String, GlobalKey> _messageKeys = {};
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _textController = TextEditingController();
+    _messageFocusNode = FocusNode();
     context.read<TeamChatCubit>().joinGroupChat(widget.chatId);
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: BlocBuilder<TeamChatCubit, TeamChatState>(
-            builder: (context, state) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                state.groupName ?? 'Loading...', // Safe fallback
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+  void dispose() {
+    _scrollController.dispose();
+    _textController.dispose();
+    _messageFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant TeamChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.chatId != widget.chatId) {
+      context.read<TeamChatCubit>().joinGroupChat(widget.chatId);
+    }
+  }
+
+  String _formatMessageTime(DateTime sentAt) {
+    return '${sentAt.hour.toString().padLeft(2, '0')}:${sentAt.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _scrollToMessage(String messageId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _messageKeys[messageId];
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.3,
+        );
+      }
+    });
+  }
+
+  Widget _buildMessageBubble(
+    ChatMessage message,
+    bool isCurrentUser,
+    BuildContext context,
+  ) {
+    final messageKey = _messageKeys.putIfAbsent(
+      message.id.toString(),
+      () => GlobalKey(),
+    );
+
+    final chatState = context.read<TeamChatCubit>().state;
+    final sender = chatState.members.firstWhere(
+      (member) => member.userId == message.senderId,
+      orElse: () => MemberModel(
+        id: 0,
+        userId: message.senderId,
+        username: 'Unknown',
+        userImage: '',
+        joinedAt: DateTime.now(),
+        position: '',
+      ),
+    );
+
+    return GestureDetector(
+      onTapDown: (details) {
+        final offset = details.globalPosition;
+        showMessageOptions(
+          context: context,
+          message: message,
+          offset: offset,
+          currentUserId: chatState.currentUser?.id.toString() ?? '',
+          pinnedMessages: chatState.pinnedMessages,
+          deleteFunction: () async {
+            await context
+                .read<TeamChatCubit>()
+                .deleteMessageFromChat(message.id);
+          },
+          pinFunction: () async {
+            await context.read<TeamChatCubit>().pinMessageToChat(message.id);
+          },
+          unpinFunction: () async {
+            await context
+                .read<TeamChatCubit>()
+                .unpinMessageFromChat(message.id);
+          },
+          forwardFunction: () async {
+            // optional
+          },
+        );
+      },
+      child: Row(
+        mainAxisAlignment:
+            isCurrentUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isCurrentUser)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundImage: sender.userImage!.isNotEmpty
+                    ? NetworkImage(sender.userImage!)
+                    : AssetImage('assets/default_avatar.png') as ImageProvider,
+              ),
+            ),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
+            ),
+            child: Container(
+              key: messageKey,
+              margin: const EdgeInsets.only(top: 6, bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isCurrentUser ? AppColors.green : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: Radius.circular(isCurrentUser ? 12 : 0),
+                  bottomRight: Radius.circular(isCurrentUser ? 0 : 12),
                 ),
-              ),
-              Text(
-                '${state.members.length} people',
-                style: TextStyle(fontSize: 12, color: AppColors.white2),
-              ),
-            ],
-          );
-        }),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.people),
-            onPressed: () {
-              _showTeamSheet(context);
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'wallpaper') {
-                context.pushNamed(AppRoutes.wallpaper);
-              } else if (value == 'delete_chat') {
-                //context.read<ChatCubit>().deleteChat();
-              }
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'wallpaper',
-                child: ListTile(
-                  dense: true,
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-                  visualDensity: VisualDensity.compact,
-                  leading: Icon(Icons.collections),
-                  title: Text(
-                    'Change Wallpaper',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(1, 1),
                   ),
-                ),
+                ],
               ),
-              PopupMenuItem(
-                value: 'delete_chat',
-                child: ListTile(
-                  dense: true,
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 0, horizontal: 8),
-                  visualDensity: VisualDensity.compact,
-                  leading: Icon(
-                    Icons.delete,
-                    color: AppColors.red,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isCurrentUser && chatState.members.length > 2)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        sender.username,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.blue,
+                        ),
+                      ),
+                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          message.content,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: "Nunito",
+                            color: isCurrentUser ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatMessageTime(message.sentAt),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isCurrentUser
+                              ? Colors.white.withOpacity(0.7)
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                  title: Text(
-                    'History clear',
-                    style: TextStyle(
-                        color: AppColors.red, fontWeight: FontWeight.w600),
-                  ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
-      body: BlocBuilder<TeamChatCubit, TeamChatState>(
-        builder: (context, state) {
-          final currentState = context.watch<ChatCubit>().state;
+    );
+  }
 
-          return Stack(
-            children: [
-              if (state.status == TeamChatStatus.loading)
-                const Center(child: CircularProgressIndicator()),
-              if (currentState.wallpaper != null)
-                Positioned.fill(
-                  child: Image.asset(
-                    currentState.wallpaper!,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              if (state.status == TeamChatStatus.error)
-                Center(child: Text(state.errorMessage ?? 'Error loading chat'))
-              else
-                Column(
-                  children: [
-                    if (state.pinnedMessages.isNotEmpty)
-                      buildPinnedMessage(
-                        context,
-                        state.pinnedMessages.whereType<types.TextMessage>().toList(),
-                        () {},
-                        () {},
-                      ),
-                    Expanded(
-                      child: Chat(
-                        messages: state.messages,
-                        textMessageOptions: const TextMessageOptions(
-                          isTextSelectable: false,
-                        ),
-                        onSendPressed: (types.PartialText message) {
-                          context
-                              .read<TeamChatCubit>()
-                              .sendMessage(message.text);
-                        },
-                        onMessageTap: (context, p1) {
-                          final renderBox =
-                              context.findRenderObject() as RenderBox;
-                          final offset = renderBox.localToGlobal(Offset.zero);
-                          showTelegramStyleMenu(context, p1, offset);
-                        },
-                        user: state.currentUser ?? const types.User(id: '0'),
-                        showUserAvatars: true,
-                        showUserNames: true,
-                        inputOptions: const InputOptions(
-                          autofocus: false,
-                          usesSafeArea: true,
-                          sendButtonVisibilityMode:
-                              SendButtonVisibilityMode.always,
-                        ),
-                        theme: DefaultChatTheme(
-                          dateDividerTextStyle: TextStyle(
-                            color: AppColors.white2,
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<TeamChatCubit, TeamChatState>(
+      listener: (context, state) {
+        if (ChatStatus.loaded == state.status && state.messages.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          });
+        }
+      },
+      builder: (context, state) {
+        final chatState = context.watch<ChatCubit>().state;
+        if (state.status == ChatStatus.loading) {
+          return buildLoadingUI();
+        }
+
+        if (state.status == ChatStatus.error) {
+          return Center(child: Text('Xatolik: ${state.errorMessage}'));
+        }
+        return PopScope(
+          canPop: true,
+          onPopInvokedWithResult: (didPop, result) async {
+            await context.read<UserChatsCubit>().loadChats();
+            return;
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: BlocBuilder<TeamChatCubit, TeamChatState>(
+                builder: (context, state) {
+                  return InkWell(
+                    splashColor: AppColors.transparent,
+                    onTap: () {
+                      context.pushNamed(
+                        AppRoutes.clubProfile,
+                        extra: {'club': state.chatModel},
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          state.groupName ?? 'Loading...',
+                          style: const TextStyle(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
-                          messageInsetsVertical: 10,
-                          messageBorderRadius: 12,
-                          messageInsetsHorizontal: 10,
-                          inputPadding: EdgeInsets.zero,
-                          backgroundColor: currentState.wallpaper != null
-                              ? AppColors.transparent
-                              : AppColors.white2,
-                          primaryColor: AppColors.green,
-                          secondaryColor: AppColors.white,
-                          sentMessageBodyTextStyle:
-                              const TextStyle(color: Colors.white),
-                          receivedMessageBodyTextStyle:
-                              const TextStyle(color: Colors.black),
-                          inputMargin: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 5),
-                          inputBorderRadius:
-                              const BorderRadius.all(Radius.circular(30)),
-                          inputTextColor: Colors.black,
-                          inputBackgroundColor: Colors.white,
-                          userAvatarNameColors: [AppColors.green],
+                        ),
+                        Text(
+                          '${state.members.length} people',
+                          style: TextStyle(fontSize: 12, color: AppColors.white2),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              actions: [
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'wallpaper') {
+                      context.pushNamed(AppRoutes.wallpaper);
+                    } else if (value == 'delete_chat') {
+                      context.read<TeamChatCubit>().deleteChat();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'wallpaper',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                        visualDensity: VisualDensity.compact,
+                        leading: Icon(Icons.collections),
+                        title: Text(
+                          'Change Wallpaper',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete_chat',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                        visualDensity: VisualDensity.compact,
+                        leading: Icon(
+                          Icons.delete,
+                          color: AppColors.red,
+                        ),
+                        title: Text(
+                          'History clear',
+                          style: TextStyle(
+                            color: AppColors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  void _showTeamSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return BlocBuilder<TeamChatCubit, TeamChatState>(
-          builder: (context, state) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ],
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: Stack(
                     children: [
-                      Text(
-                        'Team Members (${state.members.length})',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      if (chatState.wallpaper != null)
+                        Positioned.fill(
+                          child: Image.asset(
+                            chatState.wallpaper!,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          // Implement add member functionality
-                        },
-                      ),
+                      if (chatState.wallpaper == null)
+                        Positioned.fill(
+                          child: Image.asset(
+                            AppIcons.chatWall2,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      if (state.messages.isNotEmpty)
+                        Column(
+                          children: [
+                            if (state.pinnedMessages.isNotEmpty)
+                              PinnedMessagesHeader(
+                                pinnedMessages:
+                                    state.pinnedMessages.cast<ChatMessage>(),
+                                onClose: () {},
+                                onPinTap: (index) {
+                                  _scrollToMessage(
+                                      state.pinnedMessages[index].id.toString());
+                                },
+                                onExpandToggle: () {},
+                                cubit: PinnedMessagesCubit(),
+                              ),
+                            Expanded(
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                reverse: true,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 10),
+                                itemCount: state.messages.length,
+                                itemBuilder: (context, index) {
+                                  final message = state.messages[
+                                      state.messages.length - 1 - index];
+                                  final isCurrentUser =
+                                      state.currentUser!.id == message.senderId;
+
+                                  return _buildMessageBubble(
+                                      message, isCurrentUser, context);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (state.messages.isEmpty)
+                        Center(
+                          child: Text(
+                            "Sizda hozircha xabarlar yo'q.",
+                            style: TextStyle(color: AppColors.white),
+                          ),
+                        )
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: state.members.length,
-                      itemBuilder: (context, index) {
-                        final member = state.members[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.green,
-                            backgroundImage: member.imageUrl != null
-                                ? NetworkImage(member.imageUrl!)
-                                : null,
-                            child: member.imageUrl == null
-                                ? Text(member.firstName?[0] ?? '?')
-                                : null,
-                          ),
-                          title: Text(member.firstName ?? 'Unknown'),
-                          subtitle: Text('Member'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.more_vert),
-                            onPressed: () {
-                              _showMemberOptions(context, member);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showMemberOptions(BuildContext context, types.User member) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('View Profile'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Implement view profile
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.message),
-                title: const Text('Send Private Message'),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Implement private message
-                },
-              ),
-              if (member.id !=
-                  context.read<TeamChatCubit>().currentUser.id) // Not self
-                ListTile(
-                  leading: const Icon(Icons.remove_circle_outline),
-                  title: const Text('Remove from Team'),
-                  onTap: () {
-                    // Navigator.pop(context);
-                    // context
-                    //     .read<TeamChatCubit>()
-                    //     .removeMemberFromGroup(int.parse(member.id));
-                  },
                 ),
-            ],
+                ChatInputField(
+                  isPrivateChat: false,
+                )
+              ],
+            ),
           ),
         );
       },
     );
   }
 }
-
-void showTelegramStyleMenu(
-    BuildContext context, types.Message message, Offset offset) async {
-  // 1. Klaviaturani yopish
-  FocusScope.of(context).unfocus();
-
-  final isOwnMessage =
-      message.author.id == context.read<TeamChatCubit>().currentUser.id;
-
-  final selected = await showMenu<String>(
-    context: context,
-    position: RelativeRect.fromLTRB(
-      offset.dx + 50,
-      offset.dy,
-      offset.dx + 100,
-      offset.dy,
-    ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    color: Colors.white,
-    elevation: 8,
-    items: [
-      const PopupMenuItem<String>(
-        value: 'pin',
-        child: Row(
-          children: [
-            Icon(Icons.push_pin, size: 20),
-            SizedBox(width: 10),
-            Text("Pin qilish"),
-          ],
-        ),
-      ),
-      const PopupMenuItem<String>(
-        value: 'copy',
-        child: Row(
-          children: [
-            Icon(Icons.copy, size: 20),
-            SizedBox(width: 10),
-            Text("Nusxa olish"),
-          ],
-        ),
-      ),
-      const PopupMenuItem<String>(
-        value: 'forward',
-        child: Row(
-          children: [
-            Icon(Icons.send, size: 20),
-            SizedBox(width: 10),
-            Text("Ulashish"),
-          ],
-        ),
-      ),
-      if (isOwnMessage)
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete, size: 20, color: Colors.red),
-              SizedBox(width: 10),
-              Text("O‘chirish", style: TextStyle(color: Colors.red)),
-            ],
-          ),
-        ),
-    ],
-  );
-
-  if (!context.mounted || selected == null) return;
-
-  FocusScope.of(context).unfocus();
-
-  switch (selected) {
-    case 'pin':
-      await context
-          .read<TeamChatCubit>()
-          .pinMessageToChat(int.parse(message.id));
-      break;
-
-    case 'copy':
-      Clipboard.setData(
-          ClipboardData(text: (message as types.TextMessage).text));
-      break;
-    case 'forward':
-      // TODO: Forward qilish
-      break;
-    case 'delete':
-      await context
-          .read<TeamChatCubit>()
-          .deleteMessageFromChat(int.parse(message.id));
-      break;
-  }
-}
-
-Widget buildPinnedMessage(
-    BuildContext context,
-    List<types.TextMessage> texts,
-    VoidCallback onClose,
-    VoidCallback onTap, // scrollToMessage chaqirilsin
-    ) {
-  return Material(
-    color: AppColors.green40,
-    child: InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            // 🔹 Left side - vertical bars for each pinned message
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(
-                texts.length,
-                    (index) => Container(
-                  width: 4,
-                  height: 8,
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // 🔸 Title + subtitle
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Pinned messages",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    texts.map((e) => e.text).join(" • "),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ❌ Close icon
-            IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: onClose,
-              tooltip: "Unpin all",
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
